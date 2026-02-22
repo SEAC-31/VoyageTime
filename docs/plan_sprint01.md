@@ -16,9 +16,9 @@ Definir claramente el objetivo del sprint.
 | T1.5 | Inicializar el proyecto en Androiid Studio | Sharon | 5m | Alta |
 | T2.1 | Crear el Repositorio de Github | Sharon | 5m | Alta |
 | T2.2 | Iniciar repositorio local | Joan y Sharon | 5m | Alta |
-| T2.3 | Añadir licencia | Joan | X | Baja |
-| T2.3.1 | Buscar mejor licencia para la aplicacion | Joan | X | Baja |
-| T2.3.2 | Añadir la licencia al Github | Joan | X | Baja |
+| T2.3 | Añadir licencia | Joan | 30m | Baja |
+| T2.3.1 | Buscar mejor licencia para la aplicacion | Joan | 20m | Baja |
+| T2.3.2 | Añadir la licencia al Github | Joan | 10m | Baja |
 | T2.4 | Añadir CONTRIBUTING.md | Joan | 30m | Baja |
 | T2.5 | Crear archivo README.md | Sharon | 1h | Baja |
 | T2.6 | Añadir la carpeta de documentación "docs" | Joan | 10m | Baja |
@@ -38,16 +38,16 @@ Definir claramente el objetivo del sprint.
 | T3.1.10 | Layout Página Terminos y condiciones | Sharon y Joan | 1h | Alta |
 | T3.1.11 | Layout Splash Screen | Sharon | 4h | Media |
 | T3.2 | Implementar la navegación entre pantallas | Sharon y Joan | 8h | Alta |
-| T3.3 | Documentar el diagrama del modelo de datos en design.md | Joan | X | Baja |
-| T3.4 | Implementar las clases del modelo de datos y sus funciones | Joan | X | Media |
-| T3.4.1 | Funcion Home | Joan |  | Media |
-| T3.4.3 | Funcion Viajes | Joan |  | Media |
-| T3.4.4 | Funcion Login | Joan | | Media |
-| T3.4.5 | Funcion Registrarse | Joan | | Media |
-| T3.4.6 | Funcion Perfil | Joan | | Media |
-| T3.4.7 | Funcion Preferencias Usuario | Joan | | Media |
-| T3.4.8 | Funcion Recomendaciones| Joan | | Media |
-| T3.4.9 | Funcion Mapa | Joan | | Media |
+| T3.3 | Documentar el diagrama del modelo de datos en design.md | Joan | 6h | Baja |
+| T3.4 | Implementar las clases del modelo de datos y sus funciones | Joan | 18h | Media |
+| T3.4.1 | Funcion Home | Joan | 2h | Media |
+| T3.4.3 | Funcion Viajes | Joan | 2h | Media |
+| T3.4.4 | Funcion Login | Joan | 2h | Media |
+| T3.4.5 | Funcion Registrarse | Joan | 3h | Media |
+| T3.4.6 | Funcion Perfil | Joan | 2 | Media |
+| T3.4.7 | Funcion Preferencias Usuario | Joan | 2h | Media |
+| T3.4.8 | Funcion Recomendaciones| Joan | 1h | Media |
+| T3.4.9 | Funcion Mapa | Joan | 2h | Media |
 
 ---
 
