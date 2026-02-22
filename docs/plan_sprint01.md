@@ -19,7 +19,7 @@ Definir claramente el objetivo del sprint.
 | T2.3 | Añadir licencia | Joan | X | Baja |
 | T2.3.1 | Buscar mejor licencia para la aplicacion | Joan | X | Baja |
 | T2.3.2 | Añadir la licencia al Github | Joan | X | Baja |
-| T2.4 | Añadir CONTRIBUTING.md | Joan | X | Baja |
+| T2.4 | Añadir CONTRIBUTING.md | Joan | 30m | Baja |
 | T2.5 | Crear archivo README.md | Sharon | 1h | Baja |
 | T2.6 | Añadir la carpeta de documentación "docs" | Joan | 10m | Baja |
 | T2.7 | Incluir el archivo design.md | Joan | X | Media |
