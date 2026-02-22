@@ -22,8 +22,8 @@ Definir claramente el objetivo del sprint.
 | T2.4 | Añadir CONTRIBUTING.md | Joan | 30m | Baja |
 | T2.5 | Crear archivo README.md | Sharon | 1h | Baja |
 | T2.6 | Añadir la carpeta de documentación "docs" | Joan | 10m | Baja |
-| T2.7 | Incluir el archivo design.md | Joan | X | Media |
-| T2.8 | Configurar las ramas remotas y locales necesarias | Joan | X | Alta |
+| T2.7 | Incluir el archivo design.md | Joan | 5m | Media |
+| T2.8 | Configurar las ramas remotas y locales necesarias | Joan | 10m | Alta |
 | T2.9 | Subir el código inicial a GitHub (v0.1.0) | Sharon | 20m | Alta |
 | T2.10 | Crear la primera release en GitHub (v0.1.0) | Sharon | 5m | Alta |
 | T3.1 | Desarrollar los layouts de las pantallas | Sharon | 20h | Alta |
