@@ -9,10 +9,3 @@
 .externalNativeBuild
 .cxx
 local.properties
-gradle
-gradle.properties
-gradlew
-gradlew.bat
-/gradle
-build.gradle.kts
-settings.gradle.kts
