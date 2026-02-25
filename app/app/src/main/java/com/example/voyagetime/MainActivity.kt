@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Icon
@@ -26,7 +25,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.voyagetime.ui.screens.Home
-import com.example.voyagetime.ui.screens.Itinerary
 import com.example.voyagetime.ui.screens.Trips
 import com.example.voyagetime.ui.screens.Preferences
 import com.example.voyagetime.ui.theme.VoyageTimeTheme
@@ -57,7 +55,6 @@ fun VoyageTimeApp() {
     val items = listOf(
         NavItem(Routes.HOME, "Home", Icons.Default.Home),
         NavItem(Routes.TRIPS, "Trips", Icons.Default.Place),
-        NavItem(Routes.ITINERARY, "Itinerary", Icons.Default.DateRange),
         NavItem(Routes.PREFERENCES, "Preferences", Icons.Default.AccountBox),
     )
 
@@ -101,9 +98,6 @@ fun VoyageTimeApp() {
                 composable(Routes.TRIPS) {
                     Trips()
                 }
-                composable (Routes.ITINERARY){
-                    Itinerary()
-                }
                 composable(Routes.PREFERENCES) {
                     Preferences()
                 }
@@ -116,6 +110,5 @@ fun VoyageTimeApp() {
 object Routes {
     const val HOME = "home"
     const val TRIPS = "trips"
-    const val ITINERARY = "itinerary"
     const val PREFERENCES = "preferences"
 }
