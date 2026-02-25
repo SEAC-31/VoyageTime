@@ -26,6 +26,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.voyagetime.ui.screens.Home
+import com.example.voyagetime.ui.screens.Itinerary
+import com.example.voyagetime.ui.screens.Trips
+import com.example.voyagetime.ui.screens.Preferences
 import com.example.voyagetime.ui.theme.VoyageTimeTheme
 
 class MainActivity : ComponentActivity() {
@@ -54,8 +57,8 @@ fun VoyageTimeApp() {
     val items = listOf(
         NavItem(Routes.HOME, "Home", Icons.Default.Home),
         NavItem(Routes.TRIPS, "Trips", Icons.Default.Place),
-        NavItem(Routes.ITINERARY, "Calendar", Icons.Default.DateRange),
-        NavItem(Routes.PROFILE, "Profile", Icons.Default.AccountBox),
+        NavItem(Routes.ITINERARY, "Itinerary", Icons.Default.DateRange),
+        NavItem(Routes.PREFERENCES, "Preferences", Icons.Default.AccountBox),
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -96,13 +99,13 @@ fun VoyageTimeApp() {
                     Home()
                 }
                 composable(Routes.TRIPS) {
-                    Text("Places to visit and/or trips + link to Map page")
+                    Trips()
                 }
                 composable (Routes.ITINERARY){
-                    Text("Calendar with the trips and information")
+                    Itinerary()
                 }
-                composable(Routes.PROFILE) {
-                    Text("Profile Screen")
+                composable(Routes.PREFERENCES) {
+                    Preferences()
                 }
             }
         }
@@ -114,5 +117,5 @@ object Routes {
     const val HOME = "home"
     const val TRIPS = "trips"
     const val ITINERARY = "itinerary"
-    const val PROFILE = "profile"
+    const val PREFERENCES = "preferences"
 }

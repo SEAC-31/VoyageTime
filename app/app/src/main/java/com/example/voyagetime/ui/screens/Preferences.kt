@@ -6,9 +6,9 @@ import androidx.compose.ui.Modifier
 
 
 @Composable
-fun Itinerary(modifier: Modifier = Modifier) {
+fun Preferences(modifier: Modifier = Modifier) {
     Text(
-        text = "This is the Itinerary",
+        text = "Preferences of user for app display",
         modifier = modifier
     )
 }
