@@ -19,7 +19,7 @@
     <!-- ═══════════════════════════════════════ -->
     <!--   ACENTOS FRÍOS (Secundario)            -->
     <!-- ═══════════════════════════════════════ -->
-    <color name="aurora">#FF6B9E8C</color>        <!-- Secundario / Confirmaciones -->
+    <color name="aurora">#FF6B9E8C</color>        <!-- Secundario / Cosh nfirmaciones -->
     <color name="glacier">#FF4A7A8A</color>       <!-- Links / Tags / Filtros -->
     <color name="tide">#FF2E5D6E</color>          <!-- Tonal / Badges -->
 
