@@ -17,6 +17,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
@@ -29,6 +32,8 @@ import com.example.voyagetime.ui.screens.Home
 import com.example.voyagetime.ui.screens.Trips
 import com.example.voyagetime.ui.screens.Gallery
 import com.example.voyagetime.ui.screens.Preferences
+import com.example.voyagetime.ui.screens.AboutUs
+import com.example.voyagetime.ui.screens.SplashScreen
 import com.example.voyagetime.ui.theme.VoyageTimeTheme
 
 class MainActivity : ComponentActivity() {
@@ -37,7 +42,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             VoyageTimeTheme {
-                VoyageTimeApp()
+                var showSplash by remember { mutableStateOf(true) }
+
+                if (showSplash) {
+                    SplashScreen(onFinished = { showSplash = false })
+                } else {
+                    VoyageTimeApp()
+                }
             }
         }
     }
@@ -78,10 +89,11 @@ fun VoyageTimeApp() {
                     onClick = {
                         navController.navigate(item.route) {
                             popUpTo(navController.graph.startDestinationId) {
-                                saveState = true
+                                saveState = false
+                                inclusive = false
                             }
                             launchSingleTop = true
-                            restoreState = true
+                            restoreState = false
                         }
                     }
                 )
@@ -94,17 +106,16 @@ fun VoyageTimeApp() {
                 startDestination = Routes.HOME,
                 modifier = Modifier.padding(innerPadding)
             ) {
-                composable(Routes.HOME) {
-                    Home()
-                }
-                composable(Routes.TRIPS) {
-                    Trips()
-                }
-                composable(Routes.GALLERY) {
-                    Gallery()
-                }
+                composable(Routes.HOME) { Home() }
+                composable(Routes.TRIPS) { Trips() }
+                composable(Routes.GALLERY) { Gallery() }
                 composable(Routes.PREFERENCES) {
-                    Preferences()
+                    Preferences(onNavigateToAboutUs = {
+                        navController.navigate(Routes.ABOUT_US)
+                    })
+                }
+                composable(Routes.ABOUT_US) {
+                    AboutUs(onBack = { navController.popBackStack() })
                 }
             }
         }
@@ -116,4 +127,5 @@ object Routes {
     const val TRIPS = "trips"
     const val GALLERY = "gallery"
     const val PREFERENCES = "preferences"
+    const val ABOUT_US = "about_us"
 }
