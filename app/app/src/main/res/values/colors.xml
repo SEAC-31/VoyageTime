@@ -1,10 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!--   FONDOS & SUPERFICIES                  -->
+    <!-- ═══════════════════════════════════════ -->
+    <color name="ink">#FF0D1117</color>           <!-- Fondo principal -->
+    <color name="obsidian">#FF161C26</color>      <!-- Cards / Bottom Sheets -->
+    <color name="slate">#FF1E2733</color>         <!-- Elevated surfaces -->
+    <color name="fog">#FF2C3A4A</color>           <!-- Nav / Dividers -->
+
+    <!-- ═══════════════════════════════════════ -->
+    <!--   ACENTOS CÁLIDOS (Primario)            -->
+    <!-- ═══════════════════════════════════════ -->
+    <color name="horizon">#FFC9A96E</color>       <!-- Primario / CTAs / FAB -->
+    <color name="sand">#FFE8C98A</color>          <!-- Hover / Active state -->
+    <color name="dusk">#FFB87A5A</color>          <!-- Alertas / Warm accent -->
+
+    <!-- ═══════════════════════════════════════ -->
+    <!--   ACENTOS FRÍOS (Secundario)            -->
+    <!-- ═══════════════════════════════════════ -->
+    <color name="aurora">#FF6B9E8C</color>        <!-- Secundario / Cosh nfirmaciones -->
+    <color name="glacier">#FF4A7A8A</color>       <!-- Links / Tags / Filtros -->
+    <color name="tide">#FF2E5D6E</color>          <!-- Tonal / Badges -->
+
+    <!-- ═══════════════════════════════════════ -->
+    <!--   TIPOGRAFÍA & NEUTROS                  -->
+    <!-- ═══════════════════════════════════════ -->
+    <color name="ivory">#FFF5F0E8</color>         <!-- Títulos H1/H2 -->
+    <color name="pearl">#FFD4DDE4</color>         <!-- Texto de cuerpo -->
+    <color name="mist">#FF8FA3B0</color>          <!-- Subtítulos / Metadatos -->
+    <color name="stone">#FF4A5C6A</color>         <!-- Texto deshabilitado -->
+
+    <!-- ═══════════════════════════════════════ -->
+    <!--   SEMÁNTICOS                            -->
+    <!-- ═══════════════════════════════════════ -->
+    <color name="color_primary">@color/horizon</color>
+    <color name="color_primary_variant">@color/sand</color>
+    <color name="color_secondary">@color/aurora</color>
+    <color name="color_secondary_variant">@color/tide</color>
+    <color name="color_background">@color/ink</color>
+    <color name="color_surface">@color/obsidian</color>
+    <color name="color_error">@color/dusk</color>
+    <color name="color_on_primary">@color/ink</color>
+    <color name="color_on_secondary">@color/ivory</color>
+    <color name="color_on_background">@color/pearl</color>
+    <color name="color_on_surface">@color/pearl</color>
+    <color name="color_on_error">@color/ivory</color>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!--   LEGADO (requerido por el SDK)         -->
+    <!-- ═══════════════════════════════════════ -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
 </resources>
