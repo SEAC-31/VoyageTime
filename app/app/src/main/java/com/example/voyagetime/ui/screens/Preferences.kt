@@ -1,6 +1,7 @@
 package com.example.voyagetime.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,10 +18,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun Preferences(modifier: Modifier = Modifier) {
+fun Preferences(
+    modifier: Modifier = Modifier,
+    onNavigateToAboutUs: () -> Unit = {}
+) {
     val scrollState = rememberScrollState()
 
-    // State variables (no functionality, just UI state)
     var darkMode by remember { mutableStateOf(false) }
     var notifications by remember { mutableStateOf(true) }
     var locationAccess by remember { mutableStateOf(true) }
@@ -36,7 +39,6 @@ fun Preferences(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
 
-        // Header
         Text(
             text = "Preferences",
             fontSize = 28.sp,
@@ -174,7 +176,7 @@ fun Preferences(modifier: Modifier = Modifier) {
                 icon = Icons.Default.Info,
                 title = "About VoyageTime",
                 subtitle = "Version 1.0",
-                onClick = {}
+                onClick = onNavigateToAboutUs
             )
 
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
@@ -234,6 +236,7 @@ fun PreferenceToggleItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -290,6 +293,7 @@ fun PreferenceButtonItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick() }
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
