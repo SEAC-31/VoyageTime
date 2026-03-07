@@ -20,14 +20,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.voyagetime.ui.screens.Home
-import com.example.voyagetime.ui.screens.Trips
+import androidx.navigation.navArgument
 import com.example.voyagetime.ui.screens.Gallery
+import com.example.voyagetime.ui.screens.Home
+import com.example.voyagetime.ui.screens.Itinerary
 import com.example.voyagetime.ui.screens.Preferences
+import com.example.voyagetime.ui.screens.Trips
 import com.example.voyagetime.ui.theme.VoyageTimeTheme
 
 class MainActivity : ComponentActivity() {
@@ -95,12 +98,27 @@ fun VoyageTimeApp() {
                 composable(Routes.HOME) {
                     Home()
                 }
+
                 composable(Routes.TRIPS) {
-                    Trips()
+                    Trips(
+                        onTripClick = { tripId ->
+                            navController.navigate("${Routes.ITINERARY}/$tripId")
+                        }
+                    )
                 }
+
+                composable(
+                    route = "${Routes.ITINERARY}/{tripId}",
+                    arguments = listOf(navArgument("tripId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val tripId = backStackEntry.arguments?.getString("tripId") ?: ""
+                    Itinerary(tripId = tripId)
+                }
+
                 composable(Routes.GALLERY) {
                     Gallery()
                 }
+
                 composable(Routes.PREFERENCES) {
                     Preferences()
                 }
@@ -112,6 +130,7 @@ fun VoyageTimeApp() {
 object Routes {
     const val HOME = "home"
     const val TRIPS = "trips"
+    const val ITINERARY = "itinerary"
     const val GALLERY = "gallery"
     const val PREFERENCES = "preferences"
 }

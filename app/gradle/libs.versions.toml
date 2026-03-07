@@ -12,6 +12,7 @@ composeBom = "2025.05.00"
 navigationCompose = "2.9.7"
 foundationLayout = "1.10.3"
 foundation = "1.10.3"
+foundationLayoutVersion = "1.10.4"
 
 
 [libraries]
@@ -35,6 +36,7 @@ androidx-compose-material3-adaptive-navigation-suite = { group = "androidx.compo
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayoutVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
