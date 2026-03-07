@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -26,6 +27,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.voyagetime.ui.screens.Home
 import com.example.voyagetime.ui.screens.Trips
+import com.example.voyagetime.ui.screens.Gallery
 import com.example.voyagetime.ui.screens.Preferences
 import com.example.voyagetime.ui.theme.VoyageTimeTheme
 
@@ -55,6 +57,7 @@ fun VoyageTimeApp() {
     val items = listOf(
         NavItem(Routes.HOME, "Home", Icons.Default.Home),
         NavItem(Routes.TRIPS, "Trips", Icons.Default.Place),
+        NavItem(Routes.GALLERY, "Gallery", Icons.Default.PhotoLibrary),
         NavItem(Routes.PREFERENCES, "Preferences", Icons.Default.AccountBox),
     )
 
@@ -74,7 +77,6 @@ fun VoyageTimeApp() {
                     selected = selected,
                     onClick = {
                         navController.navigate(item.route) {
-                            // Avoid building a huge back stack when clicking bottom items
                             popUpTo(navController.graph.startDestinationId) {
                                 saveState = true
                             }
@@ -98,6 +100,9 @@ fun VoyageTimeApp() {
                 composable(Routes.TRIPS) {
                     Trips()
                 }
+                composable(Routes.GALLERY) {
+                    Gallery()
+                }
                 composable(Routes.PREFERENCES) {
                     Preferences()
                 }
@@ -106,9 +111,9 @@ fun VoyageTimeApp() {
     }
 }
 
-//
 object Routes {
     const val HOME = "home"
     const val TRIPS = "trips"
+    const val GALLERY = "gallery"
     const val PREFERENCES = "preferences"
 }
