@@ -1,10 +1,30 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+
+    <!-- BACKGROUNDS -->
+    <color name="background_black">#000000</color>
+    <color name="surface_dark">#121212</color>
+    <color name="surface_variant">#1E1E1E</color>
+
+    <!-- PRIMARY (Logo Orange) -->
+    <color name="voyage_orange">#FF7A00</color>
+    <color name="voyage_orange_dark">#CC6200</color>
+
+    <!-- SECONDARY (Sky Blue from clock) -->
+    <color name="voyage_sky">#BFE6F8</color>
+    <color name="voyage_sky_dark">#7BC6E8</color>
+
+    <!-- TEXT -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#E6E6E6</color>
+    <color name="text_muted">#9CA3AF</color>
+
+    <!-- MATERIAL MAPPING -->
+    <color name="color_primary">@color/voyage_orange</color>
+    <color name="color_primary_variant">@color/voyage_orange_dark</color>
+    <color name="color_secondary">@color/voyage_sky</color>
+    <color name="color_secondary_variant">@color/voyage_sky_dark</color>
+
+    <color name="color_background">@color/background_black</color>
+    <color name="color_surface">@color/surface_dark</color>
+
 </resources>
