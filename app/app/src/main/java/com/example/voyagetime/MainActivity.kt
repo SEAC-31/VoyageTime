@@ -22,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -30,13 +29,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.voyagetime.ui.screens.AboutUs
+import com.example.voyagetime.ui.screens.DepartureCityScreen
 import com.example.voyagetime.ui.screens.Gallery
 import com.example.voyagetime.ui.screens.Home
 import com.example.voyagetime.ui.screens.Itinerary
 import com.example.voyagetime.ui.screens.Preferences
-import com.example.voyagetime.ui.screens.Trips
-import com.example.voyagetime.ui.screens.AboutUs
 import com.example.voyagetime.ui.screens.SplashScreen
+import com.example.voyagetime.ui.screens.TravelStyleScreen
+import com.example.voyagetime.ui.screens.Trips
+import com.example.voyagetime.ui.screens.CreateTripScreen
 import com.example.voyagetime.ui.theme.VoyageTimeTheme
 
 class MainActivity : ComponentActivity() {
@@ -109,7 +111,24 @@ fun VoyageTimeApp() {
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable(Routes.HOME) {
-                    Home()
+                    Home(
+                        onTripClick = { tripId ->
+                            navController.navigate("${Routes.ITINERARY}/$tripId")
+                        },
+                        onDepartureCityClick = {
+                            navController.navigate(Routes.DEPARTURE_CITY)
+                        },
+                        onTravelStyleClick = {
+                            navController.navigate(Routes.TRAVEL_STYLE)
+                        },
+                        onAddNewTripClick = {
+                            navController.navigate(Routes.CREATE_TRIP)
+                        }
+                    )
+                }
+
+                composable(Routes.CREATE_TRIP) {
+                    CreateTripScreen()
                 }
 
                 composable(Routes.TRIPS) {
@@ -128,15 +147,26 @@ fun VoyageTimeApp() {
                     Itinerary(tripId = tripId)
                 }
 
+                composable(Routes.DEPARTURE_CITY) {
+                    DepartureCityScreen()
+                }
+
+                composable(Routes.TRAVEL_STYLE) {
+                    TravelStyleScreen()
+                }
+
                 composable(Routes.GALLERY) {
                     Gallery()
                 }
 
                 composable(Routes.PREFERENCES) {
-                    Preferences(onNavigateToAboutUs = {
-                        navController.navigate(Routes.ABOUT_US)
-                    })
+                    Preferences(
+                        onNavigateToAboutUs = {
+                            navController.navigate(Routes.ABOUT_US)
+                        }
+                    )
                 }
+
                 composable(Routes.ABOUT_US) {
                     AboutUs(onBack = { navController.popBackStack() })
                 }
@@ -147,8 +177,11 @@ fun VoyageTimeApp() {
 
 object Routes {
     const val HOME = "home"
+    const val CREATE_TRIP =  "create_trip"
     const val TRIPS = "trips"
     const val ITINERARY = "itinerary"
+    const val DEPARTURE_CITY = "departure_city"
+    const val TRAVEL_STYLE = "travel_style"
     const val GALLERY = "gallery"
     const val PREFERENCES = "preferences"
     const val ABOUT_US = "about_us"

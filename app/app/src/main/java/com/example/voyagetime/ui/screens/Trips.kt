@@ -1,12 +1,15 @@
 package com.example.voyagetime.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,29 +19,53 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.FlightTakeoff
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.TravelExplore
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.voyagetime.R
+
+enum class TripState {
+    UPCOMING,
+    PLANNED,
+    COMPLETED
+}
+
+enum class TripDialogType {
+    TRIPS,
+    DAYS,
+    BUDGET
+}
 
 data class TripItem(
     val id: String,
@@ -47,10 +74,12 @@ data class TripItem(
     val dateRange: String,
     val duration: String,
     val budget: String,
-    val status: String
+    val statusLabel: String,
+    val state: TripState,
+    val image: Int
 )
 
-data class TripStat(
+data class HomeStat(
     val value: String,
     val label: String,
     val icon: ImageVector
@@ -72,7 +101,9 @@ fun Trips(
                 dateRange = "12 Jun - 18 Jun 2026",
                 duration = "6 days",
                 budget = "€820",
-                status = "Upcoming"
+                statusLabel = "Upcoming",
+                state = TripState.UPCOMING,
+                image = R.drawable.paris
             ),
             TripItem(
                 id = "tokyo",
@@ -81,7 +112,9 @@ fun Trips(
                 dateRange = "02 Aug - 11 Aug 2026",
                 duration = "9 days",
                 budget = "€2,450",
-                status = "Planned"
+                statusLabel = "Planned",
+                state = TripState.PLANNED,
+                image = R.drawable.tokyo
             ),
             TripItem(
                 id = "amsterdam",
@@ -90,7 +123,9 @@ fun Trips(
                 dateRange = "21 Sep - 25 Sep 2026",
                 duration = "4 days",
                 budget = "€680",
-                status = "Upcoming"
+                statusLabel = "Upcoming",
+                state = TripState.UPCOMING,
+                image = R.drawable.newyork
             )
         )
     }
@@ -104,7 +139,9 @@ fun Trips(
                 dateRange = "10 Mar - 13 Mar 2026",
                 duration = "3 days",
                 budget = "€290",
-                status = "Completed"
+                statusLabel = "Completed",
+                state = TripState.COMPLETED,
+                image = R.drawable.barcelona
             ),
             TripItem(
                 id = "rome",
@@ -113,18 +150,45 @@ fun Trips(
                 dateRange = "15 Jan - 20 Jan 2026",
                 duration = "5 days",
                 budget = "€740",
-                status = "Completed"
+                statusLabel = "Completed",
+                state = TripState.COMPLETED,
+                image = R.drawable.paris
             )
         )
     }
 
-    val stats = remember {
+    val allTrips = upcomingTrips + pastTrips
+
+    val currentBudget = upcomingTrips.sumOf { it.budget.replace("€", "").replace(",", "").toInt() }
+    val pastBudget = pastTrips.sumOf { it.budget.replace("€", "").replace(",", "").toInt() }
+    val totalBudget = currentBudget + pastBudget
+
+    val stats = remember(totalBudget) {
         listOf(
-            TripStat("5", "Total Trips", Icons.Default.TravelExplore),
-            TripStat("27", "Days Planned", Icons.Default.CalendarMonth),
-            TripStat("€4,980", "Estimated Budget", Icons.Default.AttachMoney)
+            HomeStat("5", "Trips", Icons.Default.TravelExplore),
+            HomeStat("27", "Days Planned", Icons.Default.CalendarMonth),
+            HomeStat("€$totalBudget", "Budget", Icons.Default.AttachMoney)
         )
     }
+
+    var activeDialog by remember { mutableStateOf<TripDialogType?>(null) }
+
+    activeDialog?.let { dialogType ->
+        TripOverviewDialog(
+            dialogType = dialogType,
+            trips = allTrips,
+            onDismiss = { activeDialog = null }
+        )
+    }
+
+    var favoriteRegion by remember { mutableStateOf("Europe") }
+    var travelGoal by remember { mutableStateOf("Visit 3 new cities this year") }
+
+    var editingFavoriteRegion by remember { mutableStateOf(false) }
+    var editingTravelGoal by remember { mutableStateOf(false) }
+
+    var favoriteRegionDraft by remember { mutableStateOf(favoriteRegion) }
+    var travelGoalDraft by remember { mutableStateOf(travelGoal) }
 
     Column(
         modifier = modifier
@@ -141,13 +205,34 @@ fun Trips(
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        TripsOverviewSection(stats = stats)
+        TripCategory(title = "Overview") {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                stats.forEachIndexed { index, stat ->
+                    val dialogType = when (index) {
+                        0 -> TripDialogType.TRIPS
+                        1 -> TripDialogType.DAYS
+                        else -> TripDialogType.BUDGET
+                    }
+
+                    HomeStatCard(
+                        stat = stat,
+                        modifier = Modifier.weight(1f),
+                        onClick = { activeDialog = dialogType }
+                    )
+                }
+            }
+        }
 
         TripCategory(title = "Upcoming Trips") {
             upcomingTrips.forEachIndexed { index, trip ->
-                TripCardItem(
+                EditableUpcomingTripCard(
                     trip = trip,
-                    onItineraryClick = { onTripClick(trip.id) }
+                    onViewClick = { onTripClick(trip.id) }
                 )
                 if (index != upcomingTrips.lastIndex) {
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
@@ -157,9 +242,9 @@ fun Trips(
 
         TripCategory(title = "Past Trips") {
             pastTrips.forEachIndexed { index, trip ->
-                TripCardItem(
+                PastTripCard(
                     trip = trip,
-                    onItineraryClick = { onTripClick(trip.id) }
+                    onViewClick = { onTripClick(trip.id) }
                 )
                 if (index != pastTrips.lastIndex) {
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
@@ -168,22 +253,58 @@ fun Trips(
         }
 
         TripCategory(title = "Travel Insights") {
-            InfoRow(
+            EditableInsightRow(
                 icon = Icons.Default.Explore,
                 title = "Favorite Region",
-                subtitle = "Europe"
+                value = favoriteRegion,
+                isEditing = editingFavoriteRegion,
+                draftValue = favoriteRegionDraft,
+                onDraftChange = { favoriteRegionDraft = it },
+                onEditClick = {
+                    favoriteRegionDraft = favoriteRegion
+                    editingFavoriteRegion = true
+                    editingTravelGoal = false
+                },
+                onCancel = {
+                    editingFavoriteRegion = false
+                    favoriteRegionDraft = favoriteRegion
+                },
+                onSave = {
+                    favoriteRegion = favoriteRegionDraft
+                    editingFavoriteRegion = false
+                }
             )
+
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-            InfoRow(
+
+            StaticInsightRow(
                 icon = Icons.Default.FlightTakeoff,
                 title = "Next Departure",
                 subtitle = "Paris — 12 Jun 2026"
             )
+
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-            InfoRow(
-                icon = Icons.Default.TrendingUp,
+
+            EditableInsightRow(
+                icon = Icons.AutoMirrored.Filled.TrendingUp,
                 title = "Travel Goal",
-                subtitle = "Visit 3 new cities this year"
+                value = travelGoal,
+                isEditing = editingTravelGoal,
+                draftValue = travelGoalDraft,
+                onDraftChange = { travelGoalDraft = it },
+                onEditClick = {
+                    travelGoalDraft = travelGoal
+                    editingTravelGoal = true
+                    editingFavoriteRegion = false
+                },
+                onCancel = {
+                    editingTravelGoal = false
+                    travelGoalDraft = travelGoal
+                },
+                onSave = {
+                    travelGoal = travelGoalDraft
+                    editingTravelGoal = false
+                }
             )
         }
 
@@ -192,86 +313,72 @@ fun Trips(
 }
 
 @Composable
-fun TripsOverviewSection(stats: List<TripStat>) {
-    Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
-        Text(
-            text = "OVERVIEW",
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 1.2.sp,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
-        )
+fun TripOverviewDialog(
+    dialogType: TripDialogType,
+    trips: List<TripItem>,
+    onDismiss: () -> Unit
+) {
+    val title: String
+    val text: String
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                stats.forEach { stat ->
-                    StatBox(
-                        stat = stat,
-                        modifier = Modifier.weight(1f)
-                    )
+    when (dialogType) {
+        TripDialogType.TRIPS -> {
+            title = "Trips Overview"
+            text = buildString {
+                appendLine("Total trips planned: ${trips.size}")
+                appendLine()
+                trips.forEach { trip ->
+                    appendLine("• ${trip.destination} (${trip.country})")
                 }
             }
         }
-    }
-}
 
-@Composable
-fun StatBox(
-    stat: TripStat,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
-                .padding(8.dp)
-        ) {
-            Icon(
-                imageVector = stat.icon,
-                contentDescription = stat.label,
-                tint = MaterialTheme.colorScheme.primary
-            )
+        TripDialogType.DAYS -> {
+            title = "Days Planned"
+            text = buildString {
+                appendLine("Trip dates:")
+                appendLine()
+                trips.forEach { trip ->
+                    appendLine("• ${trip.destination}: ${trip.dateRange}")
+                }
+            }
         }
 
-        Text(
-            text = stat.value,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Text(
-            text = stat.label,
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
-        )
+        TripDialogType.BUDGET -> {
+            val total = trips.sumOf { it.budget.replace("€", "").replace(",", "").toInt() }
+            title = "Budget Details"
+            text = buildString {
+                appendLine("Estimated costs by trip:")
+                appendLine()
+                trips.forEach { trip ->
+                    appendLine("• ${trip.destination}: ${trip.budget}")
+                }
+                appendLine()
+                append("Total budget: €$total")
+            }
+        }
     }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        },
+        title = {
+            Text(text = title)
+        },
+        text = {
+            Text(text = text)
+        }
+    )
 }
 
 @Composable
 fun TripCategory(
     title: String,
-    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
         Text(
@@ -285,9 +392,9 @@ fun TripCategory(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
@@ -299,81 +406,498 @@ fun TripCategory(
 }
 
 @Composable
-fun TripCardItem(
+fun EditableUpcomingTripCard(
     trip: TripItem,
-    onItineraryClick: () -> Unit
+    onViewClick: () -> Unit
 ) {
-    Row(
+    var isEditing by remember { mutableStateOf(false) }
+    var draftDestination by remember { mutableStateOf(trip.destination) }
+    var draftCountry by remember { mutableStateOf(trip.country) }
+    var draftDateRange by remember { mutableStateOf(trip.dateRange) }
+    var draftDuration by remember { mutableStateOf(trip.duration) }
+    var draftBudget by remember { mutableStateOf(trip.budget) }
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
-                .padding(10.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.LocationOn,
-                contentDescription = trip.destination,
-                tint = MaterialTheme.colorScheme.primary
-            )
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val useSecondRowForButtons = maxWidth < 760.dp
+
+            if (useSecondRowForButtons) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    TripInfoBlock(
+                        image = trip.image,
+                        destination = draftDestination,
+                        country = draftCountry,
+                        dateRange = draftDateRange,
+                        duration = draftDuration,
+                        budget = draftBudget,
+                        statusLabel = trip.statusLabel
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedButton(
+                            onClick = { isEditing = !isEditing }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit trip"
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Edit")
+                        }
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        Button(onClick = onViewClick) {
+                            Text("View Plan")
+                        }
+                    }
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    TripInfoBlock(
+                        image = trip.image,
+                        destination = draftDestination,
+                        country = draftCountry,
+                        dateRange = draftDateRange,
+                        duration = draftDuration,
+                        budget = draftBudget,
+                        statusLabel = trip.statusLabel,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.height(110.dp)
+                    ) {
+                        Button(onClick = onViewClick) {
+                            Text("View Plan")
+                        }
+
+                        OutlinedButton(
+                            onClick = { isEditing = !isEditing }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit trip"
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Edit")
+                        }
+                    }
+                }
+            }
         }
 
-        Spacer(modifier = Modifier.width(14.dp))
+        if (isEditing) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Edit Upcoming Trip",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    OutlinedTextField(
+                        value = draftDestination,
+                        onValueChange = { draftDestination = it },
+                        label = { Text("Destination") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = draftCountry,
+                        onValueChange = { draftCountry = it },
+                        label = { Text("Country") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = draftDateRange,
+                        onValueChange = { draftDateRange = it },
+                        label = { Text("Date range") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = draftDuration,
+                        onValueChange = { draftDuration = it },
+                        label = { Text("Duration") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = draftBudget,
+                        onValueChange = { draftBudget = it },
+                        label = { Text("Budget") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(
+                            onClick = {
+                                draftDestination = trip.destination
+                                draftCountry = trip.country
+                                draftDateRange = trip.dateRange
+                                draftDuration = trip.duration
+                                draftBudget = trip.budget
+                                isEditing = false
+                            }
+                        ) {
+                            Text("Cancel")
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Button(
+                            onClick = {
+                                isEditing = false
+                            }
+                        ) {
+                            Text("Save")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PastTripCard(
+    trip: TripItem,
+    onViewClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val useSecondRowForButtons = maxWidth < 760.dp
+
+            if (useSecondRowForButtons) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    TripInfoBlock(
+                        image = trip.image,
+                        destination = trip.destination,
+                        country = trip.country,
+                        dateRange = trip.dateRange,
+                        duration = trip.duration,
+                        budget = trip.budget,
+                        statusLabel = trip.statusLabel
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        OutlinedButton(onClick = onViewClick) {
+                            Text("View Plan")
+                        }
+                    }
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    TripInfoBlock(
+                        image = trip.image,
+                        destination = trip.destination,
+                        country = trip.country,
+                        dateRange = trip.dateRange,
+                        duration = trip.duration,
+                        budget = trip.budget,
+                        statusLabel = trip.statusLabel,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        OutlinedButton(onClick = onViewClick) {
+                            Text("View Plan")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TripInfoBlock(
+    image: Int,
+    destination: String,
+    country: String,
+    dateRange: String,
+    duration: String,
+    budget: String,
+    statusLabel: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.Top
+    ) {
+        Image(
+            painter = painterResource(id = image),
+            contentDescription = destination,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .width(96.dp)
+                .height(96.dp)
+                .clip(RoundedCornerShape(16.dp))
+        )
+
+        Spacer(modifier = Modifier.width(12.dp))
 
         Column(
-            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = trip.destination,
-                fontSize = 16.sp,
+                text = destination,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
 
             Text(
-                text = trip.country,
+                text = country,
                 fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MiniInfo(
                     icon = Icons.Default.CalendarMonth,
-                    text = trip.dateRange
+                    text = dateRange
                 )
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MiniInfo(
-                    icon = Icons.Default.CalendarMonth,
-                    text = trip.duration
+                    icon = Icons.Default.Schedule,
+                    text = duration
                 )
                 MiniInfo(
                     icon = Icons.Default.AttachMoney,
-                    text = trip.budget
+                    text = budget
                 )
             }
 
             Text(
-                text = trip.status,
+                text = statusLabel,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.primary
+                color = if (statusLabel == "Completed") {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                } else {
+                    MaterialTheme.colorScheme.primary
+                },
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
+    }
+}
 
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = "Open itinerary",
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.clickable { onItineraryClick() }
+@Composable
+fun EditableInsightRow(
+    icon: ImageVector,
+    title: String,
+    value: String,
+    isEditing: Boolean,
+    draftValue: String,
+    onDraftChange: (String) -> Unit,
+    onEditClick: () -> Unit,
+    onCancel: () -> Unit,
+    onSave: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
+                    .padding(10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = value,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+
+            OutlinedButton(onClick = onEditClick) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit insight"
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Edit")
+            }
+        }
+
+        if (isEditing) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = draftValue,
+                        onValueChange = onDraftChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        label = { Text(title) }
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = onCancel) {
+                            Text("Cancel")
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Button(onClick = onSave) {
+                            Text("Save")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StaticInsightRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.background
         )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .padding(10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            Column {
+                Text(
+                    text = title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
+                )
+            }
+        }
     }
 }
 
@@ -388,63 +912,15 @@ fun MiniInfo(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
-            modifier = Modifier.padding(end = 4.dp)
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
         )
+        Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = text,
             fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
-        )
-    }
-}
-
-@Composable
-fun InfoRow(
-    icon: ImageVector,
-    title: String,
-    subtitle: String
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
-                .padding(10.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-
-        Spacer(modifier = Modifier.width(14.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = subtitle,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
-        }
-
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

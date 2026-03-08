@@ -2,6 +2,7 @@ package com.example.voyagetime.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,20 +20,25 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.FlightTakeoff
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.TravelExplore
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,50 +47,117 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Button
 import com.example.voyagetime.R
 
-data class HomeHighlightTrip(
+data class HomeTripSummary(
+    val id: String,
     val destination: String,
     val country: String,
-    val dateRange: String,
-    val budget: String,
-    val image: Int
+    val startDate: String,
+    val endDate: String,
+    val duration: String,
+    val budget: Int,
+    val image: Int,
+    val status: String
 )
 
-data class HomeStat(
-    val value: String,
-    val label: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector
-)
+enum class HomeDialogType {
+    TRIPS, DAYS, BUDGET
+}
 
 @Composable
-fun Home(modifier: Modifier = Modifier) {
+fun Home(
+    modifier: Modifier = Modifier,
+    onTripClick: (String) -> Unit,
+    onDepartureCityClick: () -> Unit,
+    onTravelStyleClick: () -> Unit,
+    onAddNewTripClick: () -> Unit
+) {
     val scrollState = rememberScrollState()
 
-    val stats = remember {
+    val allTrips = remember {
         listOf(
-            HomeStat("5", "Trips", Icons.Default.TravelExplore),
-            HomeStat("27", "Days Planned", Icons.Default.CalendarMonth),
-            HomeStat("€4,980", "Budget", Icons.Default.AttachMoney)
+            HomeTripSummary(
+                id = "paris",
+                destination = "Paris",
+                country = "France",
+                startDate = "12 Jun 2026",
+                endDate = "18 Jun 2026",
+                duration = "6 days",
+                budget = 820,
+                image = R.drawable.paris,
+                status = "Upcoming"
+            ),
+            HomeTripSummary(
+                id = "tokyo",
+                destination = "Tokyo",
+                country = "Japan",
+                startDate = "02 Aug 2026",
+                endDate = "11 Aug 2026",
+                duration = "9 days",
+                budget = 2450,
+                image = R.drawable.tokyo,
+                status = "Planned"
+            ),
+            HomeTripSummary(
+                id = "amsterdam",
+                destination = "Amsterdam",
+                country = "Netherlands",
+                startDate = "21 Sep 2026",
+                endDate = "25 Sep 2026",
+                duration = "4 days",
+                budget = 680,
+                image = R.drawable.newyork,
+                status = "Upcoming"
+            ),
+            HomeTripSummary(
+                id = "barcelona",
+                destination = "Barcelona",
+                country = "Spain",
+                startDate = "10 Mar 2026",
+                endDate = "13 Mar 2026",
+                duration = "3 days",
+                budget = 290,
+                image = R.drawable.barcelona,
+                status = "Completed"
+            ),
+            HomeTripSummary(
+                id = "rome",
+                destination = "Rome",
+                country = "Italy",
+                startDate = "15 Jan 2026",
+                endDate = "20 Jan 2026",
+                duration = "5 days",
+                budget = 740,
+                image = R.drawable.paris,
+                status = "Completed"
+            )
         )
     }
 
-    val featuredTrips = remember {
+    val totalBudget = allTrips.sumOf { it.budget }
+
+    val stats = remember(totalBudget) {
         listOf(
-            HomeHighlightTrip(
-                destination = "Paris",
-                country = "France",
-                dateRange = "12 Jun - 18 Jun 2026",
-                budget = "€820",
-                image = R.drawable.paris
-            ),
-            HomeHighlightTrip(
-                destination = "Tokyo",
-                country = "Japan",
-                dateRange = "02 Aug - 11 Aug 2026",
-                budget = "€2,450",
-                image = R.drawable.tokyo
-            )
+            HomeStat("5", "Trips", Icons.Default.TravelExplore),
+            HomeStat("27", "Days Planned", Icons.Default.CalendarMonth),
+            HomeStat("€$totalBudget", "Budget", Icons.Default.AttachMoney)
+        )
+    }
+
+    val featuredTrips = remember(allTrips) {
+        listOf(allTrips[0], allTrips[1])
+    }
+
+    var activeDialog by remember { mutableStateOf<HomeDialogType?>(null) }
+
+    activeDialog?.let { dialogType ->
+        HomeOverviewDialog(
+            dialogType = dialogType,
+            trips = allTrips,
+            onDismiss = { activeDialog = null }
         )
     }
 
@@ -97,6 +170,18 @@ fun Home(modifier: Modifier = Modifier) {
     ) {
         HomeHeader()
 
+        Button(
+            onClick = onAddNewTripClick,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Add new trip"
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Add New Trip")
+        }
+
         HomeSection(title = "Overview") {
             Row(
                 modifier = Modifier
@@ -104,22 +189,35 @@ fun Home(modifier: Modifier = Modifier) {
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                stats.forEach { stat ->
+                stats.forEachIndexed { index, stat ->
+                    val dialogType = when (index) {
+                        0 -> HomeDialogType.TRIPS
+                        1 -> HomeDialogType.DAYS
+                        else -> HomeDialogType.BUDGET
+                    }
+
                     HomeStatCard(
                         stat = stat,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        onClick = { activeDialog = dialogType }
                     )
                 }
             }
         }
 
         HomeSection(title = "Next Trip") {
-            NextTripCard()
+            NextTripCard(
+                trip = allTrips[0],
+                onClick = { onTripClick(allTrips[0].id) }
+            )
         }
 
         HomeSection(title = "Featured Trips") {
             featuredTrips.forEachIndexed { index, trip ->
-                HomeFeaturedTripCard(trip = trip)
+                HomeFeaturedTripCard(
+                    trip = trip,
+                    onClick = { onTripClick(trip.id) }
+                )
                 if (index != featuredTrips.lastIndex) {
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
                 }
@@ -130,24 +228,83 @@ fun Home(modifier: Modifier = Modifier) {
             HomeInfoRow(
                 icon = Icons.Default.LocationOn,
                 title = "Departure City",
-                subtitle = "Barcelona"
+                subtitle = "Barcelona",
+                onClick = onDepartureCityClick
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
             HomeInfoRow(
                 icon = Icons.Default.Explore,
                 title = "Travel Style",
-                subtitle = "City break, culture and food"
-            )
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-            HomeInfoRow(
-                icon = Icons.Default.Schedule,
-                title = "Next Planning Task",
-                subtitle = "Review Paris itinerary"
+                subtitle = "City break, culture and food",
+                onClick = onTravelStyleClick
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
     }
+}
+
+@Composable
+fun HomeOverviewDialog(
+    dialogType: HomeDialogType,
+    trips: List<HomeTripSummary>,
+    onDismiss: () -> Unit
+) {
+    val title: String
+    val text: String
+
+    when (dialogType) {
+        HomeDialogType.TRIPS -> {
+            title = "Trips Overview"
+            text = buildString {
+                appendLine("Total trips planned: ${trips.size}")
+                appendLine()
+                trips.forEach { trip ->
+                    appendLine("• ${trip.destination} (${trip.country})")
+                }
+            }
+        }
+
+        HomeDialogType.DAYS -> {
+            title = "Days Planned"
+            text = buildString {
+                appendLine("Trip dates:")
+                appendLine()
+                trips.forEach { trip ->
+                    appendLine("• ${trip.destination}: ${trip.startDate} - ${trip.endDate}")
+                }
+            }
+        }
+
+        HomeDialogType.BUDGET -> {
+            val total = trips.sumOf { it.budget }
+            title = "Budget Details"
+            text = buildString {
+                appendLine("Estimated costs by trip:")
+                appendLine()
+                trips.forEach { trip ->
+                    appendLine("• ${trip.destination}: €${trip.budget}")
+                }
+                appendLine()
+                append("Total budget: €$total")
+            }
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        },
+        title = {
+            Text(text = title)
+        },
+        text = {
+            Text(text = text)
+        }
+    )
 }
 
 @Composable
@@ -208,12 +365,14 @@ fun HomeSection(
 @Composable
 fun HomeStatCard(
     stat: HomeStat,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
 ) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
+            .clickable { onClick() }
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -246,10 +405,14 @@ fun HomeStatCard(
 }
 
 @Composable
-fun NextTripCard() {
+fun NextTripCard(
+    trip: HomeTripSummary,
+    onClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick() }
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -274,20 +437,20 @@ fun NextTripCard() {
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Paris, France",
+                    text = "${trip.destination}, ${trip.country}",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "12 Jun - 18 Jun 2026",
+                    text = "${trip.startDate} - ${trip.endDate}",
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
                 )
             }
 
             Text(
-                text = "Upcoming",
+                text = trip.status,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary
@@ -297,16 +460,16 @@ fun NextTripCard() {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             HomeMiniInfo(
                 icon = Icons.Default.CalendarMonth,
-                text = "6 days"
+                text = trip.duration
             )
             HomeMiniInfo(
                 icon = Icons.Default.AttachMoney,
-                text = "€820"
+                text = "€${trip.budget}"
             )
         }
 
         Text(
-            text = "Main plan: Louvre Museum, Seine walk and Eiffel Tower visit.",
+            text = "Tap to open the itinerary of this trip.",
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f)
         )
@@ -314,10 +477,14 @@ fun NextTripCard() {
 }
 
 @Composable
-fun HomeFeaturedTripCard(trip: HomeHighlightTrip) {
+fun HomeFeaturedTripCard(
+    trip: HomeTripSummary,
+    onClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -352,20 +519,14 @@ fun HomeFeaturedTripCard(trip: HomeHighlightTrip) {
 
             HomeMiniInfo(
                 icon = Icons.Default.CalendarMonth,
-                text = trip.dateRange
+                text = "${trip.startDate} - ${trip.endDate}"
             )
 
             HomeMiniInfo(
                 icon = Icons.Default.AttachMoney,
-                text = trip.budget
+                text = "€${trip.budget}"
             )
         }
-
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-        )
     }
 }
 
@@ -393,6 +554,58 @@ fun HomeMiniInfo(
 
 @Composable
 fun HomeInfoRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                .padding(10.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        Spacer(modifier = Modifier.width(14.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
+
+        Icon(
+            imageVector = Icons.Default.Edit,
+            contentDescription = "Edit",
+            tint = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+fun HomeStaticInfoRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     subtitle: String
@@ -432,11 +645,5 @@ fun HomeInfoRow(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
         }
-
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-        )
     }
 }
