@@ -20,7 +20,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun Preferences(
     modifier: Modifier = Modifier,
-    onNavigateToAboutUs: () -> Unit = {}
+    onNavigateToAboutUs: () -> Unit = {},
+    onNavigateToTerms: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -49,7 +50,6 @@ fun Preferences(
 
         // ── APPEARANCE ──────────────────────────────────────
         PreferenceCategory(title = "Appearance") {
-
             PreferenceToggleItem(
                 icon = Icons.Default.DarkMode,
                 title = "Dark Mode",
@@ -57,18 +57,14 @@ fun Preferences(
                 checked = darkMode,
                 onCheckedChange = { darkMode = it }
             )
-
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-
             PreferenceButtonItem(
                 icon = Icons.Default.Palette,
                 title = "App Theme",
                 subtitle = "Ocean Blue",
                 onClick = {}
             )
-
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-
             PreferenceButtonItem(
                 icon = Icons.Default.Language,
                 title = "Language",
@@ -79,7 +75,6 @@ fun Preferences(
 
         // ── NOTIFICATIONS ────────────────────────────────────
         PreferenceCategory(title = "Notifications") {
-
             PreferenceToggleItem(
                 icon = Icons.Default.Notifications,
                 title = "Push Notifications",
@@ -87,9 +82,7 @@ fun Preferences(
                 checked = notifications,
                 onCheckedChange = { notifications = it }
             )
-
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-
             PreferenceToggleItem(
                 icon = Icons.Default.LocationOn,
                 title = "Location Access",
@@ -101,7 +94,6 @@ fun Preferences(
 
         // ── DATA & STORAGE ───────────────────────────────────
         PreferenceCategory(title = "Data & Storage") {
-
             PreferenceToggleItem(
                 icon = Icons.Default.WifiOff,
                 title = "Offline Mode",
@@ -109,9 +101,7 @@ fun Preferences(
                 checked = offlineMode,
                 onCheckedChange = { offlineMode = it }
             )
-
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-
             PreferenceToggleItem(
                 icon = Icons.Default.Sync,
                 title = "Auto Sync",
@@ -119,9 +109,7 @@ fun Preferences(
                 checked = autoSync,
                 onCheckedChange = { autoSync = it }
             )
-
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-
             PreferenceButtonItem(
                 icon = Icons.Default.Delete,
                 title = "Clear Cache",
@@ -132,7 +120,6 @@ fun Preferences(
 
         // ── DISPLAY ──────────────────────────────────────────
         PreferenceCategory(title = "Display") {
-
             PreferenceToggleItem(
                 icon = Icons.Default.AttachMoney,
                 title = "Show Prices",
@@ -140,9 +127,7 @@ fun Preferences(
                 checked = showPrices,
                 onCheckedChange = { showPrices = it }
             )
-
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-
             PreferenceButtonItem(
                 icon = Icons.Default.Flag,
                 title = "Currency",
@@ -153,34 +138,34 @@ fun Preferences(
 
         // ── ACCOUNT ──────────────────────────────────────────
         PreferenceCategory(title = "Account") {
-
             PreferenceButtonItem(
                 icon = Icons.Default.Person,
                 title = "Edit Profile",
                 subtitle = "Change your personal information",
                 onClick = {}
             )
-
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-
             PreferenceButtonItem(
                 icon = Icons.Default.Lock,
                 title = "Privacy & Security",
                 subtitle = "Manage your data and permissions",
                 onClick = {}
             )
-
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-
             PreferenceButtonItem(
                 icon = Icons.Default.Info,
                 title = "About VoyageTime",
                 subtitle = "Version 1.0",
                 onClick = onNavigateToAboutUs
             )
-
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-
+            PreferenceButtonItem(
+                icon = Icons.Default.Description,
+                title = "Terms & Conditions",
+                subtitle = "Read our terms of service",
+                onClick = onNavigateToTerms
+            )
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
             PreferenceButtonItem(
                 icon = Icons.Default.Logout,
                 title = "Log Out",
@@ -247,33 +232,16 @@ fun PreferenceToggleItem(
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp)
-            )
+            Icon(imageVector = icon, contentDescription = title, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
         }
         Spacer(modifier = Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
             if (subtitle.isNotEmpty()) {
-                Text(
-                    text = subtitle,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
+                Text(text = subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             }
         }
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange
-        )
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 
@@ -285,10 +253,7 @@ fun PreferenceButtonItem(
     onClick: () -> Unit,
     isDestructive: Boolean = false
 ) {
-    val contentColor = if (isDestructive)
-        MaterialTheme.colorScheme.error
-    else
-        MaterialTheme.colorScheme.onSurface
+    val contentColor = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
 
     Row(
         modifier = Modifier
@@ -302,44 +267,25 @@ fun PreferenceButtonItem(
                 .size(40.dp)
                 .clip(RoundedCornerShape(10.dp))
                 .background(
-                    if (isDestructive)
-                        MaterialTheme.colorScheme.error.copy(alpha = 0.12f)
-                    else
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                    if (isDestructive) MaterialTheme.colorScheme.error.copy(alpha = 0.12f)
+                    else MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
                 ),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = title,
-                tint = if (isDestructive)
-                    MaterialTheme.colorScheme.error
-                else
-                    MaterialTheme.colorScheme.primary,
+                tint = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )
         }
         Spacer(modifier = Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = contentColor
-            )
+            Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = contentColor)
             if (subtitle.isNotEmpty()) {
-                Text(
-                    text = subtitle,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
+                Text(text = subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             }
         }
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-            modifier = Modifier.size(20.dp)
-        )
+        Icon(imageVector = Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(20.dp))
     }
 }
