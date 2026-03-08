@@ -1,22 +1,56 @@
 package com.example.voyagetime.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.WifiOff
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.voyagetime.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,21 +59,32 @@ fun AboutUs(
     onBack: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
+    val orange = MaterialTheme.colorScheme.primary
+    val sky = MaterialTheme.colorScheme.secondary
+    val surface = MaterialTheme.colorScheme.surface
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("About VoyageTime") },
+                title = {
+                    Text(
+                        text = "About VoyageTime",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Go back"
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Go back",
+                            tint = orange
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = surface
                 )
             )
         }
@@ -49,292 +94,199 @@ fun AboutUs(
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(innerPadding)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = 20.dp, vertical = 18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-
-            // ── LOGO ─────────────────────────────────────────
             Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(MaterialTheme.colorScheme.primary),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.TravelExplore,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(56.dp)
+                Box(
+                    modifier = Modifier
+                        .size(132.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    sky.copy(alpha = 0.18f),
+                                    androidx.compose.ui.graphics.Color.Transparent
+                                )
+                            )
+                        )
                 )
-            }
 
-            // ── APP NAME & VERSION ────────────────────────────
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "VoyageTime",
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = "Version 1.0.0",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-                )
-            }
-
-            // ── DESCRIPTION ───────────────────────────────────
-            AboutCard {
-                Text(
-                    text = "✈️  What is VoyageTime?",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "VoyageTime is your personal travel companion. Plan your trips, organize your itineraries, and keep all your travel memories in one place. Whether you're planning a weekend getaway or a round-the-world adventure, VoyageTime has you covered.",
-                    fontSize = 14.sp,
-                    lineHeight = 22.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                )
-            }
-
-            // ── FEATURES ──────────────────────────────────────
-            AboutCard {
-                Text(
-                    text = "🌟  Key Features",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                AboutFeatureRow(Icons.Default.Place, "Plan and manage your trips easily")
-                AboutFeatureRow(Icons.Default.PhotoLibrary, "Keep a gallery of your travel memories")
-                AboutFeatureRow(Icons.Default.DateRange, "Organize detailed day-by-day itineraries")
-                AboutFeatureRow(Icons.Default.Notifications, "Get reminders for your upcoming trips")
-                AboutFeatureRow(Icons.Default.WifiOff, "Access your trips even offline")
-            }
-
-            // ── TEAM ──────────────────────────────────────────
-            AboutCard {
-                Text(
-                    text = "👥  Our Team",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                AboutTeamMember(name = "Alex Martínez", role = "Lead Developer & Designer")
-                Spacer(modifier = Modifier.height(8.dp))
-                AboutTeamMember(name = "Sara López", role = "Backend & Data Engineer")
-                Spacer(modifier = Modifier.height(8.dp))
-                AboutTeamMember(name = "Marc Puig", role = "UX Research & QA")
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = "We believe travel changes lives, and we want to make planning it as enjoyable as the journey itself.",
-                    fontSize = 13.sp,
-                    lineHeight = 20.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-            }
-
-            // ── TECHNICAL INFO ────────────────────────────────
-            AboutCard {
-                Text(
-                    text = "⚙️  Technical Information",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                AboutTechRow("Platform", "Android 8.0+ (API 26+)")
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                AboutTechRow("Built with", "Kotlin + Jetpack Compose")
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                AboutTechRow("UI Framework", "Material Design 3")
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                AboutTechRow("Navigation", "Jetpack Navigation Compose")
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                AboutTechRow("Min SDK", "API 26 (Android 8.0 Oreo)")
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                AboutTechRow("Target SDK", "API 36")
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                AboutTechRow("Build version", "1.0.0 (versionCode 1)")
-            }
-
-            // ── LICENSE ───────────────────────────────────────
-            AboutCard {
-                Text(
-                    text = "📄  License",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "MIT License",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "Copyright © 2025 VoyageTime\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software.\n\nThe software is provided \"as is\", without warranty of any kind.",
-                    fontSize = 13.sp,
-                    lineHeight = 20.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-            }
-
-            // ── CONTACT ───────────────────────────────────────
-            AboutCard {
-                Text(
-                    text = "📬  Contact",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Have feedback or found a bug? We'd love to hear from you.",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                OutlinedButton(
-                    onClick = {},
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                Box(
+                    modifier = Modifier
+                        .size(108.dp)
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(surfaceVariant)
+                        .border(
+                            width = 1.5.dp,
+                            color = orange.copy(alpha = 0.55f),
+                            shape = RoundedCornerShape(28.dp)
+                        )
+                        .padding(14.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("contact@voyagetime.app")
+                    Image(
+                        painter = painterResource(id = R.drawable.logo),
+                        contentDescription = "VoyageTime Logo",
+                        modifier = Modifier.size(76.dp),
+                        contentScale = ContentScale.Fit
+                    )
                 }
             }
 
-            // ── FOOTER ────────────────────────────────────────
-            Text(
-                text = "Made with ❤️ for travelers\n© 2025 VoyageTime",
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
-                textAlign = TextAlign.Center,
-                lineHeight = 20.sp
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "VoyageTime",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Version 1.0.0",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
+                )
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            AboutCard {
+                Text(
+                    text = "What is VoyageTime?",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = orange
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "VoyageTime is your personal travel companion. Plan trips, organize itineraries, track ideas, and keep your travel memories in one place with a clean and visual experience.",
+                    fontSize = 14.sp,
+                    lineHeight = 22.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.82f)
+                )
+            }
+
+            AboutCard {
+                Text(
+                    text = "Key Features",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = orange
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+
+                AboutFeatureRow(Icons.Default.Place, "Plan and manage your trips easily")
+                AboutFeatureRow(Icons.Default.PhotoLibrary, "Keep a gallery of your travel memories")
+                AboutFeatureRow(Icons.Default.DateRange, "Organize detailed day-by-day itineraries")
+                AboutFeatureRow(Icons.Default.Notifications, "Get reminders for upcoming trips")
+                AboutFeatureRow(Icons.Default.WifiOff, "Access important travel info offline")
+            }
+
+            AboutCard {
+                Text(
+                    text = "Our Mission",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = orange
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "We built VoyageTime to make travel planning feel inspiring, simple, and visually enjoyable. Every trip deserves a place where timing, ideas, memories, and planning come together beautifully.",
+                    fontSize = 14.sp,
+                    lineHeight = 22.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.82f)
+                )
+            }
+
+            AboutCard {
+                Text(
+                    text = "Technical Information",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = orange
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+
+                AboutFeatureRow(Icons.Default.Code, "Built with Kotlin and Jetpack Compose")
+                AboutFeatureRow(Icons.Default.Storage, "Local trip organization and editable travel data")
+                AboutFeatureRow(Icons.Default.Security, "Structured navigation and scalable screen design")
+            }
+
+            Text(
+                text = "Designed for travelers who want clarity, style, and control.",
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center,
+                color = sky.copy(alpha = 0.9f),
+                lineHeight = 20.sp,
+                modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+            )
         }
     }
 }
 
-// ── COMPONENTS ───────────────────────────────────────────────
-
 @Composable
-fun AboutCard(content: @Composable ColumnScope.() -> Unit) {
+private fun AboutCard(
+    content: @Composable () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.92f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp)
+        ) {
             content()
         }
     }
 }
 
 @Composable
-fun AboutFeatureRow(
+private fun AboutFeatureRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     text: String
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
+    Column {
+        Row(
             modifier = Modifier
-                .size(30.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .padding(vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(16.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = text,
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-        )
-    }
-}
+            Surface(
+                modifier = Modifier.size(38.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.14f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
 
-@Composable
-fun AboutTeamMember(name: String, role: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(22.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Column {
+            Spacer(modifier = Modifier.size(12.dp))
+
             Text(
-                text = name,
+                text = text,
                 fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = role,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                lineHeight = 20.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.86f)
             )
         }
-    }
-}
 
-@Composable
-fun AboutTechRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
-            modifier = Modifier.width(120.dp)
-        )
-        Text(
-            text = value,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)
         )
     }
 }

@@ -1,51 +1,73 @@
 package com.example.voyagetime.ui.screens
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseInOutSine
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.TravelExplore
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.voyagetime.R
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(onFinished: () -> Unit) {
-
-    // Progress from 0f to 1f over 2 seconds
     val progress = remember { Animatable(0f) }
 
-    // Pulsing animation for the logo
     val pulse = rememberInfiniteTransition(label = "pulse")
     val logoScale by pulse.animateFloat(
-        initialValue = 0.95f,
-        targetValue = 1.05f,
+        initialValue = 0.96f,
+        targetValue = 1.04f,
         animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = EaseInOutSine),
+            animation = tween(durationMillis = 1000, easing = EaseInOutSine),
             repeatMode = RepeatMode.Reverse
         ),
         label = "logoScale"
     )
 
-    // Animated dots for "Loading..."
     var dotCount by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) {
-        // Animate progress bar over 2 seconds
         progress.animateTo(
             targetValue = 1f,
-            animationSpec = tween(durationMillis = 2000, easing = LinearEasing)
+            animationSpec = tween(durationMillis = 2200, easing = LinearEasing)
         )
         onFinished()
     }
@@ -59,97 +81,157 @@ fun SplashScreen(onFinished: () -> Unit) {
 
     val dots = ".".repeat(dotCount)
 
+    val orange = MaterialTheme.colorScheme.primary
+    val sky = MaterialTheme.colorScheme.secondary
+    val background = MaterialTheme.colorScheme.background
+    val surface = MaterialTheme.colorScheme.surface
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.background,
-                    )
-                )
-            )
+            .background(background)
     ) {
+        Box(
+            modifier = Modifier
+                .size(320.dp)
+                .align(Alignment.TopCenter)
+                .offset(y = (-70).dp)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            sky.copy(alpha = 0.18f),
+                            Color.Transparent
+                        )
+                    ),
+                    shape = CircleShape
+                )
+        )
 
-        // Center content
+        Box(
+            modifier = Modifier
+                .size(260.dp)
+                .align(Alignment.Center)
+                .offset(y = (-110).dp)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            orange.copy(alpha = 0.14f),
+                            Color.Transparent
+                        )
+                    ),
+                    shape = CircleShape
+                )
+        )
+
         Column(
-            modifier = Modifier.align(Alignment.Center),
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(horizontal = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-
-            // Logo
             Box(
-                modifier = Modifier
-                    .size((120 * logoScale).dp)
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primary,
-                                MaterialTheme.colorScheme.tertiary
-                            )
-                        )
-                    ),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.TravelExplore,
-                    contentDescription = "VoyageTime Logo",
-                    tint = Color.White,
-                    modifier = Modifier.size(64.dp)
+                Box(
+                    modifier = Modifier
+                        .size((148 * logoScale).dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    sky.copy(alpha = 0.22f),
+                                    Color.Transparent
+                                )
+                            )
+                        )
                 )
+
+                Box(
+                    modifier = Modifier
+                        .size((124 * logoScale).dp)
+                        .clip(RoundedCornerShape(32.dp))
+                        .background(surface)
+                        .border(
+                            width = 1.5.dp,
+                            color = orange.copy(alpha = 0.55f),
+                            shape = RoundedCornerShape(32.dp)
+                        )
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo_no_background),
+                        contentDescription = "VoyageTime Logo",
+                        modifier = Modifier.size((100 * logoScale).dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
             }
 
-            // App name
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "VoyageTime",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = "Your travel companion",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Loading text + progress bar
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "VoyageTime",
+                    fontSize = 34.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    letterSpacing = 0.3.sp
+                )
+
+                Text(
+                    text = "Time your journeys beautifully",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.68f),
+                    textAlign = TextAlign.Center,
+                    lineHeight = 20.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
                     text = "Loading$dots",
                     fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.SemiBold,
+                    color = sky.copy(alpha = 0.92f)
                 )
 
-                LinearProgressIndicator(
-                    progress = { progress.value },
+                Box(
                     modifier = Modifier
-                        .width(200.dp)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp)),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                )
+                        .width(220.dp)
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(surface)
+                        .border(
+                            width = 1.dp,
+                            color = sky.copy(alpha = 0.18f),
+                            shape = RoundedCornerShape(999.dp)
+                        )
+                        .padding(2.dp)
+                ) {
+                    LinearProgressIndicator(
+                        progress = { progress.value },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(999.dp)),
+                        color = orange,
+                        trackColor = Color.Transparent
+                    )
+                }
             }
         }
 
-        // Version bottom right
         Text(
             text = "v1.0.0",
             fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.34f),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(20.dp)

@@ -13,25 +13,29 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.FlightTakeoff
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.TravelExplore
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,8 +51,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
 import com.example.voyagetime.R
 
 data class HomeTripSummary(
@@ -66,6 +68,12 @@ data class HomeTripSummary(
 enum class HomeDialogType {
     TRIPS, DAYS, BUDGET
 }
+
+data class HomeStat(
+    val value: String,
+    val label: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector
+)
 
 @Composable
 fun Home(
@@ -102,17 +110,6 @@ fun Home(
                 status = "Planned"
             ),
             HomeTripSummary(
-                id = "amsterdam",
-                destination = "Amsterdam",
-                country = "Netherlands",
-                startDate = "21 Sep 2026",
-                endDate = "25 Sep 2026",
-                duration = "4 days",
-                budget = 680,
-                image = R.drawable.newyork,
-                status = "Upcoming"
-            ),
-            HomeTripSummary(
                 id = "barcelona",
                 destination = "Barcelona",
                 country = "Spain",
@@ -124,14 +121,14 @@ fun Home(
                 status = "Completed"
             ),
             HomeTripSummary(
-                id = "rome",
-                destination = "Rome",
-                country = "Italy",
-                startDate = "15 Jan 2026",
-                endDate = "20 Jan 2026",
-                duration = "5 days",
-                budget = 740,
-                image = R.drawable.paris,
+                id = "newyork",
+                destination = "New York",
+                country = "United States",
+                startDate = "04 Dec 2025",
+                endDate = "10 Dec 2025",
+                duration = "6 days",
+                budget = 1680,
+                image = R.drawable.newyork,
                 status = "Completed"
             )
         )
@@ -141,14 +138,14 @@ fun Home(
 
     val stats = remember(totalBudget) {
         listOf(
-            HomeStat("5", "Trips", Icons.Default.TravelExplore),
-            HomeStat("27", "Days Planned", Icons.Default.CalendarMonth),
+            HomeStat(allTrips.size.toString(), "Trips", Icons.Default.TravelExplore),
+            HomeStat(allTrips.sumOf { extractDays(it.duration) }.toString(), "Days Planned", Icons.Default.CalendarMonth),
             HomeStat("€$totalBudget", "Budget", Icons.Default.AttachMoney)
         )
     }
 
     val featuredTrips = remember(allTrips) {
-        listOf(allTrips[0], allTrips[1])
+        listOf(allTrips[1], allTrips[3]) // Tokyo + New York
     }
 
     var activeDialog by remember { mutableStateOf<HomeDialogType?>(null) }
@@ -172,14 +169,18 @@ fun Home(
 
         Button(
             onClick = onAddNewTripClick,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = "Add new trip"
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Add New Trip")
+            Text(
+                text = "Add New Trip",
+                fontWeight = FontWeight.SemiBold
+            )
         }
 
         HomeSection(title = "Overview") {
@@ -219,7 +220,10 @@ fun Home(
                     onClick = { onTripClick(trip.id) }
                 )
                 if (index != featuredTrips.lastIndex) {
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)
+                    )
                 }
             }
         }
@@ -231,7 +235,10 @@ fun Home(
                 subtitle = "Barcelona",
                 onClick = onDepartureCityClick
             )
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 8.dp),
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)
+            )
             HomeInfoRow(
                 icon = Icons.Default.Explore,
                 title = "Travel Style",
@@ -242,6 +249,10 @@ fun Home(
 
         Spacer(modifier = Modifier.height(16.dp))
     }
+}
+
+private fun extractDays(duration: String): Int {
+    return duration.substringBefore(" ").toIntOrNull() ?: 0
 }
 
 @Composable
@@ -257,7 +268,7 @@ fun HomeOverviewDialog(
         HomeDialogType.TRIPS -> {
             title = "Trips Overview"
             text = buildString {
-                appendLine("Total trips planned: ${trips.size}")
+                appendLine("You currently have ${trips.size} trips:")
                 appendLine()
                 trips.forEach { trip ->
                     appendLine("• ${trip.destination} (${trip.country})")
@@ -309,26 +320,52 @@ fun HomeOverviewDialog(
 
 @Composable
 fun HomeHeader() {
-    Column(
+    val orange = MaterialTheme.colorScheme.primary
+    val sky = MaterialTheme.colorScheme.secondary
+
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.90f))
+            .padding(18.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "VoyageTime",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
-        )
+        Box(
+            modifier = Modifier
+                .size(100.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(10.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.logo_no_background),
+                contentDescription = "VoyageTime logo",
+                modifier = Modifier.size(80.dp),
+                contentScale = ContentScale.FillHeight
+            )
+        }
 
-        Text(
-            text = "Your travel dashboard for plans, itineraries and memorable trips.",
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-        )
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "VoyageTime",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Text(
+                text = "Your travel dashboard for plans, itineraries and memorable trips.",
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f)
+            )
+        }
     }
 }
 
@@ -349,9 +386,9 @@ fun HomeSection(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.50f)
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
@@ -370,7 +407,7 @@ fun HomeStatCard(
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
             .clickable { onClick() }
             .padding(14.dp),
@@ -378,8 +415,8 @@ fun HomeStatCard(
     ) {
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f))
                 .padding(8.dp)
         ) {
             Icon(
@@ -414,14 +451,24 @@ fun NextTripCard(
             .fillMaxWidth()
             .clickable { onClick() }
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+        Image(
+            painter = painterResource(id = trip.image),
+            contentDescription = trip.destination,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+                .clip(RoundedCornerShape(18.dp))
+        )
+
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
                     .padding(10.dp),
                 contentAlignment = Alignment.Center
@@ -452,7 +499,7 @@ fun NextTripCard(
             Text(
                 text = trip.status,
                 fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary
             )
         }
@@ -495,7 +542,7 @@ fun HomeFeaturedTripCard(
             modifier = Modifier
                 .width(92.dp)
                 .height(92.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .clip(RoundedCornerShape(16.dp))
         )
 
         Spacer(modifier = Modifier.width(14.dp))
@@ -568,7 +615,7 @@ fun HomeInfoRow(
     ) {
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
+                .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
                 .padding(10.dp),
             contentAlignment = Alignment.Center
@@ -601,49 +648,5 @@ fun HomeInfoRow(
             contentDescription = "Edit",
             tint = MaterialTheme.colorScheme.primary
         )
-    }
-}
-
-@Composable
-fun HomeStaticInfoRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    subtitle: String
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
-                .padding(10.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-
-        Spacer(modifier = Modifier.width(14.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = subtitle,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
-        }
     }
 }

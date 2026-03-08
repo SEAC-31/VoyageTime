@@ -1,56 +1,30 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- ═══════════════════════════════════════ -->
-    <!--   FONDOS & SUPERFICIES                  -->
-    <!-- ═══════════════════════════════════════ -->
-    <color name="ink">#FF0D1117</color>           <!-- Fondo principal -->
-    <color name="obsidian">#FF161C26</color>      <!-- Cards / Bottom Sheets -->
-    <color name="slate">#FF1E2733</color>         <!-- Elevated surfaces -->
-    <color name="fog">#FF2C3A4A</color>           <!-- Nav / Dividers -->
+    <!-- BACKGROUNDS -->
+    <color name="background_black">#000000</color>
+    <color name="surface_dark">#121212</color>
+    <color name="surface_variant">#1E1E1E</color>
 
-    <!-- ═══════════════════════════════════════ -->
-    <!--   ACENTOS CÁLIDOS (Primario)            -->
-    <!-- ═══════════════════════════════════════ -->
-    <color name="horizon">#FFC9A96E</color>       <!-- Primario / CTAs / FAB -->
-    <color name="sand">#FFE8C98A</color>          <!-- Hover / Active state -->
-    <color name="dusk">#FFB87A5A</color>          <!-- Alertas / Warm accent -->
+    <!-- PRIMARY (Logo Orange) -->
+    <color name="voyage_orange">#FF7A00</color>
+    <color name="voyage_orange_dark">#CC6200</color>
 
-    <!-- ═══════════════════════════════════════ -->
-    <!--   ACENTOS FRÍOS (Secundario)            -->
-    <!-- ═══════════════════════════════════════ -->
-    <color name="aurora">#FF6B9E8C</color>        <!-- Secundario / Cosh nfirmaciones -->
-    <color name="glacier">#FF4A7A8A</color>       <!-- Links / Tags / Filtros -->
-    <color name="tide">#FF2E5D6E</color>          <!-- Tonal / Badges -->
+    <!-- SECONDARY (Sky Blue from clock) -->
+    <color name="voyage_sky">#BFE6F8</color>
+    <color name="voyage_sky_dark">#7BC6E8</color>
 
-    <!-- ═══════════════════════════════════════ -->
-    <!--   TIPOGRAFÍA & NEUTROS                  -->
-    <!-- ═══════════════════════════════════════ -->
-    <color name="ivory">#FFF5F0E8</color>         <!-- Títulos H1/H2 -->
-    <color name="pearl">#FFD4DDE4</color>         <!-- Texto de cuerpo -->
-    <color name="mist">#FF8FA3B0</color>          <!-- Subtítulos / Metadatos -->
-    <color name="stone">#FF4A5C6A</color>         <!-- Texto deshabilitado -->
+    <!-- TEXT -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#E6E6E6</color>
+    <color name="text_muted">#9CA3AF</color>
 
-    <!-- ═══════════════════════════════════════ -->
-    <!--   SEMÁNTICOS                            -->
-    <!-- ═══════════════════════════════════════ -->
-    <color name="color_primary">@color/horizon</color>
-    <color name="color_primary_variant">@color/sand</color>
-    <color name="color_secondary">@color/aurora</color>
-    <color name="color_secondary_variant">@color/tide</color>
-    <color name="color_background">@color/ink</color>
-    <color name="color_surface">@color/obsidian</color>
-    <color name="color_error">@color/dusk</color>
-    <color name="color_on_primary">@color/ink</color>
-    <color name="color_on_secondary">@color/ivory</color>
-    <color name="color_on_background">@color/pearl</color>
-    <color name="color_on_surface">@color/pearl</color>
-    <color name="color_on_error">@color/ivory</color>
+    <!-- MATERIAL MAPPING -->
+    <color name="color_primary">@color/voyage_orange</color>
+    <color name="color_primary_variant">@color/voyage_orange_dark</color>
+    <color name="color_secondary">@color/voyage_sky</color>
+    <color name="color_secondary_variant">@color/voyage_sky_dark</color>
 
-    <!-- ═══════════════════════════════════════ -->
-    <!--   LEGADO (requerido por el SDK)         -->
-    <!-- ═══════════════════════════════════════ -->
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="color_background">@color/background_black</color>
+    <color name="color_surface">@color/surface_dark</color>
 
 </resources>

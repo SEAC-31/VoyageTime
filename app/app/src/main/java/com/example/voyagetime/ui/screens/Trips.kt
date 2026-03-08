@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -36,6 +38,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -79,12 +82,6 @@ data class TripItem(
     val image: Int
 )
 
-data class HomeStat(
-    val value: String,
-    val label: String,
-    val icon: ImageVector
-)
-
 @Composable
 fun Trips(
     modifier: Modifier = Modifier,
@@ -115,17 +112,6 @@ fun Trips(
                 statusLabel = "Planned",
                 state = TripState.PLANNED,
                 image = R.drawable.tokyo
-            ),
-            TripItem(
-                id = "amsterdam",
-                destination = "Amsterdam",
-                country = "Netherlands",
-                dateRange = "21 Sep - 25 Sep 2026",
-                duration = "4 days",
-                budget = "€680",
-                statusLabel = "Upcoming",
-                state = TripState.UPCOMING,
-                image = R.drawable.newyork
             )
         )
     }
@@ -144,15 +130,15 @@ fun Trips(
                 image = R.drawable.barcelona
             ),
             TripItem(
-                id = "rome",
-                destination = "Rome",
-                country = "Italy",
-                dateRange = "15 Jan - 20 Jan 2026",
-                duration = "5 days",
-                budget = "€740",
+                id = "newyork",
+                destination = "New York",
+                country = "United States",
+                dateRange = "04 Dec - 10 Dec 2025",
+                duration = "6 days",
+                budget = "€1,680",
                 statusLabel = "Completed",
                 state = TripState.COMPLETED,
-                image = R.drawable.paris
+                image = R.drawable.newyork
             )
         )
     }
@@ -162,11 +148,12 @@ fun Trips(
     val currentBudget = upcomingTrips.sumOf { it.budget.replace("€", "").replace(",", "").toInt() }
     val pastBudget = pastTrips.sumOf { it.budget.replace("€", "").replace(",", "").toInt() }
     val totalBudget = currentBudget + pastBudget
+    val totalDays = allTrips.sumOf { it.duration.substringBefore(" ").toIntOrNull() ?: 0 }
 
-    val stats = remember(totalBudget) {
+    val stats = remember(totalBudget, totalDays) {
         listOf(
-            HomeStat("5", "Trips", Icons.Default.TravelExplore),
-            HomeStat("27", "Days Planned", Icons.Default.CalendarMonth),
+            HomeStat("4", "Trips", Icons.Default.TravelExplore),
+            HomeStat(totalDays.toString(), "Days Planned", Icons.Default.CalendarMonth),
             HomeStat("€$totalBudget", "Budget", Icons.Default.AttachMoney)
         )
     }
@@ -181,8 +168,8 @@ fun Trips(
         )
     }
 
-    var favoriteRegion by remember { mutableStateOf("Europe") }
-    var travelGoal by remember { mutableStateOf("Visit 3 new cities this year") }
+    var favoriteRegion by remember { mutableStateOf("Europe & North America") }
+    var travelGoal by remember { mutableStateOf("Complete 4 memorable trips with clear itineraries") }
 
     var editingFavoriteRegion by remember { mutableStateOf(false) }
     var editingTravelGoal by remember { mutableStateOf(false) }
@@ -197,13 +184,7 @@ fun Trips(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Text(
-            text = "Trips",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
+        TripsHeader(totalTrips = allTrips.size)
 
         TripCategory(title = "Overview") {
             Row(
@@ -235,7 +216,10 @@ fun Trips(
                     onViewClick = { onTripClick(trip.id) }
                 )
                 if (index != upcomingTrips.lastIndex) {
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)
+                    )
                 }
             }
         }
@@ -247,7 +231,10 @@ fun Trips(
                     onViewClick = { onTripClick(trip.id) }
                 )
                 if (index != pastTrips.lastIndex) {
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)
+                    )
                 }
             }
         }
@@ -275,7 +262,10 @@ fun Trips(
                 }
             )
 
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 8.dp),
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)
+            )
 
             StaticInsightRow(
                 icon = Icons.Default.FlightTakeoff,
@@ -283,7 +273,10 @@ fun Trips(
                 subtitle = "Paris — 12 Jun 2026"
             )
 
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 8.dp),
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)
+            )
 
             EditableInsightRow(
                 icon = Icons.AutoMirrored.Filled.TrendingUp,
@@ -309,6 +302,57 @@ fun Trips(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+fun TripsHeader(totalTrips: Int) {
+    val orange = MaterialTheme.colorScheme.primary
+    val sky = MaterialTheme.colorScheme.secondary
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.90f))
+            .padding(18.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(100.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(10.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.logo_no_background),
+                contentDescription = "VoyageTime logo",
+                modifier = Modifier.size(80.dp),
+                contentScale = ContentScale.Fit
+            )
+        }
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "Trips",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Text(
+                text = "Review your planned and completed trips in one place.",
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f)
+            )
+        }
     }
 }
 
@@ -366,12 +410,8 @@ fun TripOverviewDialog(
                 Text("Close")
             }
         },
-        title = {
-            Text(text = title)
-        },
-        text = {
-            Text(text = text)
-        }
+        title = { Text(text = title) },
+        text = { Text(text = text) }
     )
 }
 
@@ -423,89 +463,194 @@ fun EditableUpcomingTripCard(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-            val useSecondRowForButtons = maxWidth < 760.dp
+        if (!isEditing) {
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                val useSecondRowForButtons = maxWidth < 700.dp
 
-            if (useSecondRowForButtons) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    TripInfoBlock(
-                        image = trip.image,
-                        destination = draftDestination,
-                        country = draftCountry,
-                        dateRange = draftDateRange,
-                        duration = draftDuration,
-                        budget = draftBudget,
-                        statusLabel = trip.statusLabel
-                    )
-
+                if (!useSecondRowForButtons) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedButton(
-                            onClick = { isEditing = !isEditing }
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit trip"
+                            Image(
+                                painter = painterResource(id = trip.image),
+                                contentDescription = trip.destination,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .width(100.dp)
+                                    .height(100.dp)
+                                    .clip(RoundedCornerShape(18.dp))
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Edit")
+
+                            Spacer(modifier = Modifier.width(14.dp))
+
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = trip.destination,
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+
+                                Text(
+                                    text = trip.country,
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    MiniInfo(
+                                        icon = Icons.Default.CalendarMonth,
+                                        text = trip.dateRange
+                                    )
+                                }
+
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    MiniInfo(
+                                        icon = Icons.Default.Schedule,
+                                        text = trip.duration
+                                    )
+                                    MiniInfo(
+                                        icon = Icons.Default.AttachMoney,
+                                        text = trip.budget
+                                    )
+                                }
+
+                                Text(
+                                    text = trip.statusLabel,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.weight(1f))
+                        Spacer(modifier = Modifier.width(12.dp))
 
-                        Button(onClick = onViewClick) {
-                            Text("View Plan")
+                        Column(
+                            horizontalAlignment = Alignment.End,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(onClick = { isEditing = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Edit trip"
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Edit")
+                            }
+
+                            Button(onClick = onViewClick) {
+                                Text("View Trip")
+                            }
                         }
                     }
-                }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    TripInfoBlock(
-                        image = trip.image,
-                        destination = draftDestination,
-                        country = draftCountry,
-                        dateRange = draftDateRange,
-                        duration = draftDuration,
-                        budget = draftBudget,
-                        statusLabel = trip.statusLabel,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
+                } else {
                     Column(
-                        horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.height(110.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Button(onClick = onViewClick) {
-                            Text("View Plan")
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Image(
+                                painter = painterResource(id = trip.image),
+                                contentDescription = trip.destination,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .width(100.dp)
+                                    .height(100.dp)
+                                    .clip(RoundedCornerShape(18.dp))
+                            )
+
+                            Spacer(modifier = Modifier.width(14.dp))
+
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = trip.destination,
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+
+                                Text(
+                                    text = trip.country,
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    MiniInfo(
+                                        icon = Icons.Default.CalendarMonth,
+                                        text = trip.dateRange
+                                    )
+                                }
+
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    MiniInfo(
+                                        icon = Icons.Default.Schedule,
+                                        text = trip.duration
+                                    )
+                                    MiniInfo(
+                                        icon = Icons.Default.AttachMoney,
+                                        text = trip.budget
+                                    )
+                                }
+
+                                Text(
+                                    text = trip.statusLabel,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
 
-                        OutlinedButton(
-                            onClick = { isEditing = !isEditing }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit trip"
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Edit")
+                            OutlinedButton(onClick = { isEditing = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Edit trip"
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Edit")
+                            }
+
+                            Button(onClick = onViewClick) {
+                                Text("View Trip")
+                            }
                         }
                     }
                 }
             }
-        }
-
-        if (isEditing) {
+        } else {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -519,73 +664,97 @@ fun EditableUpcomingTripCard(
                         .padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        text = "Edit Upcoming Trip",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
                     OutlinedTextField(
                         value = draftDestination,
                         onValueChange = { draftDestination = it },
-                        label = { Text("Destination") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Destination") }
                     )
 
                     OutlinedTextField(
                         value = draftCountry,
                         onValueChange = { draftCountry = it },
-                        label = { Text("Country") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Country") }
                     )
 
                     OutlinedTextField(
                         value = draftDateRange,
                         onValueChange = { draftDateRange = it },
-                        label = { Text("Date range") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Date Range") }
                     )
 
                     OutlinedTextField(
                         value = draftDuration,
                         onValueChange = { draftDuration = it },
-                        label = { Text("Duration") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Duration") }
                     )
 
                     OutlinedTextField(
                         value = draftBudget,
                         onValueChange = { draftBudget = it },
-                        label = { Text("Budget") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Budget") }
                     )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(
-                            onClick = {
-                                draftDestination = trip.destination
-                                draftCountry = trip.country
-                                draftDateRange = trip.dateRange
-                                draftDuration = trip.duration
-                                draftBudget = trip.budget
-                                isEditing = false
-                            }
-                        ) {
-                            Text("Cancel")
-                        }
+                    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                        val useSecondRowForButtons = maxWidth < 420.dp
 
-                        Spacer(modifier = Modifier.width(8.dp))
+                        if (!useSecondRowForButtons) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TextButton(
+                                    onClick = {
+                                        draftDestination = trip.destination
+                                        draftCountry = trip.country
+                                        draftDateRange = trip.dateRange
+                                        draftDuration = trip.duration
+                                        draftBudget = trip.budget
+                                        isEditing = false
+                                    }
+                                ) {
+                                    Text("Cancel")
+                                }
 
-                        Button(
-                            onClick = {
-                                isEditing = false
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Button(onClick = { isEditing = false }) {
+                                    Text("Save")
+                                }
                             }
-                        ) {
-                            Text("Save")
+                        } else {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    TextButton(
+                                        onClick = {
+                                            draftDestination = trip.destination
+                                            draftCountry = trip.country
+                                            draftDateRange = trip.dateRange
+                                            draftDuration = trip.duration
+                                            draftBudget = trip.budget
+                                            isEditing = false
+                                        }
+                                    ) {
+                                        Text("Cancel")
+                                    }
+
+                                    Button(onClick = { isEditing = false }) {
+                                        Text("Save")
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -599,102 +768,31 @@ fun PastTripCard(
     trip: TripItem,
     onViewClick: () -> Unit
 ) {
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onViewClick() }
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-            val useSecondRowForButtons = maxWidth < 760.dp
-
-            if (useSecondRowForButtons) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    TripInfoBlock(
-                        image = trip.image,
-                        destination = trip.destination,
-                        country = trip.country,
-                        dateRange = trip.dateRange,
-                        duration = trip.duration,
-                        budget = trip.budget,
-                        statusLabel = trip.statusLabel
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        OutlinedButton(onClick = onViewClick) {
-                            Text("View Plan")
-                        }
-                    }
-                }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    TripInfoBlock(
-                        image = trip.image,
-                        destination = trip.destination,
-                        country = trip.country,
-                        dateRange = trip.dateRange,
-                        duration = trip.duration,
-                        budget = trip.budget,
-                        statusLabel = trip.statusLabel,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Column(
-                        horizontalAlignment = Alignment.End
-                    ) {
-                        OutlinedButton(onClick = onViewClick) {
-                            Text("View Plan")
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun TripInfoBlock(
-    image: Int,
-    destination: String,
-    country: String,
-    dateRange: String,
-    duration: String,
-    budget: String,
-    statusLabel: String,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
-            painter = painterResource(id = image),
-            contentDescription = destination,
+            painter = painterResource(id = trip.image),
+            contentDescription = trip.destination,
             contentScale = ContentScale.Crop,
             modifier = Modifier
-                .width(96.dp)
-                .height(96.dp)
-                .clip(RoundedCornerShape(16.dp))
+                .width(100.dp)
+                .height(100.dp)
+                .clip(RoundedCornerShape(18.dp))
         )
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(14.dp))
 
         Column(
+            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = destination,
+                text = trip.destination,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -703,7 +801,7 @@ fun TripInfoBlock(
             )
 
             Text(
-                text = country,
+                text = trip.country,
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
                 maxLines = 2,
@@ -713,30 +811,26 @@ fun TripInfoBlock(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MiniInfo(
                     icon = Icons.Default.CalendarMonth,
-                    text = dateRange
+                    text = trip.dateRange
                 )
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MiniInfo(
                     icon = Icons.Default.Schedule,
-                    text = duration
+                    text = trip.duration
                 )
                 MiniInfo(
                     icon = Icons.Default.AttachMoney,
-                    text = budget
+                    text = trip.budget
                 )
             }
 
             Text(
-                text = statusLabel,
+                text = trip.statusLabel,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
-                color = if (statusLabel == "Completed") {
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                } else {
-                    MaterialTheme.colorScheme.primary
-                },
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -762,46 +856,110 @@ fun EditableInsightRow(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
-                    .padding(10.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = title,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val useSecondRowForButtons = maxWidth < 620.dp
 
-            Spacer(modifier = Modifier.width(14.dp))
+            if (!useSecondRowForButtons) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
+                            .padding(10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = title,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = value,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-            }
+                    Spacer(modifier = Modifier.width(14.dp))
 
-            OutlinedButton(onClick = onEditClick) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit insight"
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Edit")
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = title,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = value,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    OutlinedButton(onClick = onEditClick) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit insight"
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Edit")
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
+                                .padding(10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = title,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = title,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = value,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedButton(onClick = onEditClick) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit insight"
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Edit")
+                        }
+                    }
+                }
             }
         }
 
@@ -827,18 +985,44 @@ fun EditableInsightRow(
                         label = { Text(title) }
                     )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(onClick = onCancel) {
-                            Text("Cancel")
-                        }
+                    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                        val useSecondRowForButtons = maxWidth < 420.dp
 
-                        Spacer(modifier = Modifier.width(8.dp))
+                        if (!useSecondRowForButtons) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TextButton(onClick = onCancel) {
+                                    Text("Cancel")
+                                }
 
-                        Button(onClick = onSave) {
-                            Text("Save")
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Button(onClick = onSave) {
+                                    Text("Save")
+                                }
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    TextButton(onClick = onCancel) {
+                                        Text("Cancel")
+                                    }
+
+                                    Button(onClick = onSave) {
+                                        Text("Save")
+                                    }
+                                }
+                            }
                         }
                     }
                 }

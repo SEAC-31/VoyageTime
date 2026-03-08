@@ -25,7 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun CreateTripScreen(modifier: Modifier = Modifier) {
+fun CreateTripScreen(
+    modifier: Modifier = Modifier,
+    onCancel: () -> Unit = {}
+) {
     val scrollState = rememberScrollState()
 
     val destination = remember { mutableStateOf("") }
@@ -98,14 +101,6 @@ fun CreateTripScreen(modifier: Modifier = Modifier) {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = "This is a mock creation form for Sprint 01. Data is not saved.",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
                 Button(
                     onClick = { },
                     modifier = Modifier.fillMaxWidth()
@@ -114,7 +109,7 @@ fun CreateTripScreen(modifier: Modifier = Modifier) {
                 }
 
                 TextButton(
-                    onClick = { },
+                    onClick = onCancel,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Cancel")
