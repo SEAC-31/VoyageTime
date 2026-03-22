@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -38,7 +37,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -56,7 +54,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.voyagetime.R
+import com.example.voyagetime.ui.viewmodel.TripsViewModel
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.util.Locale
 
 enum class TripState {
     UPCOMING,
@@ -82,100 +87,29 @@ data class TripItem(
     val image: Int
 )
 
+data class HomeStat(
+    val value: String,
+    val label: String,
+    val icon: ImageVector
+)
+
 @Composable
 fun Trips(
     modifier: Modifier = Modifier,
-    onTripClick: (String) -> Unit
+    onTripClick: (String) -> Unit,
+    viewModel: TripsViewModel = viewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
-
-    val upcomingTrips = remember {
-        listOf(
-            TripItem(
-                id = "paris",
-                destination = "Paris",
-                country = "France",
-                dateRange = "12 Jun - 18 Jun 2026",
-                duration = "6 days",
-                budget = "€820",
-                statusLabel = "Upcoming",
-                state = TripState.UPCOMING,
-                image = R.drawable.paris
-            ),
-            TripItem(
-                id = "tokyo",
-                destination = "Tokyo",
-                country = "Japan",
-                dateRange = "02 Aug - 11 Aug 2026",
-                duration = "9 days",
-                budget = "€2,450",
-                statusLabel = "Planned",
-                state = TripState.PLANNED,
-                image = R.drawable.tokyo
-            )
-        )
-    }
-
-    val pastTrips = remember {
-        listOf(
-            TripItem(
-                id = "barcelona",
-                destination = "Barcelona",
-                country = "Spain",
-                dateRange = "10 Mar - 13 Mar 2026",
-                duration = "3 days",
-                budget = "€290",
-                statusLabel = "Completed",
-                state = TripState.COMPLETED,
-                image = R.drawable.barcelona
-            ),
-            TripItem(
-                id = "newyork",
-                destination = "New York",
-                country = "United States",
-                dateRange = "04 Dec - 10 Dec 2025",
-                duration = "6 days",
-                budget = "€1,680",
-                statusLabel = "Completed",
-                state = TripState.COMPLETED,
-                image = R.drawable.newyork
-            )
-        )
-    }
-
-    val allTrips = upcomingTrips + pastTrips
-
-    val currentBudget = upcomingTrips.sumOf { it.budget.replace("€", "").replace(",", "").toInt() }
-    val pastBudget = pastTrips.sumOf { it.budget.replace("€", "").replace(",", "").toInt() }
-    val totalBudget = currentBudget + pastBudget
-    val totalDays = allTrips.sumOf { it.duration.substringBefore(" ").toIntOrNull() ?: 0 }
-
-    val stats = remember(totalBudget, totalDays) {
-        listOf(
-            HomeStat("4", "Trips", Icons.Default.TravelExplore),
-            HomeStat(totalDays.toString(), "Days Planned", Icons.Default.CalendarMonth),
-            HomeStat("€$totalBudget", "Budget", Icons.Default.AttachMoney)
-        )
-    }
-
     var activeDialog by remember { mutableStateOf<TripDialogType?>(null) }
 
     activeDialog?.let { dialogType ->
         TripOverviewDialog(
             dialogType = dialogType,
-            trips = allTrips,
+            trips = uiState.allTrips,
             onDismiss = { activeDialog = null }
         )
     }
-
-    var favoriteRegion by remember { mutableStateOf("Europe & North America") }
-    var travelGoal by remember { mutableStateOf("Complete 4 memorable trips with clear itineraries") }
-
-    var editingFavoriteRegion by remember { mutableStateOf(false) }
-    var editingTravelGoal by remember { mutableStateOf(false) }
-
-    var favoriteRegionDraft by remember { mutableStateOf(favoriteRegion) }
-    var travelGoalDraft by remember { mutableStateOf(travelGoal) }
 
     Column(
         modifier = modifier
@@ -184,7 +118,7 @@ fun Trips(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        TripsHeader(totalTrips = allTrips.size)
+        TripsHeader(totalTrips = uiState.allTrips.size)
 
         TripCategory(title = "Overview") {
             Row(
@@ -193,7 +127,7 @@ fun Trips(
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                stats.forEachIndexed { index, stat ->
+                uiState.stats.forEachIndexed { index, stat ->
                     val dialogType = when (index) {
                         0 -> TripDialogType.TRIPS
                         1 -> TripDialogType.DAYS
@@ -210,12 +144,14 @@ fun Trips(
         }
 
         TripCategory(title = "Upcoming Trips") {
-            upcomingTrips.forEachIndexed { index, trip ->
+            uiState.upcomingTrips.forEachIndexed { index, trip ->
                 EditableUpcomingTripCard(
                     trip = trip,
-                    onViewClick = { onTripClick(trip.id) }
+                    onViewClick = { onTripClick(trip.id) },
+                    onSave = { updatedTrip -> viewModel.updateTrip(updatedTrip) }
                 )
-                if (index != upcomingTrips.lastIndex) {
+
+                if (index != uiState.upcomingTrips.lastIndex) {
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 8.dp),
                         color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)
@@ -225,12 +161,13 @@ fun Trips(
         }
 
         TripCategory(title = "Past Trips") {
-            pastTrips.forEachIndexed { index, trip ->
+            uiState.pastTrips.forEachIndexed { index, trip ->
                 PastTripCard(
                     trip = trip,
                     onViewClick = { onTripClick(trip.id) }
                 )
-                if (index != pastTrips.lastIndex) {
+
+                if (index != uiState.pastTrips.lastIndex) {
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 8.dp),
                         color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)
@@ -243,23 +180,8 @@ fun Trips(
             EditableInsightRow(
                 icon = Icons.Default.Explore,
                 title = "Favorite Region",
-                value = favoriteRegion,
-                isEditing = editingFavoriteRegion,
-                draftValue = favoriteRegionDraft,
-                onDraftChange = { favoriteRegionDraft = it },
-                onEditClick = {
-                    favoriteRegionDraft = favoriteRegion
-                    editingFavoriteRegion = true
-                    editingTravelGoal = false
-                },
-                onCancel = {
-                    editingFavoriteRegion = false
-                    favoriteRegionDraft = favoriteRegion
-                },
-                onSave = {
-                    favoriteRegion = favoriteRegionDraft
-                    editingFavoriteRegion = false
-                }
+                value = uiState.favoriteRegion,
+                onSave = { viewModel.updateFavoriteRegion(it) }
             )
 
             HorizontalDivider(
@@ -270,7 +192,7 @@ fun Trips(
             StaticInsightRow(
                 icon = Icons.Default.FlightTakeoff,
                 title = "Next Departure",
-                subtitle = "Paris — 12 Jun 2026"
+                subtitle = uiState.nextDeparture
             )
 
             HorizontalDivider(
@@ -281,23 +203,8 @@ fun Trips(
             EditableInsightRow(
                 icon = Icons.AutoMirrored.Filled.TrendingUp,
                 title = "Travel Goal",
-                value = travelGoal,
-                isEditing = editingTravelGoal,
-                draftValue = travelGoalDraft,
-                onDraftChange = { travelGoalDraft = it },
-                onEditClick = {
-                    travelGoalDraft = travelGoal
-                    editingTravelGoal = true
-                    editingFavoriteRegion = false
-                },
-                onCancel = {
-                    editingTravelGoal = false
-                    travelGoalDraft = travelGoal
-                },
-                onSave = {
-                    travelGoal = travelGoalDraft
-                    editingTravelGoal = false
-                }
+                value = uiState.travelGoal,
+                onSave = { viewModel.updateTravelGoal(it) }
             )
         }
 
@@ -307,9 +214,6 @@ fun Trips(
 
 @Composable
 fun TripsHeader(totalTrips: Int) {
-    val orange = MaterialTheme.colorScheme.primary
-    val sky = MaterialTheme.colorScheme.secondary
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -352,6 +256,13 @@ fun TripsHeader(totalTrips: Int) {
                 lineHeight = 20.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f)
             )
+
+            Text(
+                text = "Total trips: $totalTrips",
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
@@ -389,7 +300,7 @@ fun TripOverviewDialog(
         }
 
         TripDialogType.BUDGET -> {
-            val total = trips.sumOf { it.budget.replace("€", "").replace(",", "").toInt() }
+            val total = trips.sumOf { it.budgetValue() }
             title = "Budget Details"
             text = buildString {
                 appendLine("Estimated costs by trip:")
@@ -448,14 +359,27 @@ fun TripCategory(
 @Composable
 fun EditableUpcomingTripCard(
     trip: TripItem,
-    onViewClick: () -> Unit
+    onViewClick: () -> Unit,
+    onSave: (TripItem) -> Unit
 ) {
-    var isEditing by remember { mutableStateOf(false) }
-    var draftDestination by remember { mutableStateOf(trip.destination) }
-    var draftCountry by remember { mutableStateOf(trip.country) }
-    var draftDateRange by remember { mutableStateOf(trip.dateRange) }
-    var draftDuration by remember { mutableStateOf(trip.duration) }
-    var draftBudget by remember { mutableStateOf(trip.budget) }
+    var isEditing by remember(trip.id) { mutableStateOf(false) }
+    var draftDestination by remember(trip.id, trip.destination) { mutableStateOf(trip.destination) }
+    var draftCountry by remember(trip.id, trip.country) { mutableStateOf(trip.country) }
+    var draftDateRange by remember(trip.id, trip.dateRange) { mutableStateOf(normalizeDateRangeForEditing(trip.dateRange)) }
+    var draftDuration by remember(trip.id, trip.duration) { mutableStateOf(trip.duration) }
+    var draftBudget by remember(trip.id, trip.budget) { mutableStateOf(extractBudgetDigits(trip.budget)) }
+
+    val destinationError = if (draftDestination.trim().isBlank()) "Destination is required" else null
+    val countryError = if (draftCountry.trim().isBlank()) "Country is required" else null
+    val dateRangeError = validateDateRangeMessage(draftDateRange)
+    val durationError = validateDurationMessage(draftDuration)
+    val budgetError = validateBudgetMessage(draftBudget)
+
+    val canSave = destinationError == null &&
+            countryError == null &&
+            dateRangeError == null &&
+            durationError == null &&
+            budgetError == null
 
     Column(
         modifier = Modifier
@@ -472,71 +396,10 @@ fun EditableUpcomingTripCard(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.weight(1f),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Image(
-                                painter = painterResource(id = trip.image),
-                                contentDescription = trip.destination,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .width(100.dp)
-                                    .height(100.dp)
-                                    .clip(RoundedCornerShape(18.dp))
-                            )
-
-                            Spacer(modifier = Modifier.width(14.dp))
-
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = trip.destination,
-                                    fontSize = 17.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-
-                                Text(
-                                    text = trip.country,
-                                    fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-
-                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    MiniInfo(
-                                        icon = Icons.Default.CalendarMonth,
-                                        text = trip.dateRange
-                                    )
-                                }
-
-                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    MiniInfo(
-                                        icon = Icons.Default.Schedule,
-                                        text = trip.duration
-                                    )
-                                    MiniInfo(
-                                        icon = Icons.Default.AttachMoney,
-                                        text = trip.budget
-                                    )
-                                }
-
-                                Text(
-                                    text = trip.statusLabel,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
+                        TripMainInfo(
+                            trip = trip,
+                            modifier = Modifier.weight(1f)
+                        )
 
                         Spacer(modifier = Modifier.width(12.dp))
 
@@ -563,71 +426,7 @@ fun EditableUpcomingTripCard(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Image(
-                                painter = painterResource(id = trip.image),
-                                contentDescription = trip.destination,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .width(100.dp)
-                                    .height(100.dp)
-                                    .clip(RoundedCornerShape(18.dp))
-                            )
-
-                            Spacer(modifier = Modifier.width(14.dp))
-
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = trip.destination,
-                                    fontSize = 17.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-
-                                Text(
-                                    text = trip.country,
-                                    fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-
-                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    MiniInfo(
-                                        icon = Icons.Default.CalendarMonth,
-                                        text = trip.dateRange
-                                    )
-                                }
-
-                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    MiniInfo(
-                                        icon = Icons.Default.Schedule,
-                                        text = trip.duration
-                                    )
-                                    MiniInfo(
-                                        icon = Icons.Default.AttachMoney,
-                                        text = trip.budget
-                                    )
-                                }
-
-                                Text(
-                                    text = trip.statusLabel,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
+                        TripMainInfo(trip = trip)
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -668,39 +467,104 @@ fun EditableUpcomingTripCard(
                         value = draftDestination,
                         onValueChange = { draftDestination = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Destination") }
+                        label = { Text("Destination") },
+                        isError = destinationError != null,
+                        supportingText = {
+                            if (destinationError != null) {
+                                Text(destinationError)
+                            }
+                        }
                     )
 
                     OutlinedTextField(
                         value = draftCountry,
                         onValueChange = { draftCountry = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Country") }
+                        label = { Text("Country") },
+                        isError = countryError != null,
+                        supportingText = {
+                            if (countryError != null) {
+                                Text(countryError)
+                            }
+                        }
                     )
 
                     OutlinedTextField(
                         value = draftDateRange,
-                        onValueChange = { draftDateRange = it },
+                        onValueChange = { newValue ->
+                            draftDateRange = newValue.filter { char ->
+                                char.isDigit() || char.isLetter() || char == ' ' || char == '-'
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Date Range") }
+                        label = { Text("Date Range") },
+                        placeholder = { Text("12 Jun 2026 - 18 Jun 2026") },
+                        isError = dateRangeError != null,
+                        supportingText = {
+                            if (dateRangeError != null) {
+                                Text(dateRangeError)
+                            }
+                        }
                     )
 
                     OutlinedTextField(
                         value = draftDuration,
-                        onValueChange = { draftDuration = it },
+                        onValueChange = { newValue ->
+                            draftDuration = sanitizeDurationInput(newValue)
+                        },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Duration") }
+                        label = { Text("Duration") },
+                        placeholder = { Text("6 days") },
+                        isError = durationError != null,
+                        supportingText = {
+                            if (durationError != null) {
+                                Text(durationError)
+                            }
+                        }
                     )
 
                     OutlinedTextField(
                         value = draftBudget,
-                        onValueChange = { draftBudget = it },
+                        onValueChange = { newValue ->
+                            draftBudget = newValue.filter { it.isDigit() }
+                        },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Budget") }
+                        label = { Text("Budget") },
+                        placeholder = { Text("820") },
+                        isError = budgetError != null,
+                        supportingText = {
+                            if (budgetError != null) {
+                                Text(budgetError)
+                            }
+                        }
                     )
 
                     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                         val useSecondRowForButtons = maxWidth < 420.dp
+
+                        val cancelAction = {
+                            draftDestination = trip.destination
+                            draftCountry = trip.country
+                            draftDateRange = normalizeDateRangeForEditing(trip.dateRange)
+                            draftDuration = trip.duration
+                            draftBudget = extractBudgetDigits(trip.budget)
+                            isEditing = false
+                        }
+
+                        val saveAction = {
+                            if (canSave) {
+                                onSave(
+                                    trip.copy(
+                                        destination = draftDestination.trim(),
+                                        country = draftCountry.trim(),
+                                        dateRange = normalizeDateRangeForStorage(draftDateRange),
+                                        duration = normalizeDuration(draftDuration),
+                                        budget = "€${draftBudget.trim()}"
+                                    )
+                                )
+                                isEditing = false
+                            }
+                        }
 
                         if (!useSecondRowForButtons) {
                             Row(
@@ -708,57 +572,111 @@ fun EditableUpcomingTripCard(
                                 horizontalArrangement = Arrangement.End,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                TextButton(
-                                    onClick = {
-                                        draftDestination = trip.destination
-                                        draftCountry = trip.country
-                                        draftDateRange = trip.dateRange
-                                        draftDuration = trip.duration
-                                        draftBudget = trip.budget
-                                        isEditing = false
-                                    }
-                                ) {
+                                TextButton(onClick = cancelAction) {
                                     Text("Cancel")
                                 }
 
                                 Spacer(modifier = Modifier.width(8.dp))
 
-                                Button(onClick = { isEditing = false }) {
+                                Button(
+                                    onClick = saveAction,
+                                    enabled = canSave
+                                ) {
                                     Text("Save")
                                 }
                             }
                         } else {
-                            Column(
+                            Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    TextButton(
-                                        onClick = {
-                                            draftDestination = trip.destination
-                                            draftCountry = trip.country
-                                            draftDateRange = trip.dateRange
-                                            draftDuration = trip.duration
-                                            draftBudget = trip.budget
-                                            isEditing = false
-                                        }
-                                    ) {
-                                        Text("Cancel")
-                                    }
+                                TextButton(onClick = cancelAction) {
+                                    Text("Cancel")
+                                }
 
-                                    Button(onClick = { isEditing = false }) {
-                                        Text("Save")
-                                    }
+                                Button(
+                                    onClick = saveAction,
+                                    enabled = canSave
+                                ) {
+                                    Text("Save")
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+    }
+}
+@Composable
+private fun TripMainInfo(
+    trip: TripItem,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(
+            painter = painterResource(id = trip.image),
+            contentDescription = trip.destination,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .width(100.dp)
+                .height(100.dp)
+                .clip(RoundedCornerShape(18.dp))
+        )
+
+        Spacer(modifier = Modifier.width(14.dp))
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = trip.destination,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Text(
+                text = trip.country,
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                MiniInfo(
+                    icon = Icons.Default.CalendarMonth,
+                    text = trip.dateRange
+                )
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                MiniInfo(
+                    icon = Icons.Default.Schedule,
+                    text = trip.duration
+                )
+                MiniInfo(
+                    icon = Icons.Default.AttachMoney,
+                    text = trip.budget
+                )
+            }
+
+            Text(
+                text = trip.statusLabel,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -843,13 +761,11 @@ fun EditableInsightRow(
     icon: ImageVector,
     title: String,
     value: String,
-    isEditing: Boolean,
-    draftValue: String,
-    onDraftChange: (String) -> Unit,
-    onEditClick: () -> Unit,
-    onCancel: () -> Unit,
-    onSave: () -> Unit
+    onSave: (String) -> Unit
 ) {
+    var isEditing by remember { mutableStateOf(false) }
+    var draftValue by remember(value) { mutableStateOf(value) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -896,7 +812,10 @@ fun EditableInsightRow(
 
                     Spacer(modifier = Modifier.width(12.dp))
 
-                    OutlinedButton(onClick = onEditClick) {
+                    OutlinedButton(onClick = {
+                        draftValue = value
+                        isEditing = true
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "Edit insight"
@@ -950,7 +869,10 @@ fun EditableInsightRow(
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedButton(onClick = onEditClick) {
+                        OutlinedButton(onClick = {
+                            draftValue = value
+                            isEditing = true
+                        }) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = "Edit insight"
@@ -979,7 +901,7 @@ fun EditableInsightRow(
                 ) {
                     OutlinedTextField(
                         value = draftValue,
-                        onValueChange = onDraftChange,
+                        onValueChange = { draftValue = it },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
                         label = { Text(title) }
@@ -994,33 +916,48 @@ fun EditableInsightRow(
                                 horizontalArrangement = Arrangement.End,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                TextButton(onClick = onCancel) {
+                                TextButton(
+                                    onClick = {
+                                        draftValue = value
+                                        isEditing = false
+                                    }
+                                ) {
                                     Text("Cancel")
                                 }
 
                                 Spacer(modifier = Modifier.width(8.dp))
 
-                                Button(onClick = onSave) {
+                                Button(
+                                    onClick = {
+                                        onSave(draftValue.trim())
+                                        isEditing = false
+                                    }
+                                ) {
                                     Text("Save")
                                 }
                             }
                         } else {
-                            Column(
+                            Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                TextButton(
+                                    onClick = {
+                                        draftValue = value
+                                        isEditing = false
+                                    }
                                 ) {
-                                    TextButton(onClick = onCancel) {
-                                        Text("Cancel")
-                                    }
+                                    Text("Cancel")
+                                }
 
-                                    Button(onClick = onSave) {
-                                        Text("Save")
+                                Button(
+                                    onClick = {
+                                        onSave(draftValue.trim())
+                                        isEditing = false
                                     }
+                                ) {
+                                    Text("Save")
                                 }
                             }
                         }
@@ -1090,9 +1027,7 @@ fun MiniInfo(
     icon: ImageVector,
     text: String
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             imageVector = icon,
             contentDescription = null,
@@ -1107,4 +1042,184 @@ fun MiniInfo(
             overflow = TextOverflow.Ellipsis
         )
     }
+}
+
+@Composable
+fun HomeStatCard(
+    stat: HomeStat,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier.clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.background
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = stat.icon,
+                contentDescription = stat.label,
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+            Text(
+                text = stat.value,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Text(
+                text = stat.label,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
+            )
+        }
+    }
+}
+
+private fun TripItem.budgetValue(): Int {
+    return budget.replace("€", "").replace(",", "").trim().toIntOrNull() ?: 0
+}
+
+private fun extractBudgetDigits(budget: String): String {
+    return budget.filter { it.isDigit() }
+}
+
+private fun validateBudgetMessage(value: String): String? {
+    if (value.isBlank()) return "Budget is required"
+    if (!value.all { it.isDigit() }) return "Budget must contain numbers only"
+    return null
+}
+
+private fun sanitizeDurationInput(value: String): String {
+    return value.filter { char ->
+        char.isDigit() || char.isLetter() || char == ' '
+    }
+}
+
+private fun validateDurationMessage(value: String): String? {
+    val trimmed = value.trim()
+
+    if (trimmed.isBlank()) {
+        return "Duration is required"
+    }
+
+    val regex = Regex("""^\d+\s+(day|days|month|months|year|years)$""", RegexOption.IGNORE_CASE)
+
+    if (!regex.matches(trimmed)) {
+        return "Use format like: 6 days, 2 months, 1 year"
+    }
+
+    return null
+}
+
+private fun normalizeDuration(value: String): String {
+    val trimmed = value.trim().lowercase()
+    val parts = trimmed.split(Regex("""\s+"""))
+
+    if (parts.size != 2) return value.trim()
+
+    val amount = parts[0]
+    val unit = when (parts[1]) {
+        "day", "days" -> if (amount == "1") "day" else "days"
+        "month", "months" -> if (amount == "1") "month" else "months"
+        "year", "years" -> if (amount == "1") "year" else "years"
+        else -> parts[1]
+    }
+
+    return "$amount $unit"
+}
+
+private fun validateDateRangeMessage(value: String): String? {
+    val trimmed = value.trim()
+
+    if (trimmed.isBlank()) {
+        return "Date range is required"
+    }
+
+    val parseResult = parseDateRange(trimmed) ?: return "Use real dates like: 12 Jun 2026 - 18 Jun 2026"
+
+    val startDate = parseResult.first
+    val endDate = parseResult.second
+
+    if (endDate.isBefore(startDate)) {
+        return "End date cannot be before start date"
+    }
+
+    return null
+}
+
+private fun parseDateRange(value: String): Pair<LocalDate, LocalDate>? {
+    val input = value.trim()
+
+    val formatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
+
+    val fullYearPattern = Regex(
+        """^(\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4})\s*-\s*(\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4})$""",
+        RegexOption.IGNORE_CASE
+    )
+
+    val shortStartPattern = Regex(
+        """^(\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))\s*-\s*(\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4})$""",
+        RegexOption.IGNORE_CASE
+    )
+
+    return try {
+        val fullMatch = fullYearPattern.matchEntire(input)
+        if (fullMatch != null) {
+            val startText = fullMatch.groupValues[1]
+            val endText = fullMatch.groupValues[3]
+
+            val startDate = LocalDate.parse(startText, formatter)
+            val endDate = LocalDate.parse(endText, formatter)
+
+            return startDate to endDate
+        }
+
+        val shortMatch = shortStartPattern.matchEntire(input)
+        if (shortMatch != null) {
+            val startWithoutYear = shortMatch.groupValues[1]
+            val endText = shortMatch.groupValues[3]
+
+            val endDate = LocalDate.parse(endText, formatter)
+            val startTextSameYear = "$startWithoutYear ${endDate.year}"
+            val tentativeStartDate = LocalDate.parse(startTextSameYear, formatter)
+
+            val startDate = if (tentativeStartDate.isAfter(endDate)) {
+                LocalDate.parse("$startWithoutYear ${endDate.year - 1}", formatter)
+            } else {
+                tentativeStartDate
+            }
+
+            return startDate to endDate
+        }
+
+        null
+    } catch (_: DateTimeParseException) {
+        null
+    }
+}
+
+private fun normalizeDateRangeForStorage(value: String): String {
+    val parsed = parseDateRange(value) ?: return value.trim()
+
+    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH)
+
+    return "${parsed.first.format(formatter)} - ${parsed.second.format(formatter)}"
+}
+
+private fun normalizeDateRangeForEditing(value: String): String {
+    val parsed = parseDateRange(value) ?: return value.trim()
+
+    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH)
+
+    return "${parsed.first.format(formatter)} - ${parsed.second.format(formatter)}"
 }

@@ -69,12 +69,6 @@ enum class HomeDialogType {
     TRIPS, DAYS, BUDGET
 }
 
-data class HomeStat(
-    val value: String,
-    val label: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector
-)
-
 @Composable
 fun Home(
     modifier: Modifier = Modifier,
@@ -197,11 +191,6 @@ fun Home(
                         else -> HomeDialogType.BUDGET
                     }
 
-                    HomeStatCard(
-                        stat = stat,
-                        modifier = Modifier.weight(1f),
-                        onClick = { activeDialog = dialogType }
-                    )
                 }
             }
         }
@@ -399,47 +388,6 @@ fun HomeSection(
     }
 }
 
-@Composable
-fun HomeStatCard(
-    stat: HomeStat,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
-            .clickable { onClick() }
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f))
-                .padding(8.dp)
-        ) {
-            Icon(
-                imageVector = stat.icon,
-                contentDescription = stat.label,
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-
-        Text(
-            text = stat.value,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Text(
-            text = stat.label,
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
-        )
-    }
-}
 
 @Composable
 fun NextTripCard(
