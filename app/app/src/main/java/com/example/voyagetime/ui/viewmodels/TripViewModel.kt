@@ -1,4 +1,4 @@
-package com.example.voyagetime.ui.viewmodel
+package com.example.voyagetime.ui.viewmodels
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
@@ -54,6 +54,18 @@ class TripsViewModel(
 
     val uiState: StateFlow<TripsUiState> = _uiState.asStateFlow()
 
+    fun reloadTrips() {
+        _uiState.update { current ->
+            current.copy(
+                upcomingTrips = repository.getUpcomingTrips(),
+                pastTrips = repository.getPastTrips(),
+                favoriteRegion = repository.getFavoriteRegion(),
+                travelGoal = repository.getTravelGoal(),
+                nextDeparture = repository.getNextDeparture()
+            )
+        }
+    }
+
     fun updateTrip(updatedTrip: TripItem) {
         repository.updateTrip(updatedTrip)
         reloadTrips()
@@ -61,26 +73,12 @@ class TripsViewModel(
 
     fun updateFavoriteRegion(newValue: String) {
         repository.updateFavoriteRegion(newValue)
-        _uiState.update { current ->
-            current.copy(favoriteRegion = repository.getFavoriteRegion())
-        }
+        reloadTrips()
     }
 
     fun updateTravelGoal(newValue: String) {
         repository.updateTravelGoal(newValue)
-        _uiState.update { current ->
-            current.copy(travelGoal = repository.getTravelGoal())
-        }
-    }
-
-    private fun reloadTrips() {
-        _uiState.update { current ->
-            current.copy(
-                upcomingTrips = repository.getUpcomingTrips(),
-                pastTrips = repository.getPastTrips(),
-                nextDeparture = repository.getNextDeparture()
-            )
-        }
+        reloadTrips()
     }
 }
 

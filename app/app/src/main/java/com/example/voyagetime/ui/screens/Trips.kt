@@ -56,8 +56,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.LaunchedEffect
 import com.example.voyagetime.R
-import com.example.voyagetime.ui.viewmodel.TripsViewModel
+import com.example.voyagetime.ui.viewmodels.TripsViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -100,6 +101,10 @@ fun Trips(
     viewModel: TripsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) {
+        viewModel.reloadTrips()
+    }
+
     val scrollState = rememberScrollState()
     var activeDialog by remember { mutableStateOf<TripDialogType?>(null) }
 

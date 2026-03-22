@@ -1,4 +1,4 @@
-package com.example.voyagetime.ui.viewmodel
+package com.example.voyagetime.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import com.example.voyagetime.data.repository.ItineraryRepository

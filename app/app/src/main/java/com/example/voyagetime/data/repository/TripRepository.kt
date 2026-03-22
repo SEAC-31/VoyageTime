@@ -7,6 +7,7 @@ interface TripRepository {
     fun getPastTrips(): List<TripItem>
     fun getAllTrips(): List<TripItem>
 
+    fun addTrip(newTrip: TripItem)
     fun updateTrip(updatedTrip: TripItem)
 
     fun getFavoriteRegion(): String

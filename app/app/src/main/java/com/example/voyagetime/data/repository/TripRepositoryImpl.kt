@@ -23,6 +23,11 @@ class TripRepositoryImpl : TripRepository {
         return FakeTripDataSource.trips.toList()
     }
 
+    override fun addTrip(newTrip: TripItem) {
+        FakeTripDataSource.trips.add(0, newTrip)
+        Log.i("TripRepository", "Trip added: ${newTrip.id}")
+    }
+
     override fun updateTrip(updatedTrip: TripItem) {
         val index = FakeTripDataSource.trips.indexOfFirst { it.id == updatedTrip.id }
 
@@ -53,6 +58,13 @@ class TripRepositoryImpl : TripRepository {
     }
 
     override fun getNextDeparture(): String {
-        return FakeTripDataSource.nextDeparture
+        return getUpcomingTrips()
+            .firstOrNull()
+            ?.let { "${it.destination} — ${extractDisplayStartDate(it.dateRange)}" }
+            ?: FakeTripDataSource.nextDeparture
+    }
+
+    private fun extractDisplayStartDate(dateRange: String): String {
+        return dateRange.substringBefore("-").trim()
     }
 }

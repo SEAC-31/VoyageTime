@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -27,7 +26,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.FlightTakeoff
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.TravelExplore
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -35,7 +33,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -46,12 +43,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.voyagetime.R
+import com.example.voyagetime.ui.viewmodels.HomeViewModel
 
 data class HomeTripSummary(
     val id: String,
@@ -75,79 +77,20 @@ fun Home(
     onTripClick: (String) -> Unit,
     onDepartureCityClick: () -> Unit,
     onTravelStyleClick: () -> Unit,
-    onAddNewTripClick: () -> Unit
+    onAddNewTripClick: () -> Unit,
+    viewModel: HomeViewModel = viewModel()
 ) {
     val scrollState = rememberScrollState()
-
-    val allTrips = remember {
-        listOf(
-            HomeTripSummary(
-                id = "paris",
-                destination = "Paris",
-                country = "France",
-                startDate = "12 Jun 2026",
-                endDate = "18 Jun 2026",
-                duration = "6 days",
-                budget = 820,
-                image = R.drawable.paris,
-                status = "Upcoming"
-            ),
-            HomeTripSummary(
-                id = "tokyo",
-                destination = "Tokyo",
-                country = "Japan",
-                startDate = "02 Aug 2026",
-                endDate = "11 Aug 2026",
-                duration = "9 days",
-                budget = 2450,
-                image = R.drawable.tokyo,
-                status = "Planned"
-            ),
-            HomeTripSummary(
-                id = "barcelona",
-                destination = "Barcelona",
-                country = "Spain",
-                startDate = "10 Mar 2026",
-                endDate = "13 Mar 2026",
-                duration = "3 days",
-                budget = 290,
-                image = R.drawable.barcelona,
-                status = "Completed"
-            ),
-            HomeTripSummary(
-                id = "newyork",
-                destination = "New York",
-                country = "United States",
-                startDate = "04 Dec 2025",
-                endDate = "10 Dec 2025",
-                duration = "6 days",
-                budget = 1680,
-                image = R.drawable.newyork,
-                status = "Completed"
-            )
-        )
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) {
+        viewModel.reload()
     }
-
-    val totalBudget = allTrips.sumOf { it.budget }
-
-    val stats = remember(totalBudget) {
-        listOf(
-            HomeStat(allTrips.size.toString(), "Trips", Icons.Default.TravelExplore),
-            HomeStat(allTrips.sumOf { extractDays(it.duration) }.toString(), "Days Planned", Icons.Default.CalendarMonth),
-            HomeStat("€$totalBudget", "Budget", Icons.Default.AttachMoney)
-        )
-    }
-
-    val featuredTrips = remember(allTrips) {
-        listOf(allTrips[1], allTrips[3]) // Tokyo + New York
-    }
-
     var activeDialog by remember { mutableStateOf<HomeDialogType?>(null) }
 
     activeDialog?.let { dialogType ->
         HomeOverviewDialog(
             dialogType = dialogType,
-            trips = allTrips,
+            trips = uiState.allTrips,
             onDismiss = { activeDialog = null }
         )
     }
@@ -184,35 +127,44 @@ fun Home(
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                stats.forEachIndexed { index, stat ->
+                uiState.stats.forEachIndexed { index, stat ->
                     val dialogType = when (index) {
                         0 -> HomeDialogType.TRIPS
                         1 -> HomeDialogType.DAYS
                         else -> HomeDialogType.BUDGET
                     }
 
+                    HomeStatCard(
+                        stat = stat,
+                        modifier = Modifier.weight(1f),
+                        onClick = { activeDialog = dialogType }
+                    )
                 }
             }
         }
 
-        HomeSection(title = "Next Trip") {
-            NextTripCard(
-                trip = allTrips[0],
-                onClick = { onTripClick(allTrips[0].id) }
-            )
+        uiState.nextTrip?.let { nextTrip ->
+            HomeSection(title = "Next Trip") {
+                NextTripCard(
+                    trip = nextTrip,
+                    onClick = { onTripClick(nextTrip.id) }
+                )
+            }
         }
 
-        HomeSection(title = "Featured Trips") {
-            featuredTrips.forEachIndexed { index, trip ->
-                HomeFeaturedTripCard(
-                    trip = trip,
-                    onClick = { onTripClick(trip.id) }
-                )
-                if (index != featuredTrips.lastIndex) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 8.dp),
-                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)
+        if (uiState.featuredTrips.isNotEmpty()) {
+            HomeSection(title = "Featured Trips") {
+                uiState.featuredTrips.forEachIndexed { index, trip ->
+                    HomeFeaturedTripCard(
+                        trip = trip,
+                        onClick = { onTripClick(trip.id) }
                     )
+                    if (index != uiState.featuredTrips.lastIndex) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 8.dp),
+                            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)
+                        )
+                    }
                 }
             }
         }
@@ -238,10 +190,6 @@ fun Home(
 
         Spacer(modifier = Modifier.height(16.dp))
     }
-}
-
-private fun extractDays(duration: String): Int {
-    return duration.substringBefore(" ").toIntOrNull() ?: 0
 }
 
 @Composable
@@ -309,9 +257,6 @@ fun HomeOverviewDialog(
 
 @Composable
 fun HomeHeader() {
-    val orange = MaterialTheme.colorScheme.primary
-    val sky = MaterialTheme.colorScheme.secondary
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -387,7 +332,6 @@ fun HomeSection(
         }
     }
 }
-
 
 @Composable
 fun NextTripCard(
@@ -527,7 +471,7 @@ fun HomeFeaturedTripCard(
 
 @Composable
 fun HomeMiniInfo(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     text: String
 ) {
     Row(
@@ -549,7 +493,7 @@ fun HomeMiniInfo(
 
 @Composable
 fun HomeInfoRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     title: String,
     subtitle: String,
     onClick: () -> Unit

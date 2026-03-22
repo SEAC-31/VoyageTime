@@ -3,17 +3,29 @@ package com.example.voyagetime.data.repository
 import com.example.voyagetime.data.source.FakeItineraryDataSource
 import com.example.voyagetime.ui.screens.ItineraryDayData
 import com.example.voyagetime.ui.screens.ItineraryEvent
+import com.example.voyagetime.ui.screens.TripItem
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.util.Locale
 
-class ItineraryRepositoryImpl : ItineraryRepository {
+class ItineraryRepositoryImpl(
+    private val tripRepository: TripRepository = TripRepositoryImpl()
+) : ItineraryRepository {
 
     override fun getTripDays(tripId: String): List<ItineraryDayData> {
-        return FakeItineraryDataSource.getTripDays(tripId).map { day ->
-            day.copy(
-                morningPlan = day.morningPlan.toMutableList(),
-                afternoonPlan = day.afternoonPlan.toMutableList(),
-                eveningPlan = day.eveningPlan.toMutableList()
-            )
+        val stored = FakeItineraryDataSource.getStoredTripDaysOrNull(tripId)
+        if (stored != null) {
+            return stored.map { it.deepCopy() }
         }
+
+        val trip = tripRepository.getAllTrips().firstOrNull { it.id == tripId }
+            ?: return emptyList()
+
+        val emptyDays = createEmptyDaysForTrip(trip)
+        FakeItineraryDataSource.replaceTripDays(tripId, emptyDays)
+
+        return emptyDays.map { it.deepCopy() }
     }
 
     override fun addMorningEvent(tripId: String, dayIndex: Int, event: ItineraryEvent) {
@@ -112,5 +124,71 @@ class ItineraryRepositoryImpl : ItineraryRepository {
             updatedDays[dayIndex] = updatedDays[dayIndex].copy(notes = notes)
             FakeItineraryDataSource.replaceTripDays(tripId, updatedDays)
         }
+    }
+
+    private fun createEmptyDaysForTrip(trip: TripItem): MutableList<ItineraryDayData> {
+        val dates = buildTripDates(trip)
+        return dates.mapIndexed { index, date ->
+            ItineraryDayData(
+                dayLabel = "Day ${index + 1}",
+                dayDate = date,
+                morningPlan = mutableListOf(),
+                afternoonPlan = mutableListOf(),
+                eveningPlan = mutableListOf(),
+                notes = ""
+            )
+        }.toMutableList()
+    }
+
+    private fun buildTripDates(trip: TripItem): List<String> {
+        val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH)
+
+        val parsedRange = parseDateRange(trip.dateRange)
+        if (parsedRange != null) {
+            val (start, end) = parsedRange
+            val dates = mutableListOf<String>()
+            var current = start
+            while (!current.isAfter(end)) {
+                dates.add(current.format(formatter))
+                current = current.plusDays(1)
+            }
+            if (dates.isNotEmpty()) return dates
+        }
+
+        val totalDays = trip.duration.substringBefore(" ").toIntOrNull() ?: 1
+        return List(totalDays.coerceAtLeast(1)) { index ->
+            "Day ${index + 1}"
+        }
+    }
+
+    private fun parseDateRange(dateRange: String): Pair<LocalDate, LocalDate>? {
+        val formatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
+        val parts = dateRange.split("-").map { it.trim() }
+        if (parts.size != 2) return null
+
+        val startRaw = parts[0]
+        val endRaw = parts[1]
+
+        return try {
+            val end = LocalDate.parse(endRaw, formatter)
+
+            val start = if (startRaw.takeLast(4).all { it.isDigit() }) {
+                LocalDate.parse(startRaw, formatter)
+            } else {
+                LocalDate.parse("$startRaw ${end.year}", formatter)
+            }
+
+            start to end
+        } catch (_: DateTimeParseException) {
+            null
+        }
+    }
+
+    private fun ItineraryDayData.deepCopy(): ItineraryDayData {
+        return copy(
+            morningPlan = morningPlan.toMutableList(),
+            afternoonPlan = afternoonPlan.toMutableList(),
+            eveningPlan = eveningPlan.toMutableList()
+        )
     }
 }

@@ -148,7 +148,8 @@ fun VoyageTimeApp() {
 
                 composable(Routes.CREATE_TRIP) {
                     CreateTripScreen(
-                        onCancel = { navController.popBackStack() }
+                        onCancel = { navController.popBackStack() },
+                        onTripCreated = { navController.popBackStack() }
                     )
                 }
 

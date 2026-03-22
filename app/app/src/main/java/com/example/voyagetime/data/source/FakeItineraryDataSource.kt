@@ -18,8 +18,8 @@ object FakeItineraryDataSource {
             "newyork" to createNewYorkTripData()
         )
 
-    fun getTripDays(tripId: String): MutableList<ItineraryDayData> {
-        return tripsData[tripId] ?: tripsData.getValue("paris")
+    fun getStoredTripDaysOrNull(tripId: String): MutableList<ItineraryDayData>? {
+        return tripsData[tripId]
     }
 
     fun replaceTripDays(tripId: String, newDays: MutableList<ItineraryDayData>) {
