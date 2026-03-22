@@ -40,11 +40,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.example.voyagetime.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.voyagetime.R
 import kotlinx.coroutines.delay
 
 @Composable
@@ -162,7 +163,7 @@ fun SplashScreen(onFinished: () -> Unit) {
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.logo_no_background),
-                        contentDescription = "VoyageTime Logo",
+                        contentDescription = stringResource(R.string.app_name),
                         modifier = Modifier.size((100 * logoScale).dp),
                         contentScale = ContentScale.Fit
                     )
@@ -174,7 +175,7 @@ fun SplashScreen(onFinished: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "VoyageTime",
+                    text = stringResource(R.string.app_name),
                     fontSize = 34.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onBackground,
@@ -182,7 +183,7 @@ fun SplashScreen(onFinished: () -> Unit) {
                 )
 
                 Text(
-                    text = "Time your journeys beautifully",
+                    text = stringResource(R.string.splash_subtitle),
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.68f),
                     textAlign = TextAlign.Center,
@@ -197,7 +198,7 @@ fun SplashScreen(onFinished: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Loading$dots",
+                    text = stringResource(R.string.splash_loading) + dots,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = sky.copy(alpha = 0.92f)
@@ -229,7 +230,7 @@ fun SplashScreen(onFinished: () -> Unit) {
         }
 
         Text(
-            text = "v1.0.0",
+            text = stringResource(R.string.splash_version),
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.34f),
             modifier = Modifier

@@ -52,6 +52,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -150,11 +151,15 @@ fun Trips(
     val totalBudget = currentBudget + pastBudget
     val totalDays = allTrips.sumOf { it.duration.substringBefore(" ").toIntOrNull() ?: 0 }
 
-    val stats = remember(totalBudget, totalDays) {
+    val labelTrips = stringResource(R.string.stat_trips)
+    val labelDays = stringResource(R.string.stat_days_planned)
+    val labelBudget = stringResource(R.string.stat_budget)
+
+    val stats = remember(totalBudget, totalDays, labelTrips, labelDays, labelBudget) {
         listOf(
-            HomeStat("4", "Trips", Icons.Default.TravelExplore),
-            HomeStat(totalDays.toString(), "Days Planned", Icons.Default.CalendarMonth),
-            HomeStat("€$totalBudget", "Budget", Icons.Default.AttachMoney)
+            HomeStat("4", labelTrips, Icons.Default.TravelExplore),
+            HomeStat(totalDays.toString(), labelDays, Icons.Default.CalendarMonth),
+            HomeStat("€$totalBudget", labelBudget, Icons.Default.AttachMoney)
         )
     }
 
@@ -186,7 +191,7 @@ fun Trips(
     ) {
         TripsHeader(totalTrips = allTrips.size)
 
-        TripCategory(title = "Overview") {
+        TripCategory(title = stringResource(R.string.trips_section_overview)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -209,7 +214,7 @@ fun Trips(
             }
         }
 
-        TripCategory(title = "Upcoming Trips") {
+        TripCategory(title = stringResource(R.string.trips_section_upcoming)) {
             upcomingTrips.forEachIndexed { index, trip ->
                 EditableUpcomingTripCard(
                     trip = trip,
@@ -224,7 +229,7 @@ fun Trips(
             }
         }
 
-        TripCategory(title = "Past Trips") {
+        TripCategory(title = stringResource(R.string.trips_section_past)) {
             pastTrips.forEachIndexed { index, trip ->
                 PastTripCard(
                     trip = trip,
@@ -239,10 +244,10 @@ fun Trips(
             }
         }
 
-        TripCategory(title = "Travel Insights") {
+        TripCategory(title = stringResource(R.string.trips_section_insights)) {
             EditableInsightRow(
                 icon = Icons.Default.Explore,
-                title = "Favorite Region",
+                title = stringResource(R.string.trips_insight_region),
                 value = favoriteRegion,
                 isEditing = editingFavoriteRegion,
                 draftValue = favoriteRegionDraft,
@@ -269,7 +274,7 @@ fun Trips(
 
             StaticInsightRow(
                 icon = Icons.Default.FlightTakeoff,
-                title = "Next Departure",
+                title = stringResource(R.string.trips_insight_departure),
                 subtitle = "Paris — 12 Jun 2026"
             )
 
@@ -280,7 +285,7 @@ fun Trips(
 
             EditableInsightRow(
                 icon = Icons.AutoMirrored.Filled.TrendingUp,
-                title = "Travel Goal",
+                title = stringResource(R.string.trips_insight_goal),
                 value = travelGoal,
                 isEditing = editingTravelGoal,
                 draftValue = travelGoalDraft,
@@ -329,7 +334,7 @@ fun TripsHeader(totalTrips: Int) {
         ) {
             Image(
                 painter = painterResource(id = R.drawable.logo_no_background),
-                contentDescription = "VoyageTime logo",
+                contentDescription = stringResource(R.string.app_name),
                 modifier = Modifier.size(80.dp),
                 contentScale = ContentScale.Fit
             )
@@ -340,14 +345,14 @@ fun TripsHeader(totalTrips: Int) {
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "Trips",
+                text = stringResource(R.string.trips_title),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
             Text(
-                text = "Review your planned and completed trips in one place.",
+                text = stringResource(R.string.trips_header_subtitle),
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f)
@@ -367,7 +372,7 @@ fun TripOverviewDialog(
 
     when (dialogType) {
         TripDialogType.TRIPS -> {
-            title = "Trips Overview"
+            title = "Trips Overview" // translated below
             text = buildString {
                 appendLine("Total trips planned: ${trips.size}")
                 appendLine()
@@ -407,7 +412,7 @@ fun TripOverviewDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text(stringResource(R.string.dialog_close))
             }
         },
         title = { Text(text = title) },
@@ -550,11 +555,11 @@ fun EditableUpcomingTripCard(
                                     contentDescription = "Edit trip"
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Edit")
+                                Text(stringResource(R.string.trips_btn_edit))
                             }
 
                             Button(onClick = onViewClick) {
-                                Text("View Trip")
+                                Text(stringResource(R.string.trips_btn_view))
                             }
                         }
                     }
@@ -640,11 +645,11 @@ fun EditableUpcomingTripCard(
                                     contentDescription = "Edit trip"
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Edit")
+                                Text(stringResource(R.string.trips_btn_edit))
                             }
 
                             Button(onClick = onViewClick) {
-                                Text("View Trip")
+                                Text(stringResource(R.string.trips_btn_view))
                             }
                         }
                     }
@@ -668,35 +673,35 @@ fun EditableUpcomingTripCard(
                         value = draftDestination,
                         onValueChange = { draftDestination = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Destination") }
+                        label = { Text(stringResource(R.string.trips_field_destination)) }
                     )
 
                     OutlinedTextField(
                         value = draftCountry,
                         onValueChange = { draftCountry = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Country") }
+                        label = { Text(stringResource(R.string.trips_field_country)) }
                     )
 
                     OutlinedTextField(
                         value = draftDateRange,
                         onValueChange = { draftDateRange = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Date Range") }
+                        label = { Text(stringResource(R.string.trips_field_date_range)) }
                     )
 
                     OutlinedTextField(
                         value = draftDuration,
                         onValueChange = { draftDuration = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Duration") }
+                        label = { Text(stringResource(R.string.trips_field_duration)) }
                     )
 
                     OutlinedTextField(
                         value = draftBudget,
                         onValueChange = { draftBudget = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Budget") }
+                        label = { Text(stringResource(R.string.trips_field_budget)) }
                     )
 
                     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
@@ -718,13 +723,13 @@ fun EditableUpcomingTripCard(
                                         isEditing = false
                                     }
                                 ) {
-                                    Text("Cancel")
+                                    Text(stringResource(R.string.trips_btn_cancel))
                                 }
 
                                 Spacer(modifier = Modifier.width(8.dp))
 
                                 Button(onClick = { isEditing = false }) {
-                                    Text("Save")
+                                    Text(stringResource(R.string.trips_btn_save))
                                 }
                             }
                         } else {
@@ -747,11 +752,11 @@ fun EditableUpcomingTripCard(
                                             isEditing = false
                                         }
                                     ) {
-                                        Text("Cancel")
+                                        Text(stringResource(R.string.trips_btn_cancel))
                                     }
 
                                     Button(onClick = { isEditing = false }) {
-                                        Text("Save")
+                                        Text(stringResource(R.string.trips_btn_save))
                                     }
                                 }
                             }
@@ -902,7 +907,7 @@ fun EditableInsightRow(
                             contentDescription = "Edit insight"
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Edit")
+                        Text(stringResource(R.string.trips_btn_edit))
                     }
                 }
             } else {
@@ -956,7 +961,7 @@ fun EditableInsightRow(
                                 contentDescription = "Edit insight"
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Edit")
+                            Text(stringResource(R.string.trips_btn_edit))
                         }
                     }
                 }
@@ -995,13 +1000,13 @@ fun EditableInsightRow(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 TextButton(onClick = onCancel) {
-                                    Text("Cancel")
+                                    Text(stringResource(R.string.trips_btn_cancel))
                                 }
 
                                 Spacer(modifier = Modifier.width(8.dp))
 
                                 Button(onClick = onSave) {
-                                    Text("Save")
+                                    Text(stringResource(R.string.trips_btn_save))
                                 }
                             }
                         } else {
@@ -1015,11 +1020,11 @@ fun EditableInsightRow(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     TextButton(onClick = onCancel) {
-                                        Text("Cancel")
+                                        Text(stringResource(R.string.trips_btn_cancel))
                                     }
 
                                     Button(onClick = onSave) {
-                                        Text("Save")
+                                        Text(stringResource(R.string.trips_btn_save))
                                     }
                                 }
                             }

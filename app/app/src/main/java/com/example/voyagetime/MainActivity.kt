@@ -1,5 +1,6 @@
 package com.example.voyagetime
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -38,21 +40,43 @@ import com.example.voyagetime.ui.screens.Preferences
 import com.example.voyagetime.ui.screens.TermsAndConditions
 import com.example.voyagetime.ui.screens.TermsAcceptanceScreen
 import com.example.voyagetime.ui.screens.Itinerary
+import com.example.voyagetime.ui.screens.LanguageManager
 import com.example.voyagetime.ui.screens.SplashScreen
 import com.example.voyagetime.ui.screens.TravelStyleScreen
 import com.example.voyagetime.ui.screens.CreateTripScreen
 import com.example.voyagetime.ui.theme.VoyageTimeTheme
 
+// Three possible app flows:
+// SPLASH → TERMS_ACCEPTANCE → MAIN  (first launch)
+// SPLASH → MAIN                     (language change via recreate())
+// The language-change case is handled by passing startAfterSplash = MAIN
+// through an Intent extra set in Preferences before calling recreate().
 enum class AppScreen {
     SPLASH,
     TERMS_ACCEPTANCE,
     MAIN
 }
 
+const val EXTRA_START_AFTER_SPLASH = "start_after_splash"
+
 class MainActivity : ComponentActivity() {
+
+    // Apply the saved language before any resource is inflated.
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LanguageManager.applyLanguage(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // When the activity is recreated after a language change, Preferences
+        // sets this extra so we skip Terms and go straight to Preferences.
+        val startAfterSplash = intent
+            .getStringExtra(EXTRA_START_AFTER_SPLASH)
+            ?.let { AppScreen.valueOf(it) }
+            ?: AppScreen.TERMS_ACCEPTANCE
+
         setContent {
             VoyageTimeTheme {
                 var currentScreen by remember { mutableStateOf(AppScreen.SPLASH) }
@@ -60,7 +84,7 @@ class MainActivity : ComponentActivity() {
                 when (currentScreen) {
                     AppScreen.SPLASH -> {
                         SplashScreen(onFinished = {
-                            currentScreen = AppScreen.TERMS_ACCEPTANCE
+                            currentScreen = startAfterSplash
                         })
                     }
                     AppScreen.TERMS_ACCEPTANCE -> {
@@ -85,14 +109,14 @@ data class NavItem(
 )
 
 @Composable
-fun VoyageTimeApp() {
+fun VoyageTimeApp(startDestination: String = Routes.HOME) {
     val navController = rememberNavController()
 
     val items = listOf(
-        NavItem(Routes.HOME, "Home", Icons.Default.Home),
-        NavItem(Routes.TRIPS, "Trips", Icons.Default.Place),
-        NavItem(Routes.GALLERY, "Gallery", Icons.Default.PhotoLibrary),
-        NavItem(Routes.PREFERENCES, "Preferences", Icons.Default.AccountBox),
+        NavItem(Routes.HOME, stringResource(R.string.nav_home), Icons.Default.Home),
+        NavItem(Routes.TRIPS, stringResource(R.string.nav_trips), Icons.Default.Place),
+        NavItem(Routes.GALLERY, stringResource(R.string.nav_gallery), Icons.Default.PhotoLibrary),
+        NavItem(Routes.PREFERENCES, stringResource(R.string.nav_preferences), Icons.Default.AccountBox),
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -126,7 +150,7 @@ fun VoyageTimeApp() {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             NavHost(
                 navController = navController,
-                startDestination = Routes.HOME,
+                startDestination = startDestination,
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable(Routes.HOME) {
@@ -199,7 +223,7 @@ fun VoyageTimeApp() {
 
 object Routes {
     const val HOME = "home"
-    const val CREATE_TRIP =  "create_trip"
+    const val CREATE_TRIP = "create_trip"
     const val TRIPS = "trips"
     const val ITINERARY = "itinerary"
     const val DEPARTURE_CITY = "departure_city"

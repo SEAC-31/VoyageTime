@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">VoyageTime</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_trips">Viajes</string>
+    <string name="nav_gallery">Galería</string>
+    <string name="nav_preferences">Preferencias</string>
+
+    <!-- Splash -->
+    <string name="splash_tagline">Tu compañero de viaje</string>
+    <string name="splash_loading">Cargando</string>
+    <string name="splash_version">v1.0.0</string>
+    <string name="splash_subtitle">Organiza tus viajes con estilo</string>
+
+    <!-- Home -->
+    <string name="home_title">Inicio</string>
+    <string name="home_subtitle">¡Bienvenido de nuevo, viajero!</string>
+    <string name="home_add_trip">Añadir nuevo viaje</string>
+    <string name="home_section_overview">Resumen</string>
+    <string name="home_section_next_trip">Próximo viaje</string>
+    <string name="home_section_featured">Viajes destacados</string>
+    <string name="home_section_quick_info">Información rápida</string>
+    <string name="home_tap_itinerary">Toca para abrir el itinerario de este viaje.</string>
+    <string name="home_dashboard_subtitle">Tu panel de viajes para planes, itinerarios y viajes memorables.</string>
+    <string name="home_departure_city">Ciudad de salida</string>
+    <string name="home_travel_style">Estilo de viaje</string>
+    <string name="home_departure_default">Barcelona</string>
+    <string name="home_style_default">Escapada urbana, cultura y gastronomía</string>
+
+    <!-- Stats -->
+    <string name="stat_trips">Viajes</string>
+    <string name="stat_days_planned">Días planificados</string>
+    <string name="stat_budget">Presupuesto</string>
+
+    <!-- Dialog -->
+    <string name="dialog_close">Cerrar</string>
+    <string name="dialog_trips_title">Resumen de viajes</string>
+    <string name="dialog_trips_header">Tienes actualmente %d viajes:</string>
+    <string name="dialog_days_title">Días planificados</string>
+    <string name="dialog_days_header">Fechas de los viajes:</string>
+    <string name="dialog_budget_title">Detalles del presupuesto</string>
+    <string name="dialog_budget_header">Costes estimados por viaje:</string>
+    <string name="dialog_budget_total">Presupuesto total: €%d</string>
+
+    <!-- Trip status -->
+    <string name="status_upcoming">Próximo</string>
+    <string name="status_planned">Planificado</string>
+    <string name="status_completed">Completado</string>
+
+    <!-- Trips screen -->
+    <string name="trips_title">Viajes</string>
+    <string name="trips_empty">Aún no hay viajes. ¡Empieza a planificar!</string>
+    <string name="trips_header_subtitle">Revisa tus viajes planificados y completados en un solo lugar.</string>
+    <string name="trips_section_overview">Resumen</string>
+    <string name="trips_section_upcoming">Próximos viajes</string>
+    <string name="trips_section_past">Viajes pasados</string>
+    <string name="trips_section_insights">Análisis de viajes</string>
+    <string name="trips_insight_region">Región favorita</string>
+    <string name="trips_insight_departure">Próxima salida</string>
+    <string name="trips_insight_goal">Objetivo de viaje</string>
+    <string name="trips_insight_region_default">Europa y Norteamérica</string>
+    <string name="trips_insight_goal_default">Completar 4 viajes memorables con itinerarios claros</string>
+    <string name="trips_total_planned">Total de viajes planificados: %d</string>
+    <string name="trips_trip_dates">Fechas de los viajes:</string>
+    <string name="trips_btn_edit">Editar</string>
+    <string name="trips_btn_view">Ver viaje</string>
+    <string name="trips_btn_save">Guardar</string>
+    <string name="trips_btn_cancel">Cancelar</string>
+    <string name="trips_field_destination">Destino</string>
+    <string name="trips_field_country">País</string>
+    <string name="trips_field_date_range">Rango de fechas</string>
+    <string name="trips_field_duration">Duración</string>
+    <string name="trips_field_budget">Presupuesto</string>
+
+    <!-- Gallery -->
+    <string name="gallery_title">Galería</string>
+    <string name="gallery_filter_all">Todo</string>
+    <string name="gallery_filter_favorites">Favoritos</string>
+    <string name="gallery_filter_recent">Recientes</string>
+    <string name="gallery_sort_prefix">Ordenar por: </string>
+    <string name="gallery_sort_date">Fecha añadido</string>
+    <string name="gallery_sort_name">Nombre</string>
+    <string name="gallery_sort_size">Tamaño</string>
+    <string name="gallery_sort_location">Ubicación</string>
+    <string name="gallery_items_count">%d elementos</string>
+    <string name="gallery_add">Añadir foto o vídeo</string>
+    <string name="gallery_detail_location">Ubicación</string>
+    <string name="gallery_detail_date">Fecha añadido</string>
+    <string name="gallery_detail_type">Tipo</string>
+    <string name="gallery_detail_size">Tamaño del archivo</string>
+    <string name="gallery_detail_favorite">Favorito</string>
+    <string name="gallery_detail_yes">Sí</string>
+    <string name="gallery_detail_no">No</string>
+    <string name="gallery_detail_delete">Eliminar</string>
+    <string name="gallery_type_photo">Foto</string>
+    <string name="gallery_type_video">Vídeo</string>
+    <string name="gallery_btn_delete">Eliminar</string>
+
+    <!-- Itinerary -->
+    <string name="itinerary_morning">Plan de mañana</string>
+    <string name="itinerary_afternoon">Plan de tarde</string>
+    <string name="itinerary_evening">Plan de noche</string>
+    <string name="itinerary_day_notes">Notas del día</string>
+    <string name="itinerary_notes_label">Notas</string>
+    <string name="itinerary_add_event">Añadir evento</string>
+    <string name="itinerary_btn_edit">Editar</string>
+    <string name="itinerary_btn_delete">Eliminar</string>
+    <string name="itinerary_btn_save">Guardar</string>
+    <string name="itinerary_btn_cancel">Cancelar</string>
+    <string name="itinerary_btn_select_icon">Seleccionar icono</string>
+    <string name="itinerary_field_title">Título del evento</string>
+    <string name="itinerary_field_location">Ubicación</string>
+    <string name="itinerary_field_time">Hora</string>
+    <string name="itinerary_field_cost">Coste</string>
+    <string name="itinerary_field_notes">Editar notas</string>
+    <string name="itinerary_add_morning">Añadir evento de mañana</string>
+    <string name="itinerary_edit_morning">Editar evento de mañana</string>
+    <string name="itinerary_add_afternoon">Añadir evento de tarde</string>
+    <string name="itinerary_edit_afternoon">Editar evento de tarde</string>
+    <string name="itinerary_add_evening">Añadir evento de noche</string>
+    <string name="itinerary_edit_evening">Editar evento de noche</string>
+    <string name="itinerary_hero_subtitle">Planifica cada día con una estructura clara de mañana, tarde y noche.</string>
+    <string name="itinerary_icon_restaurant">Restaurante</string>
+    <string name="itinerary_icon_tour">Tour</string>
+    <string name="itinerary_icon_place">Lugar</string>
+    <string name="itinerary_icon_map">Mapa</string>
+    <string name="itinerary_icon_train">Tren</string>
+    <string name="itinerary_free">Gratis</string>
+
+    <!-- Departure City -->
+    <string name="departure_title">Ciudad de salida</string>
+    <string name="departure_section_current">Ciudad actual</string>
+    <string name="departure_section_edit">Opciones de edición</string>
+    <string name="departure_field_city">Ciudad de salida seleccionada</string>
+    <string name="departure_field_country">País</string>
+    <string name="departure_field_airport">Área de aeropuerto preferida</string>
+    <string name="departure_btn_edit_city">Editar ciudad de salida</string>
+    <string name="departure_btn_edit_country">Editar país</string>
+    <string name="departure_btn_edit_airport">Editar área de aeropuerto</string>
+    <string name="departure_label_city">Ciudad de salida</string>
+    <string name="departure_label_country">País</string>
+    <string name="departure_label_airport">Área de aeropuerto preferida</string>
+    <string name="departure_btn_save">Guardar</string>
+    <string name="departure_btn_cancel">Cancelar</string>
+    <string name="departure_default_city">Barcelona</string>
+    <string name="departure_default_country">España</string>
+    <string name="departure_default_airport">Área metropolitana de Barcelona</string>
+
+    <!-- Travel Style -->
+    <string name="travel_style_title">Estilo de viaje</string>
+    <string name="travel_style_section_current">Estilo actual</string>
+    <string name="travel_style_section_edit">Opciones de edición</string>
+    <string name="travel_style_field_style">Estilo seleccionado</string>
+    <string name="travel_style_field_main">Interés principal</string>
+    <string name="travel_style_field_secondary">Interés secundario</string>
+    <string name="travel_style_btn_edit_style">Editar estilo seleccionado</string>
+    <string name="travel_style_btn_edit_main">Editar interés principal</string>
+    <string name="travel_style_btn_edit_secondary">Editar interés secundario</string>
+    <string name="travel_style_label_style">Estilo seleccionado</string>
+    <string name="travel_style_label_main">Interés principal</string>
+    <string name="travel_style_label_secondary">Interés secundario</string>
+    <string name="travel_style_btn_save">Guardar</string>
+    <string name="travel_style_btn_cancel">Cancelar</string>
+    <string name="travel_style_default_style">Escapada urbana, cultura y gastronomía</string>
+    <string name="travel_style_default_main">Museos, monumentos y rutas culturales</string>
+    <string name="travel_style_default_secondary">Gastronomía local y cafeterías</string>
+
+    <!-- Create Trip -->
+    <string name="create_trip_title">Crear viaje</string>
+    <string name="create_trip_field_destination">Destino</string>
+    <string name="create_trip_field_country">País</string>
+    <string name="create_trip_field_start">Fecha de inicio</string>
+    <string name="create_trip_field_end">Fecha de fin</string>
+    <string name="create_trip_field_budget">Presupuesto</string>
+    <string name="create_trip_btn_create">Crear viaje</string>
+    <string name="create_trip_btn_cancel">Cancelar</string>
+
+    <!-- Preferences -->
+    <string name="preferences_title">Preferencias</string>
+    <string name="pref_section_appearance">Apariencia</string>
+    <string name="pref_section_notifications">Notificaciones</string>
+    <string name="pref_section_data">Datos y almacenamiento</string>
+    <string name="pref_section_display">Visualización</string>
+    <string name="pref_section_account">Cuenta</string>
+    <string name="pref_dark_mode">Modo oscuro</string>
+    <string name="pref_dark_mode_sub">Cambia entre tema claro y oscuro</string>
+    <string name="pref_theme">Tema de la app</string>
+    <string name="pref_theme_sub">Azul océano</string>
+    <string name="pref_language">Idioma</string>
+    <string name="pref_language_sub">Castellano</string>
+    <string name="pref_notifications">Notificaciones push</string>
+    <string name="pref_notifications_sub">Recibe alertas sobre tus viajes</string>
+    <string name="pref_location">Acceso a la ubicación</string>
+    <string name="pref_location_sub">Permite a la app usar tu ubicación</string>
+    <string name="pref_offline">Modo sin conexión</string>
+    <string name="pref_offline_sub">Guarda viajes para acceder sin conexión</string>
+    <string name="pref_autosync">Sincronización automática</string>
+    <string name="pref_autosync_sub">Sincroniza los datos automáticamente en segundo plano</string>
+    <string name="pref_clear_cache">Vaciar caché</string>
+    <string name="pref_clear_cache_sub">Libera espacio de almacenamiento</string>
+    <string name="pref_show_prices">Mostrar precios</string>
+    <string name="pref_show_prices_sub">Muestra los costes estimados en los viajes</string>
+    <string name="pref_currency">Moneda</string>
+    <string name="pref_currency_sub">EUR — Euro</string>
+    <string name="pref_edit_profile">Editar perfil</string>
+    <string name="pref_edit_profile_sub">Cambia tu información personal</string>
+    <string name="pref_privacy">Privacidad y seguridad</string>
+    <string name="pref_privacy_sub">Gestiona tus datos y permisos</string>
+    <string name="pref_about">Sobre VoyageTime</string>
+    <string name="pref_about_sub">Versión 1.0</string>
+    <string name="pref_terms">Términos y condiciones</string>
+    <string name="pref_terms_sub">Lee nuestros términos de servicio</string>
+    <string name="pref_logout">Cerrar sesión</string>
+
+    <!-- Language Dialog -->
+    <string name="lang_dialog_title">Seleccionar idioma</string>
+    <string name="lang_dialog_accept">Aceptar</string>
+    <string name="lang_dialog_cancel">Cancelar</string>
+    <string name="lang_english">English</string>
+    <string name="lang_spanish">Castellano</string>
+    <string name="lang_catalan">Català</string>
+
+    <!-- About Us -->
+    <string name="about_title">Sobre VoyageTime</string>
+    <string name="about_version">Versión 1.0.0</string>
+    <string name="about_what_title">¿Qué es VoyageTime?</string>
+    <string name="about_what_body">VoyageTime es tu compañero de viaje personal. Planifica viajes, organiza itinerarios, registra ideas y guarda todos tus recuerdos de viaje en un solo lugar con una experiencia limpia y visual.</string>
+    <string name="about_features_title">Características principales</string>
+    <string name="about_feature_trips">Planifica y gestiona tus viajes fácilmente</string>
+    <string name="about_feature_gallery">Guarda una galería de tus recuerdos de viaje</string>
+    <string name="about_feature_itinerary">Organiza itinerarios detallados día a día</string>
+    <string name="about_feature_notifications">Recibe recordatorios de tus próximos viajes</string>
+    <string name="about_feature_offline">Accede a información importante sin conexión</string>
+    <string name="about_mission_title">Nuestra misión</string>
+    <string name="about_mission_body">Creamos VoyageTime para que la planificación de viajes sea inspiradora, sencilla y visualmente agradable. Cada viaje merece un lugar donde los tiempos, las ideas, los recuerdos y la planificación se unan de forma hermosa.</string>
+    <string name="about_tech_title">Información técnica</string>
+    <string name="about_tech_kotlin">Desarrollado con Kotlin y Jetpack Compose</string>
+    <string name="about_tech_storage">Organización local de viajes y datos editables</string>
+    <string name="about_tech_nav">Navegación estructurada y diseño escalable de pantallas</string>
+    <string name="about_footer_tagline">Diseñado para viajeros que buscan claridad, estilo y control.</string>
+    <string name="about_team_title">👥  Nuestro equipo</string>
+    <string name="about_team_body">VoyageTime está creado con pasión por un pequeño equipo de entusiastas de los viajes y desarrolladores. Creemos que viajar cambia vidas y queremos que planificarlo sea tan agradable como el propio viaje.</string>
+    <string name="about_contact_title">📬  Contacto</string>
+    <string name="about_contact_body">¿Tienes comentarios o has encontrado un error? Nos encantaría saberlo.</string>
+    <string name="about_contact_email">contact@voyagetime.app</string>
+    <string name="about_footer">Hecho con ❤️ para viajeros\n© 2025 VoyageTime</string>
+    <string name="about_back">Volver atrás</string>
+
+    <!-- Terms & Conditions -->
+    <string name="terms_title">Términos y condiciones</string>
+    <string name="terms_last_updated">Última actualización: 1 de marzo de 2025</string>
+    <string name="terms_intro">Lee detenidamente estos Términos y Condiciones antes de usar la aplicación VoyageTime. Al acceder o usar nuestro servicio, aceptas quedar vinculado por estos términos.</string>
+    <string name="terms_s1_title">Aceptación de los términos</string>
+    <string name="terms_s1_body">Al descargar, instalar o usar VoyageTime, confirmas que tienes al menos 16 años de edad y aceptas cumplir y quedar vinculado por estos Términos y Condiciones. Si no aceptas alguna parte de estos términos, no debes usar nuestra aplicación.\n\nNos reservamos el derecho de actualizar o modificar estos términos en cualquier momento. El uso continuado de la aplicación después de publicar los cambios constituye la aceptación de los términos revisados.</string>
+    <string name="terms_s2_title">Uso de la aplicación</string>
+    <string name="terms_s2_body">VoyageTime te otorga una licencia limitada, no exclusiva, intransferible y revocable para usar la aplicación con fines personales y no comerciales.\n\nAceptas no:\n• Usar la aplicación para fines ilegales o en violación de normativas locales, nacionales o internacionales.\n• Reproducir, duplicar, copiar, vender o explotar cualquier parte del servicio sin permiso escrito expreso.\n• Intentar obtener acceso no autorizado a ninguna parte de la aplicación o sus sistemas relacionados.\n• Cargar o transmitir código malicioso, virus o contenido dañino.</string>
+    <string name="terms_s3_title">Contenido del usuario</string>
+    <string name="terms_s3_body">Conservas la plena propiedad de cualquier contenido que subas a VoyageTime, incluyendo fotos, vídeos, notas de viajes e itinerarios (\'Contenido del usuario\').\n\nAl subir Contenido del usuario, otorgas a VoyageTime una licencia limitada, mundial y libre de regalías para almacenar y mostrar ese contenido únicamente con el fin de prestarte el servicio.\n\nEres el único responsable de la exactitud, legalidad y adecuación de cualquier contenido que subas. VoyageTime no supervisa el Contenido del usuario, pero se reserva el derecho de eliminar contenido que vulnere estos Términos.</string>
+    <string name="terms_s4_title">Privacidad y datos</string>
+    <string name="terms_s4_body">Tu privacidad es importante para nosotros. Nuestra Política de privacidad, incorporada a estos Términos por referencia, explica cómo recopilamos, usamos y compartimos información sobre ti cuando usas VoyageTime.\n\nRecopilamos solo los datos necesarios para prestar el servicio, incluyendo información de la cuenta, datos de viajes y análisis de uso. No vendemos tus datos personales a terceros.\n\nPuedes solicitar la eliminación de tu cuenta y los datos asociados en cualquier momento contactándonos en contact@voyagetime.app.</string>
+    <string name="terms_s5_title">Propiedad intelectual</string>
+    <string name="terms_s5_body">Todos los derechos, títulos e intereses sobre VoyageTime —incluyendo pero no limitado al software, diseño, gráficos, logotipos y marcas comerciales— son y seguirán siendo propiedad exclusiva de VoyageTime y sus licenciantes.\n\nNo puedes usar nuestras marcas comerciales, logotipos o activos de marca sin consentimiento previo por escrito.</string>
+    <string name="terms_s6_title">Servicios de terceros</string>
+    <string name="terms_s6_body">VoyageTime puede integrarse con servicios de terceros como proveedores de mapas, APIs meteorológicas y soluciones de almacenamiento en la nube. Estos servicios se rigen por sus propios términos y políticas de privacidad.\n\nNo somos responsables del contenido, exactitud ni prácticas de ningún servicio de terceros. Los enlaces a sitios web de terceros dentro de la aplicación no constituyen un respaldo.</string>
+    <string name="terms_s7_title">Exclusión de garantías</string>
+    <string name="terms_s7_body">VoyageTime se proporciona \"tal cual\" y \"según disponibilidad\" sin garantías de ningún tipo, ya sean expresas o implícitas, incluyendo pero no limitado a garantías implícitas de comerciabilidad, idoneidad para un fin particular o no infracción.\n\nNo garantizamos que la aplicación sea ininterrumpida, libre de errores o libre de virus u otros componentes dañinos. La información de viajes proporcionada en la app es solo orientativa y siempre debe verificarse con fuentes oficiales antes de viajar.</string>
+    <string name="terms_s8_title">Limitación de responsabilidad</string>
+    <string name="terms_s8_body">En la máxima medida permitida por la ley aplicable, VoyageTime no será responsable de ningún daño indirecto, incidental, especial, consecuente o punitivo, incluyendo pero no limitado a pérdida de beneficios, datos o fondo de comercio, resultante de:\n• Tu uso o incapacidad de usar la aplicación.\n• Acceso no autorizado a tus datos.\n• Errores o inexactitudes en el contenido de viajes.\n• Cualquier otro asunto relacionado con el servicio.</string>
+    <string name="terms_s9_title">Cancelación de cuenta</string>
+    <string name="terms_s9_body">Nos reservamos el derecho de suspender o cancelar tu cuenta a nuestra discreción, sin previo aviso, si creemos que has violado estos Términos o participado en conductas perjudiciales para otros usuarios o la integridad del servicio.\n\nPuedes eliminar tu cuenta en cualquier momento a través de la configuración de la cuenta. Tras la eliminación, tus datos se eliminarán permanentemente en un plazo de 30 días, salvo que la ley exija su conservación.</string>
+    <string name="terms_s10_title">Ley aplicable</string>
+    <string name="terms_s10_body">Estos Términos se regirán e interpretarán de conformidad con las leyes de la Unión Europea y el Reino de España, sin tener en cuenta sus disposiciones sobre conflicto de leyes.\n\nCualquier disputa que surja de estos Términos estará sujeta a la jurisdicción exclusiva de los tribunales ubicados en Barcelona, España.</string>
+    <string name="terms_s11_title">Contáctanos</string>
+    <string name="terms_s11_body">Si tienes alguna pregunta sobre estos Términos y Condiciones, contáctanos:\n\nEmail: legal@voyagetime.app\nDirección: VoyageTime, Carrer de la Tecnologia 42, 08000 Barcelona, España</string>
+    <string name="terms_footer">Al usar VoyageTime, reconoces que has leído, comprendido y aceptas quedar vinculado por estos Términos y Condiciones.</string>
+
+    <!-- Terms Acceptance Screen -->
+    <string name="terms_accept_disclaimer">Al pulsar \"Aceptar\", confirmas que has leído y aceptas nuestros Términos y Condiciones y Política de privacidad.</string>
+    <string name="terms_accept_btn">Aceptar y continuar</string>
+    <string name="terms_decline_btn">Rechazar</string>
+    <string name="terms_accept_subtitle">Lee detenidamente nuestros Términos y Condiciones antes de usar VoyageTime.</string>
+    <string name="terms_accept_s1_title">1. Aceptación de los términos</string>
+    <string name="terms_accept_s1_body">Al usar VoyageTime, confirmas que tienes al menos 16 años y aceptas cumplir estos Términos. Si no estás de acuerdo, no debes usar la aplicación.</string>
+    <string name="terms_accept_s2_title">2. Uso de la aplicación</string>
+    <string name="terms_accept_s2_body">VoyageTime te otorga una licencia limitada y no exclusiva para usar la app con fines personales y no comerciales. Aceptas no usar la app para fines ilegales ni intentar acceder sin autorización a ninguna parte del servicio.</string>
+    <string name="terms_accept_s3_title">3. Contenido del usuario</string>
+    <string name="terms_accept_s3_body">Conservas la propiedad del contenido que subas. Al subir contenido, otorgas a VoyageTime una licencia limitada para almacenarlo y mostrarlo únicamente para prestar el servicio. Eres responsable de la legalidad y exactitud de tu contenido.</string>
+    <string name="terms_accept_s4_title">4. Privacidad y datos</string>
+    <string name="terms_accept_s4_body">Recopilamos solo los datos necesarios para prestar el servicio. No vendemos tus datos personales a terceros. Puedes solicitar la eliminación de tu cuenta y datos en cualquier momento contactando a contact@voyagetime.app.</string>
+    <string name="terms_accept_s5_title">5. Exclusión de garantías</string>
+    <string name="terms_accept_s5_body">VoyageTime se proporciona \"tal cual\" sin garantías de ningún tipo. La información de viajes es solo orientativa y siempre debe verificarse con fuentes oficiales antes de viajar.</string>
+    <string name="terms_accept_s6_title">6. Limitación de responsabilidad</string>
+    <string name="terms_accept_s6_body">VoyageTime no será responsable de ningún daño indirecto, incidental o consecuente derivado del uso de la aplicación o de decisiones de viaje tomadas con base en la información proporcionada.</string>
+    <string name="terms_accept_s7_title">7. Ley aplicable</string>
+    <string name="terms_accept_s7_body">Estos Términos se rigen por las leyes de la Unión Europea y el Reino de España. Las disputas estarán sujetas a la jurisdicción de los tribunales de Barcelona, España.</string>
+    <string name="terms_accept_s8_title">8. Contacto</string>
+    <string name="terms_accept_s8_body">Para preguntas sobre estos Términos, contáctanos en:\nlegal@voyagetime.app</string>
+</resources>
