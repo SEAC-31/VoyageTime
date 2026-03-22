@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,23 +23,16 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.voyagetime.R
 
-// ── DATA MODEL ───────────────────────────────────────────────
-
 data class GalleryItem(
-    val id: Int,
-    val name: String,
-    val location: String,
-    val dateAdded: String,
-    val type: String,
-    val isFavorite: Boolean,
-    val size: String,
-    val color: Color,
+    val id: Int, val name: String, val location: String, val dateAdded: String,
+    val type: String, val isFavorite: Boolean, val size: String, val color: Color,
     @DrawableRes val imageRes: Int? = null
 )
 
@@ -51,16 +43,18 @@ val sampleGalleryItems = listOf(
     GalleryItem(4, "Tokyo", "Tokyo, Japan", "November 5, 2024", "photo", false, "4.1 MB", Color(0xFF66BB6A), R.drawable.tokyo),
 )
 
-// ── MAIN GALLERY SCREEN ──────────────────────────────────────
-
 @Composable
 fun Gallery(modifier: Modifier = Modifier) {
     var selectedItem by remember { mutableStateOf<GalleryItem?>(null) }
     var selectedFilter by remember { mutableStateOf("all") }
     var sortExpanded by remember { mutableStateOf(false) }
-    var selectedSort by remember { mutableStateOf("Date Added") }
 
-    val sortOptions = listOf("Date Added", "Name", "Size", "Location")
+    val sortDateLabel = stringResource(R.string.gallery_sort_date)
+    val sortNameLabel = stringResource(R.string.gallery_sort_name)
+    val sortSizeLabel = stringResource(R.string.gallery_sort_size)
+    val sortLocationLabel = stringResource(R.string.gallery_sort_location)
+    var selectedSort by remember { mutableStateOf(sortDateLabel) }
+    val sortOptions = listOf(sortDateLabel, sortNameLabel, sortSizeLabel, sortLocationLabel)
 
     val filteredItems = when (selectedFilter) {
         "favorites" -> sampleGalleryItems.filter { it.isFavorite }
@@ -69,62 +63,32 @@ fun Gallery(modifier: Modifier = Modifier) {
     }
 
     if (selectedItem != null) {
-        GalleryDetailScreen(
-            item = selectedItem!!,
-            onBack = { selectedItem = null }
-        )
+        GalleryDetailScreen(item = selectedItem!!, onBack = { selectedItem = null })
     } else {
-        Box(modifier = modifier.fillMaxSize()) {
+        Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             Column(modifier = Modifier.fillMaxSize()) {
+                Text(text = stringResource(R.string.gallery_title), fontSize = 28.sp, fontWeight = FontWeight.Bold,
+                    color = if (MaterialTheme.colorScheme.background.red < 0.5f) Color(0xFFFFFFFF) else Color(0xFF111111), modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp))
 
-                Text(
-                    text = "Gallery",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChipItem("All", selectedFilter == "all", { selectedFilter = "all" })
-                    FilterChipItem(
-                        label = "Favorites",
-                        selected = selectedFilter == "favorites",
+                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChipItem(stringResource(R.string.gallery_filter_all), selectedFilter == "all", { selectedFilter = "all" })
+                    FilterChipItem(label = stringResource(R.string.gallery_filter_favorites), selected = selectedFilter == "favorites",
                         onClick = { selectedFilter = "favorites" },
-                        leadingIcon = {
-                            Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(14.dp))
-                        }
-                    )
-                    FilterChipItem("Recent", selectedFilter == "recent", { selectedFilter = "recent" })
+                        leadingIcon = { Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(14.dp)) })
+                    FilterChipItem(stringResource(R.string.gallery_filter_recent), selectedFilter == "recent", { selectedFilter = "recent" })
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "${filteredItems.size} items",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                        fontWeight = FontWeight.Medium
-                    )
+                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(text = stringResource(R.string.gallery_items_count, filteredItems.size), fontSize = 13.sp,
+                        color = if (MaterialTheme.colorScheme.background.red < 0.5f) Color(0xFFFFFFFF).copy(alpha = 0.5f) else Color(0xFF111111).copy(alpha = 0.5f), fontWeight = FontWeight.Medium)
                     Box {
-                        Row(
-                            modifier = Modifier
-                                .clickable { sortExpanded = true }
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text("Sort by: $selectedSort", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+                        Row(modifier = Modifier.clickable { sortExpanded = true }.clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)).padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(stringResource(R.string.gallery_sort_prefix) + selectedSort, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                             Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurface)
                         }
                         DropdownMenu(expanded = sortExpanded, onDismissRequest = { sortExpanded = false }) {
@@ -132,9 +96,7 @@ fun Gallery(modifier: Modifier = Modifier) {
                                 DropdownMenuItem(
                                     text = { Text(option) },
                                     onClick = { selectedSort = option; sortExpanded = false },
-                                    leadingIcon = if (selectedSort == option) {
-                                        { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                                    } else null
+                                    leadingIcon = if (selectedSort == option) { { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) } } else null
                                 )
                             }
                         }
@@ -143,117 +105,56 @@ fun Gallery(modifier: Modifier = Modifier) {
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    items(filteredItems) { item ->
-                        GalleryGridItem(item = item, onClick = { selectedItem = item })
-                    }
+                LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    items(filteredItems) { item -> GalleryGridItem(item = item, onClick = { selectedItem = item }) }
                 }
             }
 
-            FloatingActionButton(
-                onClick = {},
-                modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp),
-                containerColor = MaterialTheme.colorScheme.primary,
-                shape = CircleShape
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add photo or video", tint = MaterialTheme.colorScheme.onPrimary)
+            FloatingActionButton(onClick = {}, modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp),
+                containerColor = MaterialTheme.colorScheme.primary, shape = CircleShape) {
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.gallery_add), tint = MaterialTheme.colorScheme.onPrimary)
             }
         }
     }
 }
-
-// ── GRID ITEM ────────────────────────────────────────────────
 
 @Composable
 fun GalleryGridItem(item: GalleryItem, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .aspectRatio(1f)
-            .clip(RoundedCornerShape(6.dp))
-            .clickable { onClick() }
-    ) {
+    Box(modifier = Modifier.aspectRatio(1f).clip(RoundedCornerShape(6.dp)).clickable { onClick() }) {
         if (item.imageRes != null) {
-            Image(
-                painter = painterResource(id = item.imageRes),
-                contentDescription = item.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
+            Image(painter = painterResource(id = item.imageRes), contentDescription = item.name,
+                contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
         } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Brush.verticalGradient(colors = listOf(item.color.copy(alpha = 0.6f), item.color)))
-            )
+            Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(colors = listOf(item.color.copy(alpha = 0.6f), item.color))))
         }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomStart)
-                .background(Brush.verticalGradient(colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f))))
-                .padding(4.dp)
-        ) {
-            Text(
-                text = item.location.split(",")[0],
-                fontSize = 9.sp,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+        Box(modifier = Modifier.fillMaxWidth().align(Alignment.BottomStart)
+            .background(Brush.verticalGradient(colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f)))).padding(4.dp)) {
+            Text(text = item.location.split(",")[0], fontSize = 9.sp, color = Color.White, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-
         if (item.type == "video") {
-            Box(
-                modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).size(18.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.5f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.PlayArrow, contentDescription = "Video", tint = Color.White, modifier = Modifier.size(12.dp))
+            Box(modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).size(18.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
             }
         }
-
         if (item.isFavorite) {
-            Box(
-                modifier = Modifier.align(Alignment.TopStart).padding(4.dp).size(18.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.5f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Star, contentDescription = "Favorite", tint = Color(0xFFFFCA28), modifier = Modifier.size(11.dp))
+            Box(modifier = Modifier.align(Alignment.TopStart).padding(4.dp).size(18.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFCA28), modifier = Modifier.size(11.dp))
             }
         }
     }
 }
 
-// ── FILTER CHIP ──────────────────────────────────────────────
-
 @Composable
-fun FilterChipItem(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    leadingIcon: (@Composable () -> Unit)? = null
-) {
+fun FilterChipItem(label: String, selected: Boolean, onClick: () -> Unit, leadingIcon: (@Composable () -> Unit)? = null) {
     val bgColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
     val textColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-
-    Row(
-        modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(bgColor).clickable { onClick() }.padding(horizontal = 14.dp, vertical = 7.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        if (leadingIcon != null) {
-            CompositionLocalProvider(LocalContentColor provides textColor) { leadingIcon() }
-        }
+    Row(modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(bgColor).clickable { onClick() }.padding(horizontal = 14.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (leadingIcon != null) CompositionLocalProvider(LocalContentColor provides textColor) { leadingIcon() }
         Text(text = label, fontSize = 13.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal, color = textColor)
     }
 }
-
-// ── DETAIL SCREEN ────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -262,108 +163,63 @@ fun GalleryDetailScreen(item: GalleryItem, onBack: () -> Unit) {
         topBar = {
             TopAppBar(
                 title = { Text(item.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Go back")
-                    }
-                },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.about_back)) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(innerPadding)
-        ) {
-            Box(
-                modifier = Modifier.fillMaxWidth().height(300.dp),
-                contentAlignment = Alignment.Center
-            ) {
+        Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(innerPadding)) {
+            Box(modifier = Modifier.fillMaxWidth().height(300.dp), contentAlignment = Alignment.Center) {
                 if (item.imageRes != null) {
-                    Image(
-                        painter = painterResource(id = item.imageRes),
-                        contentDescription = item.name,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    Image(painter = painterResource(id = item.imageRes), contentDescription = item.name,
+                        contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 } else {
-                    Box(
-                        modifier = Modifier.fillMaxSize().background(
-                            Brush.verticalGradient(colors = listOf(item.color.copy(alpha = 0.7f), item.color))
-                        ),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(colors = listOf(item.color.copy(alpha = 0.7f), item.color))), contentAlignment = Alignment.Center) {
                         Icon(Icons.Default.PhotoLibrary, contentDescription = null, tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(64.dp))
                     }
                 }
-
                 if (item.isFavorite) {
-                    Icon(
-                        Icons.Default.Star,
-                        contentDescription = null,
-                        tint = Color(0xFFFFCA28),
-                        modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).size(28.dp)
-                    )
+                    Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFCA28), modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).size(28.dp))
                 }
             }
 
             Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(item.name, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
                     var favorite by remember { mutableStateOf(item.isFavorite) }
                     IconButton(onClick = { favorite = !favorite }) {
-                        Icon(
-                            imageVector = if (favorite) Icons.Default.Star else Icons.Default.StarBorder,
-                            contentDescription = if (favorite) "Remove from favorites" else "Add to favorites",
+                        Icon(imageVector = if (favorite) Icons.Default.Star else Icons.Default.StarBorder,
+                            contentDescription = null,
                             tint = if (favorite) Color(0xFFFFCA28) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                            modifier = Modifier.size(28.dp)
-                        )
+                            modifier = Modifier.size(28.dp))
                     }
                 }
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                    elevation = CardDefaults.cardElevation(0.dp)
-                ) {
+                    elevation = CardDefaults.cardElevation(0.dp)) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        DetailInfoRow(Icons.Default.LocationOn, "Location", item.location)
+                        DetailInfoRow(Icons.Default.LocationOn, stringResource(R.string.gallery_detail_location), item.location)
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        DetailInfoRow(Icons.Default.DateRange, "Date Added", item.dateAdded)
+                        DetailInfoRow(Icons.Default.DateRange, stringResource(R.string.gallery_detail_date), item.dateAdded)
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        DetailInfoRow(Icons.Default.PhotoLibrary, "Type", item.type.replaceFirstChar { it.uppercase() })
+                        DetailInfoRow(Icons.Default.PhotoLibrary, stringResource(R.string.gallery_detail_type), item.type.replaceFirstChar { it.uppercase() })
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        DetailInfoRow(Icons.Default.Info, "File Size", item.size)
+                        DetailInfoRow(Icons.Default.Info, stringResource(R.string.gallery_detail_size), item.size)
                     }
                 }
-
-                Button(
-                    onClick = {},
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) {
+                Button(onClick = {}, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
                     Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Delete", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.gallery_btn_delete), fontWeight = FontWeight.SemiBold)
                 }
             }
         }
     }
 }
 
-// ── DETAIL INFO ROW ──────────────────────────────────────────
-
 @Composable
-fun DetailInfoRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    value: String
-) {
+fun DetailInfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
         Spacer(modifier = Modifier.width(10.dp))

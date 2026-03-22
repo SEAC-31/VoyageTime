@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">VoyageTime</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Inici</string>
+    <string name="nav_trips">Viatges</string>
+    <string name="nav_gallery">Galeria</string>
+    <string name="nav_preferences">Preferències</string>
+
+    <!-- Splash -->
+    <string name="splash_tagline">El teu company de viatge</string>
+    <string name="splash_loading">Carregant</string>
+    <string name="splash_version">v1.0.0</string>
+    <string name="splash_subtitle">Organitza els teus viatges amb estil</string>
+
+    <!-- Home -->
+    <string name="home_title">Inici</string>
+    <string name="home_subtitle">Benvingut de nou, viatger!</string>
+    <string name="home_add_trip">Afegir nou viatge</string>
+    <string name="home_section_overview">Resum</string>
+    <string name="home_section_next_trip">Proper viatge</string>
+    <string name="home_section_featured">Viatges destacats</string>
+    <string name="home_section_quick_info">Informació ràpida</string>
+    <string name="home_tap_itinerary">Toca per obrir l\'itinerari d\'aquest viatge.</string>
+    <string name="home_dashboard_subtitle">El teu tauler de viatges per a plans, itineraris i viatges memorables.</string>
+    <string name="home_departure_city">Ciutat de sortida</string>
+    <string name="home_travel_style">Estil de viatge</string>
+    <string name="home_departure_default">Barcelona</string>
+    <string name="home_style_default">Escapada urbana, cultura i gastronomia</string>
+
+    <!-- Stats -->
+    <string name="stat_trips">Viatges</string>
+    <string name="stat_days_planned">Dies planificats</string>
+    <string name="stat_budget">Pressupost</string>
+
+    <!-- Dialog -->
+    <string name="dialog_close">Tancar</string>
+    <string name="dialog_trips_title">Resum de viatges</string>
+    <string name="dialog_trips_header">Tens actualment %d viatges:</string>
+    <string name="dialog_days_title">Dies planificats</string>
+    <string name="dialog_days_header">Dates dels viatges:</string>
+    <string name="dialog_budget_title">Detalls del pressupost</string>
+    <string name="dialog_budget_header">Costos estimats per viatge:</string>
+    <string name="dialog_budget_total">Pressupost total: €%d</string>
+
+    <!-- Trip status -->
+    <string name="status_upcoming">Proper</string>
+    <string name="status_planned">Planificat</string>
+    <string name="status_completed">Completat</string>
+
+    <!-- Trips screen -->
+    <string name="trips_title">Viatges</string>
+    <string name="trips_empty">Encara no hi ha viatges. Comença a planificar!</string>
+    <string name="trips_header_subtitle">Revisa els teus viatges planificats i completats en un sol lloc.</string>
+    <string name="trips_section_overview">Resum</string>
+    <string name="trips_section_upcoming">Propers viatges</string>
+    <string name="trips_section_past">Viatges passats</string>
+    <string name="trips_section_insights">Anàlisi de viatges</string>
+    <string name="trips_insight_region">Regió favorita</string>
+    <string name="trips_insight_departure">Propera sortida</string>
+    <string name="trips_insight_goal">Objectiu de viatge</string>
+    <string name="trips_insight_region_default">Europa i Amèrica del Nord</string>
+    <string name="trips_insight_goal_default">Completar 4 viatges memorables amb itineraris clars</string>
+    <string name="trips_total_planned">Total de viatges planificats: %d</string>
+    <string name="trips_trip_dates">Dates dels viatges:</string>
+    <string name="trips_btn_edit">Editar</string>
+    <string name="trips_btn_view">Veure viatge</string>
+    <string name="trips_btn_save">Desar</string>
+    <string name="trips_btn_cancel">Cancel·lar</string>
+    <string name="trips_field_destination">Destinació</string>
+    <string name="trips_field_country">País</string>
+    <string name="trips_field_date_range">Rang de dates</string>
+    <string name="trips_field_duration">Durada</string>
+    <string name="trips_field_budget">Pressupost</string>
+
+    <!-- Gallery -->
+    <string name="gallery_title">Galeria</string>
+    <string name="gallery_filter_all">Tot</string>
+    <string name="gallery_filter_favorites">Preferits</string>
+    <string name="gallery_filter_recent">Recents</string>
+    <string name="gallery_sort_prefix">Ordenar per: </string>
+    <string name="gallery_sort_date">Data d\'afegit</string>
+    <string name="gallery_sort_name">Nom</string>
+    <string name="gallery_sort_size">Mida</string>
+    <string name="gallery_sort_location">Lloc</string>
+    <string name="gallery_items_count">%d elements</string>
+    <string name="gallery_add">Afegir foto o vídeo</string>
+    <string name="gallery_detail_location">Ubicació</string>
+    <string name="gallery_detail_date">Data d\'afegit</string>
+    <string name="gallery_detail_type">Tipus</string>
+    <string name="gallery_detail_size">Mida del fitxer</string>
+    <string name="gallery_detail_favorite">Preferit</string>
+    <string name="gallery_detail_yes">Sí</string>
+    <string name="gallery_detail_no">No</string>
+    <string name="gallery_detail_delete">Eliminar</string>
+    <string name="gallery_type_photo">Foto</string>
+    <string name="gallery_type_video">Vídeo</string>
+    <string name="gallery_btn_delete">Eliminar</string>
+
+    <!-- Itinerary -->
+    <string name="itinerary_morning">Pla de matí</string>
+    <string name="itinerary_afternoon">Pla de tarda</string>
+    <string name="itinerary_evening">Pla de nit</string>
+    <string name="itinerary_day_notes">Notes del dia</string>
+    <string name="itinerary_notes_label">Notes</string>
+    <string name="itinerary_add_event">Afegir esdeveniment</string>
+    <string name="itinerary_btn_edit">Editar</string>
+    <string name="itinerary_btn_delete">Eliminar</string>
+    <string name="itinerary_btn_save">Desar</string>
+    <string name="itinerary_btn_cancel">Cancel·lar</string>
+    <string name="itinerary_btn_select_icon">Seleccionar icona</string>
+    <string name="itinerary_field_title">Títol de l\'esdeveniment</string>
+    <string name="itinerary_field_location">Ubicació</string>
+    <string name="itinerary_field_time">Hora</string>
+    <string name="itinerary_field_cost">Cost</string>
+    <string name="itinerary_field_notes">Editar notes</string>
+    <string name="itinerary_add_morning">Afegir esdeveniment de matí</string>
+    <string name="itinerary_edit_morning">Editar esdeveniment de matí</string>
+    <string name="itinerary_add_afternoon">Afegir esdeveniment de tarda</string>
+    <string name="itinerary_edit_afternoon">Editar esdeveniment de tarda</string>
+    <string name="itinerary_add_evening">Afegir esdeveniment de nit</string>
+    <string name="itinerary_edit_evening">Editar esdeveniment de nit</string>
+    <string name="itinerary_hero_subtitle">Planifica cada dia amb una estructura clara de matí, tarda i nit.</string>
+    <string name="itinerary_icon_restaurant">Restaurant</string>
+    <string name="itinerary_icon_tour">Tour</string>
+    <string name="itinerary_icon_place">Lloc</string>
+    <string name="itinerary_icon_map">Mapa</string>
+    <string name="itinerary_icon_train">Tren</string>
+    <string name="itinerary_free">Gratuït</string>
+
+    <!-- Departure City -->
+    <string name="departure_title">Ciutat de sortida</string>
+    <string name="departure_section_current">Ciutat actual</string>
+    <string name="departure_section_edit">Opcions d\'edició</string>
+    <string name="departure_field_city">Ciutat de sortida seleccionada</string>
+    <string name="departure_field_country">País</string>
+    <string name="departure_field_airport">Àrea d\'aeroport preferida</string>
+    <string name="departure_btn_edit_city">Editar ciutat de sortida</string>
+    <string name="departure_btn_edit_country">Editar país</string>
+    <string name="departure_btn_edit_airport">Editar àrea d\'aeroport</string>
+    <string name="departure_label_city">Ciutat de sortida</string>
+    <string name="departure_label_country">País</string>
+    <string name="departure_label_airport">Àrea d\'aeroport preferida</string>
+    <string name="departure_btn_save">Desar</string>
+    <string name="departure_btn_cancel">Cancel·lar</string>
+    <string name="departure_default_city">Barcelona</string>
+    <string name="departure_default_country">Espanya</string>
+    <string name="departure_default_airport">Àrea metropolitana de Barcelona</string>
+
+    <!-- Travel Style -->
+    <string name="travel_style_title">Estil de viatge</string>
+    <string name="travel_style_section_current">Estil actual</string>
+    <string name="travel_style_section_edit">Opcions d\'edició</string>
+    <string name="travel_style_field_style">Estil seleccionat</string>
+    <string name="travel_style_field_main">Interès principal</string>
+    <string name="travel_style_field_secondary">Interès secundari</string>
+    <string name="travel_style_btn_edit_style">Editar estil seleccionat</string>
+    <string name="travel_style_btn_edit_main">Editar interès principal</string>
+    <string name="travel_style_btn_edit_secondary">Editar interès secundari</string>
+    <string name="travel_style_label_style">Estil seleccionat</string>
+    <string name="travel_style_label_main">Interès principal</string>
+    <string name="travel_style_label_secondary">Interès secundari</string>
+    <string name="travel_style_btn_save">Desar</string>
+    <string name="travel_style_btn_cancel">Cancel·lar</string>
+    <string name="travel_style_default_style">Escapada urbana, cultura i gastronomia</string>
+    <string name="travel_style_default_main">Museus, monuments i rutes culturals</string>
+    <string name="travel_style_default_secondary">Gastronomia local i cafeteries</string>
+
+    <!-- Create Trip -->
+    <string name="create_trip_title">Crear viatge</string>
+    <string name="create_trip_field_destination">Destinació</string>
+    <string name="create_trip_field_country">País</string>
+    <string name="create_trip_field_start">Data d\'inici</string>
+    <string name="create_trip_field_end">Data de fi</string>
+    <string name="create_trip_field_budget">Pressupost</string>
+    <string name="create_trip_btn_create">Crear viatge</string>
+    <string name="create_trip_btn_cancel">Cancel·lar</string>
+
+    <!-- Preferences -->
+    <string name="preferences_title">Preferències</string>
+    <string name="pref_section_appearance">Aparença</string>
+    <string name="pref_section_notifications">Notificacions</string>
+    <string name="pref_section_data">Dades i emmagatzematge</string>
+    <string name="pref_section_display">Visualització</string>
+    <string name="pref_section_account">Compte</string>
+    <string name="pref_dark_mode">Mode fosc</string>
+    <string name="pref_dark_mode_sub">Canvia entre tema clar i fosc</string>
+    <string name="pref_theme">Tema de l\'app</string>
+    <string name="pref_theme_sub">Blau oceà</string>
+    <string name="pref_language">Idioma</string>
+    <string name="pref_language_sub">Català</string>
+    <string name="pref_notifications">Notificacions push</string>
+    <string name="pref_notifications_sub">Rep alertes sobre els teus viatges</string>
+    <string name="pref_location">Accés a la ubicació</string>
+    <string name="pref_location_sub">Permet a l\'app usar la teva ubicació</string>
+    <string name="pref_offline">Mode sense connexió</string>
+    <string name="pref_offline_sub">Desa viatges per accedir sense connexió</string>
+    <string name="pref_autosync">Sincronització automàtica</string>
+    <string name="pref_autosync_sub">Sincronitza les dades automàticament en segon pla</string>
+    <string name="pref_clear_cache">Buidar la memòria cau</string>
+    <string name="pref_clear_cache_sub">Allibera espai d\'emmagatzematge</string>
+    <string name="pref_show_prices">Mostrar preus</string>
+    <string name="pref_show_prices_sub">Mostra els costos estimats als viatges</string>
+    <string name="pref_currency">Moneda</string>
+    <string name="pref_currency_sub">EUR — Euro</string>
+    <string name="pref_edit_profile">Editar perfil</string>
+    <string name="pref_edit_profile_sub">Canvia la teva informació personal</string>
+    <string name="pref_privacy">Privadesa i seguretat</string>
+    <string name="pref_privacy_sub">Gestiona les teves dades i permisos</string>
+    <string name="pref_about">Sobre VoyageTime</string>
+    <string name="pref_about_sub">Versió 1.0</string>
+    <string name="pref_terms">Termes i condicions</string>
+    <string name="pref_terms_sub">Llegeix els nostres termes de servei</string>
+    <string name="pref_logout">Tancar sessió</string>
+
+    <!-- Language Dialog -->
+    <string name="lang_dialog_title">Selecciona l\'idioma</string>
+    <string name="lang_dialog_accept">Acceptar</string>
+    <string name="lang_dialog_cancel">Cancel·lar</string>
+    <string name="lang_english">English</string>
+    <string name="lang_spanish">Castellano</string>
+    <string name="lang_catalan">Català</string>
+
+    <!-- About Us -->
+    <string name="about_title">Sobre VoyageTime</string>
+    <string name="about_version">Versió 1.0.0</string>
+    <string name="about_what_title">Què és VoyageTime?</string>
+    <string name="about_what_body">VoyageTime és el teu company de viatge personal. Planifica viatges, organitza itineraris, registra idees i guarda tots els teus records de viatge en un sol lloc amb una experiència neta i visual.</string>
+    <string name="about_features_title">Característiques principals</string>
+    <string name="about_feature_trips">Planifica i gestiona els teus viatges fàcilment</string>
+    <string name="about_feature_gallery">Guarda una galeria dels teus records de viatge</string>
+    <string name="about_feature_itinerary">Organitza itineraris detallats dia a dia</string>
+    <string name="about_feature_notifications">Rep recordatoris dels teus propers viatges</string>
+    <string name="about_feature_offline">Accedeix a informació important sense connexió</string>
+    <string name="about_mission_title">La nostra missió</string>
+    <string name="about_mission_body">Vam crear VoyageTime perquè la planificació de viatges sigui inspiradora, senzilla i visualment agradable. Cada viatge mereix un lloc on els temps, les idees, els records i la planificació s\'uneixin de manera bella.</string>
+    <string name="about_tech_title">Informació tècnica</string>
+    <string name="about_tech_kotlin">Desenvolupat amb Kotlin i Jetpack Compose</string>
+    <string name="about_tech_storage">Organització local de viatges i dades editables</string>
+    <string name="about_tech_nav">Navegació estructurada i disseny escalable de pantalles</string>
+    <string name="about_footer_tagline">Dissenyat per a viatgers que busquen claredat, estil i control.</string>
+    <string name="about_team_title">👥  El nostre equip</string>
+    <string name="about_team_body">VoyageTime és creat amb passió per un petit equip d\'apassionats dels viatges i desenvolupadors. Creiem que viatjar canvia vides i volem que planificar-ho sigui tan agradable com el propi viatge.</string>
+    <string name="about_contact_title">📬  Contacte</string>
+    <string name="about_contact_body">Tens comentaris o has trobat un error? Ens encantaria saber-ne.</string>
+    <string name="about_contact_email">contact@voyagetime.app</string>
+    <string name="about_footer">Fet amb ❤️ per als viatgers\n© 2025 VoyageTime</string>
+    <string name="about_back">Tornar enrere</string>
+
+    <!-- Terms & Conditions -->
+    <string name="terms_title">Termes i condicions</string>
+    <string name="terms_last_updated">Darrera actualització: 1 de març de 2025</string>
+    <string name="terms_intro">Llegeix detingudament aquests Termes i Condicions abans d\'usar l\'aplicació VoyageTime. En accedir o usar el nostre servei, acceptes quedar vinculat per aquests termes.</string>
+    <string name="terms_s1_title">Acceptació dels termes</string>
+    <string name="terms_s1_body">En descarregar, instal·lar o usar VoyageTime, confirmes que tens almenys 16 anys i acceptes complir i quedar vinculat per aquests Termes i Condicions. Si no acceptes alguna part d\'aquests termes, no has d\'usar la nostra aplicació.\n\nEns reservem el dret d\'actualitzar o modificar aquests termes en qualsevol moment. L\'ús continuat de l\'aplicació després de publicar els canvis constitueix l\'acceptació dels termes revisats.</string>
+    <string name="terms_s2_title">Ús de l\'aplicació</string>
+    <string name="terms_s2_body">VoyageTime et concedeix una llicència limitada, no exclusiva, intransferible i revocable per usar l\'aplicació amb finalitats personals i no comercials.\n\nAcceptes no:\n• Usar l\'aplicació per a finalitats il·legals o en violació de normatives locals, nacionals o internacionals.\n• Reproduir, duplicar, copiar, vendre o explotar qualsevol part del servei sense permís escrit exprés.\n• Intentar obtenir accés no autoritzat a cap part de l\'aplicació o els seus sistemes relacionats.\n• Carregar o transmetre codi maliciós, virus o contingut perjudicial.</string>
+    <string name="terms_s3_title">Contingut de l\'usuari</string>
+    <string name="terms_s3_body">Conserves la plena propietat de qualsevol contingut que pengis a VoyageTime, incloent fotos, vídeos, notes de viatges i itineraris (\'Contingut de l\'usuari\').\n\nEn penjar Contingut de l\'usuari, concedeixos a VoyageTime una llicència limitada, mundial i lliure de regalies per emmagatzemar i mostrar aquest contingut únicament amb la finalitat de prestar-te el servei.\n\nEts l\'únic responsable de l\'exactitud, legalitat i adequació de qualsevol contingut que pengis. VoyageTime no supervisa el Contingut de l\'usuari, però es reserva el dret d\'eliminar contingut que vulneri aquests Termes.</string>
+    <string name="terms_s4_title">Privadesa i dades</string>
+    <string name="terms_s4_body">La teva privadesa és important per a nosaltres. La nostra Política de privadesa, incorporada a aquests Termes per referència, explica com recopilem, usem i compartim informació sobre tu quan uses VoyageTime.\n\nRecopilem només les dades necessàries per prestar el servei, incloent informació del compte, dades de viatges i anàlisis d\'ús. No venem les teves dades personals a tercers.\n\nPots sol·licitar l\'eliminació del teu compte i les dades associades en qualsevol moment contactant-nos a contact@voyagetime.app.</string>
+    <string name="terms_s5_title">Propietat intel·lectual</string>
+    <string name="terms_s5_body">Tots els drets, títols i interessos sobre VoyageTime —incloent però no limitat al programari, disseny, gràfics, logotips i marques comercials— són i continuaran sent propietat exclusiva de VoyageTime i els seus llicenciants.\n\nNo pots usar les nostres marques comercials, logotips o actius de marca sense consentiment previ per escrit.</string>
+    <string name="terms_s6_title">Serveis de tercers</string>
+    <string name="terms_s6_body">VoyageTime pot integrar-se amb serveis de tercers com proveïdors de mapes, APIs meteorològiques i solucions d\'emmagatzematge al núvol. Aquests serveis es regeixen pels seus propis termes i polítiques de privadesa.\n\nNo som responsables del contingut, exactitud ni pràctiques de cap servei de tercers. Els enllaços a llocs web de tercers dins de l\'aplicació no constitueixen un aval.</string>
+    <string name="terms_s7_title">Exclusió de garanties</string>
+    <string name="terms_s7_body">VoyageTime es proporciona \"tal com és\" i \"segons disponibilitat\" sense garanties de cap tipus, ja siguin expresses o implícites, incloent però no limitat a garanties implícites de comerciabilitat, idoneïtat per a una finalitat particular o no infracció.\n\nNo garantim que l\'aplicació sigui ininterrompuda, lliure d\'errors o lliure de virus o altres components perjudicials. La informació de viatges proporcionada a l\'app és només orientativa i sempre s\'ha de verificar amb fonts oficials abans de viatjar.</string>
+    <string name="terms_s8_title">Limitació de responsabilitat</string>
+    <string name="terms_s8_body">En la màxima mesura permesa per la llei aplicable, VoyageTime no serà responsable de cap dany indirecte, incidental, especial, conseqüent o punitiu, incloent però no limitat a pèrdua de beneficis, dades o fons de comerç, resultant de:\n• El teu ús o incapacitat d\'usar l\'aplicació.\n• Accés no autoritzat a les teves dades.\n• Errors o inexactituds en el contingut de viatges.\n• Qualsevol altre assumpte relacionat amb el servei.</string>
+    <string name="terms_s9_title">Cancel·lació de compte</string>
+    <string name="terms_s9_body">Ens reservem el dret de suspendre o cancel·lar el teu compte a la nostra discreció, sense avís previ, si creiem que has violat aquests Termes o participat en conductes perjudicials per a altres usuaris o la integritat del servei.\n\nPots eliminar el teu compte en qualsevol moment a través de la configuració del compte. Després de l\'eliminació, les teves dades s\'eliminaran permanentment en un termini de 30 dies, llevat que la llei exigeixi la seva conservació.</string>
+    <string name="terms_s10_title">Llei aplicable</string>
+    <string name="terms_s10_body">Aquests Termes es regiran i interpretaran de conformitat amb les lleis de la Unió Europea i el Regne d\'Espanya, sense tenir en compte les seves disposicions sobre conflicte de lleis.\n\nQualsevol disputa que sorgeixi d\'aquests Termes estarà subjecta a la jurisdicció exclusiva dels tribunals ubicats a Barcelona, Espanya.</string>
+    <string name="terms_s11_title">Contacta\'ns</string>
+    <string name="terms_s11_body">Si tens alguna pregunta sobre aquests Termes i Condicions, contacta\'ns:\n\nEmail: legal@voyagetime.app\nAdreça: VoyageTime, Carrer de la Tecnologia 42, 08000 Barcelona, Espanya</string>
+    <string name="terms_footer">En usar VoyageTime, reconeixos que has llegit, comprès i acceptes quedar vinculat per aquests Termes i Condicions.</string>
+
+    <!-- Terms Acceptance Screen -->
+    <string name="terms_accept_disclaimer">En prémer \"Acceptar\", confirmes que has llegit i acceptes els nostres Termes i Condicions i Política de privadesa.</string>
+    <string name="terms_accept_btn">Acceptar i continuar</string>
+    <string name="terms_decline_btn">Rebutjar</string>
+    <string name="terms_accept_subtitle">Llegeix detingudament els nostres Termes i Condicions abans d\'usar VoyageTime.</string>
+    <string name="terms_accept_s1_title">1. Acceptació dels termes</string>
+    <string name="terms_accept_s1_body">En usar VoyageTime, confirmes que tens almenys 16 anys i acceptes complir aquests Termes. Si no estàs d\'acord, no has d\'usar l\'aplicació.</string>
+    <string name="terms_accept_s2_title">2. Ús de l\'aplicació</string>
+    <string name="terms_accept_s2_body">VoyageTime et concedeix una llicència limitada i no exclusiva per usar l\'app amb finalitats personals i no comercials. Acceptes no usar l\'app per a finalitats il·legals ni intentar accedir sense autorització a cap part del servei.</string>
+    <string name="terms_accept_s3_title">3. Contingut de l\'usuari</string>
+    <string name="terms_accept_s3_body">Conserves la propietat del contingut que pengis. En penjar contingut, concedeixos a VoyageTime una llicència limitada per emmagatzemar-lo i mostrar-lo únicament per prestar el servei. Ets responsable de la legalitat i exactitud del teu contingut.</string>
+    <string name="terms_accept_s4_title">4. Privadesa i dades</string>
+    <string name="terms_accept_s4_body">Recopilem només les dades necessàries per prestar el servei. No venem les teves dades personals a tercers. Pots sol·licitar l\'eliminació del teu compte i dades en qualsevol moment contactant contact@voyagetime.app.</string>
+    <string name="terms_accept_s5_title">5. Exclusió de garanties</string>
+    <string name="terms_accept_s5_body">VoyageTime es proporciona \"tal com és\" sense garanties de cap tipus. La informació de viatges és només orientativa i sempre s\'ha de verificar amb fonts oficials abans de viatjar.</string>
+    <string name="terms_accept_s6_title">6. Limitació de responsabilitat</string>
+    <string name="terms_accept_s6_body">VoyageTime no serà responsable de cap dany indirecte, incidental o conseqüent derivat de l\'ús de l\'aplicació o de decisions de viatge preses basant-se en la informació proporcionada.</string>
+    <string name="terms_accept_s7_title">7. Llei aplicable</string>
+    <string name="terms_accept_s7_body">Aquests Termes es regeixen per les lleis de la Unió Europea i el Regne d\'Espanya. Les disputes estaran subjectes a la jurisdicció dels tribunals de Barcelona, Espanya.</string>
+    <string name="terms_accept_s8_title">8. Contacte</string>
+    <string name="terms_accept_s8_body">Per preguntes sobre aquests Termes, contacta\'ns a:\nlegal@voyagetime.app</string>
+    <string name="profile_username">Nom d\'usuari</string>
+    <string name="profile_dob">Data de naixement</string>
+</resources>

@@ -1,5 +1,6 @@
 package com.example.voyagetime
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,9 +17,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -33,44 +36,77 @@ import com.example.voyagetime.ui.screens.AboutUs
 import com.example.voyagetime.ui.screens.DepartureCityScreen
 import com.example.voyagetime.ui.screens.Gallery
 import com.example.voyagetime.ui.screens.Home
-import com.example.voyagetime.ui.screens.Trips
-import com.example.voyagetime.ui.screens.Preferences
-import com.example.voyagetime.ui.screens.TermsAndConditions
-import com.example.voyagetime.ui.screens.TermsAcceptanceScreen
 import com.example.voyagetime.ui.screens.Itinerary
+import com.example.voyagetime.ui.screens.LanguageManager
+import com.example.voyagetime.ui.screens.Preferences
+import com.example.voyagetime.ui.screens.PreferencesManager
 import com.example.voyagetime.ui.screens.SplashScreen
+import com.example.voyagetime.ui.screens.TermsAcceptanceScreen
+import com.example.voyagetime.ui.screens.TermsAndConditions
 import com.example.voyagetime.ui.screens.TravelStyleScreen
+import com.example.voyagetime.ui.screens.Trips
 import com.example.voyagetime.ui.screens.CreateTripScreen
 import com.example.voyagetime.ui.theme.VoyageTimeTheme
 
-enum class AppScreen {
-    SPLASH,
-    TERMS_ACCEPTANCE,
-    MAIN
-}
+// Global dark mode state accessible anywhere in the composition tree
+val LocalDarkMode = compositionLocalOf { false }
+val LocalOnDarkModeChange = compositionLocalOf<(Boolean) -> Unit> { {} }
+
+const val EXTRA_START_AFTER_SPLASH = "start_after_splash"
+
+enum class AppScreen { SPLASH, TERMS_ACCEPTANCE, MAIN }
 
 class MainActivity : ComponentActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LanguageManager.applyLanguage(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent {
-            VoyageTimeTheme {
-                var currentScreen by remember { mutableStateOf(AppScreen.SPLASH) }
 
-                when (currentScreen) {
-                    AppScreen.SPLASH -> {
-                        SplashScreen(onFinished = {
-                            currentScreen = AppScreen.TERMS_ACCEPTANCE
-                        })
+        val startAfterSplash = intent
+            .getStringExtra(EXTRA_START_AFTER_SPLASH)
+            ?.let { AppScreen.valueOf(it) }
+            ?: AppScreen.TERMS_ACCEPTANCE
+
+        setContent {
+            val context = this
+
+            // darkMode survives recomposition and navigation
+            var darkMode by rememberSaveable {
+                mutableStateOf(PreferencesManager.getDarkMode(context))
+            }
+
+            // Provide dark mode state to entire tree via CompositionLocal
+            CompositionLocalProvider(
+                LocalDarkMode provides darkMode,
+                LocalOnDarkModeChange provides { enabled: Boolean ->
+                    darkMode = enabled
+                    PreferencesManager.saveDarkMode(context, enabled)
+                }
+            ) {
+                VoyageTimeTheme(darkTheme = darkMode) {
+                    var currentScreen by rememberSaveable {
+                        mutableStateOf(AppScreen.SPLASH)
                     }
-                    AppScreen.TERMS_ACCEPTANCE -> {
-                        TermsAcceptanceScreen(
-                            onAccept = { currentScreen = AppScreen.MAIN },
-                            onReject = { currentScreen = AppScreen.MAIN }
-                        )
-                    }
-                    AppScreen.MAIN -> {
-                        VoyageTimeApp()
+
+                    when (currentScreen) {
+                        AppScreen.SPLASH -> {
+                            SplashScreen(onFinished = {
+                                currentScreen = startAfterSplash
+                            })
+                        }
+                        AppScreen.TERMS_ACCEPTANCE -> {
+                            TermsAcceptanceScreen(
+                                onAccept = { currentScreen = AppScreen.MAIN },
+                                onReject = { currentScreen = AppScreen.MAIN }
+                            )
+                        }
+                        AppScreen.MAIN -> {
+                            VoyageTimeApp()
+                        }
                     }
                 }
             }
@@ -78,11 +114,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-data class NavItem(
-    val route: String,
-    val label: String,
-    val icon: ImageVector,
-)
+data class NavItem(val route: String, val label: String, val icon: ImageVector)
 
 @Composable
 fun VoyageTimeApp() {
@@ -101,10 +133,7 @@ fun VoyageTimeApp() {
     NavigationSuiteScaffold(
         navigationSuiteItems = {
             items.forEach { item ->
-                val selected = currentDestination
-                    ?.hierarchy
-                    ?.any { it.route == item.route } == true
-
+                val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
                 item(
                     icon = { Icon(item.icon, contentDescription = item.label) },
                     label = { Text(item.label) },
@@ -112,11 +141,9 @@ fun VoyageTimeApp() {
                     onClick = {
                         navController.navigate(item.route) {
                             popUpTo(navController.graph.startDestinationId) {
-                                saveState = false
-                                inclusive = false
+                                saveState = false; inclusive = false
                             }
-                            launchSingleTop = true
-                            restoreState = false
+                            launchSingleTop = true; restoreState = false
                         }
                     }
                 )
@@ -131,18 +158,10 @@ fun VoyageTimeApp() {
             ) {
                 composable(Routes.HOME) {
                     Home(
-                        onTripClick = { tripId ->
-                            navController.navigate("${Routes.ITINERARY}/$tripId")
-                        },
-                        onDepartureCityClick = {
-                            navController.navigate(Routes.DEPARTURE_CITY)
-                        },
-                        onTravelStyleClick = {
-                            navController.navigate(Routes.TRAVEL_STYLE)
-                        },
-                        onAddNewTripClick = {
-                            navController.navigate(Routes.CREATE_TRIP)
-                        }
+                        onTripClick = { navController.navigate("${Routes.ITINERARY}/$it") },
+                        onDepartureCityClick = { navController.navigate(Routes.DEPARTURE_CITY) },
+                        onTravelStyleClick = { navController.navigate(Routes.TRAVEL_STYLE) },
+                        onAddNewTripClick = { navController.navigate(Routes.CREATE_TRIP) }
                     )
                 }
 
@@ -152,35 +171,18 @@ fun VoyageTimeApp() {
                         onTripCreated = { navController.popBackStack() }
                     )
                 }
-
                 composable(Routes.TRIPS) {
-                    Trips(
-                        onTripClick = { tripId ->
-                            navController.navigate("${Routes.ITINERARY}/$tripId")
-                        }
-                    )
+                    Trips(onTripClick = { navController.navigate("${Routes.ITINERARY}/$it") })
                 }
-
                 composable(
                     route = "${Routes.ITINERARY}/{tripId}",
                     arguments = listOf(navArgument("tripId") { type = NavType.StringType })
-                ) { backStackEntry ->
-                    val tripId = backStackEntry.arguments?.getString("tripId") ?: ""
-                    Itinerary(tripId = tripId)
+                ) {
+                    Itinerary(tripId = it.arguments?.getString("tripId") ?: "")
                 }
-
-                composable(Routes.DEPARTURE_CITY) {
-                    DepartureCityScreen()
-                }
-
-                composable(Routes.TRAVEL_STYLE) {
-                    TravelStyleScreen()
-                }
-
-                composable(Routes.GALLERY) {
-                    Gallery()
-                }
-
+                composable(Routes.DEPARTURE_CITY) { DepartureCityScreen() }
+                composable(Routes.TRAVEL_STYLE) { TravelStyleScreen() }
+                composable(Routes.GALLERY) { Gallery() }
                 composable(Routes.PREFERENCES) {
                     Preferences(
                         onNavigateToAboutUs = { navController.navigate(Routes.ABOUT_US) },
