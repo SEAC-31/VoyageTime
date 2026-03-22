@@ -29,8 +29,33 @@ import com.example.voyagetime.LocalDarkMode
 import com.example.voyagetime.LocalOnDarkModeChange
 import com.example.voyagetime.MainActivity
 import com.example.voyagetime.R
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 private const val TAG = "Preferences"
+private val DOB_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+
+// ── VALIDATION HELPERS ────────────────────────────────────────
+
+private fun validateUsername(value: String): String? {
+    if (value.isBlank()) return "Username cannot be empty"
+    if (value.trim().length < 2) return "Username must be at least 2 characters"
+    return null
+}
+
+private fun validateDateOfBirth(value: String): String? {
+    if (value.isBlank()) return null // optional field
+    return try {
+        val date = LocalDate.parse(value.trim(), DOB_FORMATTER)
+        if (date.isAfter(LocalDate.now())) "Date of birth cannot be in the future"
+        else null
+    } catch (e: DateTimeParseException) {
+        "Use format dd/MM/YYYY (e.g. 15/03/1995)"
+    }
+}
+
+// ── MAIN SCREEN ───────────────────────────────────────────────
 
 @Composable
 fun Preferences(
@@ -41,7 +66,6 @@ fun Preferences(
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
-    // Read dark mode from CompositionLocal — always in sync with the theme
     val darkMode = LocalDarkMode.current
     val onDarkModeChange = LocalOnDarkModeChange.current
 
@@ -49,7 +73,6 @@ fun Preferences(
     var locationAccess by remember { mutableStateOf(true) }
     var offlineMode by remember { mutableStateOf(false) }
     var autoSync by remember { mutableStateOf(true) }
-
     var showPrices by remember { mutableStateOf(PreferencesManager.getShowPrices(context)) }
     var currency by remember { mutableStateOf(PreferencesManager.getCurrency(context)) }
     var currentLanguage by remember { mutableStateOf(LanguageManager.getSavedLanguage(context)) }
@@ -116,171 +139,184 @@ fun Preferences(
                 onCheckedChange = { onDarkModeChange(it) }
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-            PreferenceButtonItem(
-                icon = Icons.Default.Palette,
+            PreferenceButtonItem(icon = Icons.Default.Palette,
                 title = stringResource(R.string.pref_theme),
-                subtitle = stringResource(R.string.pref_theme_sub),
-                onClick = {}
-            )
+                subtitle = stringResource(R.string.pref_theme_sub), onClick = {})
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-            PreferenceButtonItem(
-                icon = Icons.Default.Language,
+            PreferenceButtonItem(icon = Icons.Default.Language,
                 title = stringResource(R.string.pref_language),
                 subtitle = languageDisplayName(currentLanguage),
-                onClick = { showLanguageDialog = true }
-            )
+                onClick = { showLanguageDialog = true })
         }
 
         PreferenceCategory(title = stringResource(R.string.pref_section_notifications)) {
-            PreferenceToggleItem(
-                icon = Icons.Default.Notifications,
+            PreferenceToggleItem(icon = Icons.Default.Notifications,
                 title = stringResource(R.string.pref_notifications),
                 subtitle = stringResource(R.string.pref_notifications_sub),
-                checked = notifications,
-                onCheckedChange = { notifications = it }
-            )
+                checked = notifications, onCheckedChange = { notifications = it })
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-            PreferenceToggleItem(
-                icon = Icons.Default.LocationOn,
+            PreferenceToggleItem(icon = Icons.Default.LocationOn,
                 title = stringResource(R.string.pref_location),
                 subtitle = stringResource(R.string.pref_location_sub),
-                checked = locationAccess,
-                onCheckedChange = { locationAccess = it }
-            )
+                checked = locationAccess, onCheckedChange = { locationAccess = it })
         }
 
         PreferenceCategory(title = stringResource(R.string.pref_section_data)) {
-            PreferenceToggleItem(
-                icon = Icons.Default.WifiOff,
+            PreferenceToggleItem(icon = Icons.Default.WifiOff,
                 title = stringResource(R.string.pref_offline),
                 subtitle = stringResource(R.string.pref_offline_sub),
-                checked = offlineMode,
-                onCheckedChange = { offlineMode = it }
-            )
+                checked = offlineMode, onCheckedChange = { offlineMode = it })
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-            PreferenceToggleItem(
-                icon = Icons.Default.Sync,
+            PreferenceToggleItem(icon = Icons.Default.Sync,
                 title = stringResource(R.string.pref_autosync),
                 subtitle = stringResource(R.string.pref_autosync_sub),
-                checked = autoSync,
-                onCheckedChange = { autoSync = it }
-            )
+                checked = autoSync, onCheckedChange = { autoSync = it })
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-            PreferenceButtonItem(
-                icon = Icons.Default.Delete,
+            PreferenceButtonItem(icon = Icons.Default.Delete,
                 title = stringResource(R.string.pref_clear_cache),
-                subtitle = stringResource(R.string.pref_clear_cache_sub),
-                onClick = {}
-            )
+                subtitle = stringResource(R.string.pref_clear_cache_sub), onClick = {})
         }
 
         PreferenceCategory(title = stringResource(R.string.pref_section_display)) {
-            PreferenceToggleItem(
-                icon = Icons.Default.AttachMoney,
+            PreferenceToggleItem(icon = Icons.Default.AttachMoney,
                 title = stringResource(R.string.pref_show_prices),
                 subtitle = stringResource(R.string.pref_show_prices_sub),
                 checked = showPrices,
-                onCheckedChange = { showPrices = it; PreferencesManager.saveShowPrices(context, it) }
-            )
+                onCheckedChange = { showPrices = it; PreferencesManager.saveShowPrices(context, it) })
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-            PreferenceButtonItem(
-                icon = Icons.Default.Flag,
+            PreferenceButtonItem(icon = Icons.Default.Flag,
                 title = stringResource(R.string.pref_currency),
-                subtitle = currency,
-                onClick = { showCurrencyDialog = true }
-            )
+                subtitle = currency, onClick = { showCurrencyDialog = true })
         }
 
         PreferenceCategory(title = stringResource(R.string.pref_section_account)) {
-            PreferenceButtonItem(
-                icon = Icons.Default.Person,
+            PreferenceButtonItem(icon = Icons.Default.Person,
                 title = stringResource(R.string.pref_edit_profile),
                 subtitle = stringResource(R.string.pref_edit_profile_sub),
-                onClick = { showProfileDialog = true }
-            )
+                onClick = { showProfileDialog = true })
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-            PreferenceButtonItem(
-                icon = Icons.Default.Lock,
+            PreferenceButtonItem(icon = Icons.Default.Lock,
                 title = stringResource(R.string.pref_privacy),
-                subtitle = stringResource(R.string.pref_privacy_sub),
-                onClick = {}
-            )
+                subtitle = stringResource(R.string.pref_privacy_sub), onClick = {})
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-            PreferenceButtonItem(
-                icon = Icons.Default.Info,
+            PreferenceButtonItem(icon = Icons.Default.Info,
                 title = stringResource(R.string.pref_about),
                 subtitle = stringResource(R.string.pref_about_sub),
-                onClick = onNavigateToAboutUs
-            )
+                onClick = onNavigateToAboutUs)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-            PreferenceButtonItem(
-                icon = Icons.Default.Description,
+            PreferenceButtonItem(icon = Icons.Default.Description,
                 title = stringResource(R.string.pref_terms),
                 subtitle = stringResource(R.string.pref_terms_sub),
-                onClick = onNavigateToTerms
-            )
+                onClick = onNavigateToTerms)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
-            PreferenceButtonItem(
-                icon = Icons.AutoMirrored.Filled.Logout,
+            PreferenceButtonItem(icon = Icons.AutoMirrored.Filled.Logout,
                 title = stringResource(R.string.pref_logout),
-                subtitle = "",
-                onClick = {},
-                isDestructive = true
-            )
+                subtitle = "", onClick = {}, isDestructive = true)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
-// ── DIALOGS ───────────────────────────────────────────────────
+// ── EDIT PROFILE DIALOG ───────────────────────────────────────
 
 @Composable
 fun EditProfileDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
+
     var username by remember { mutableStateOf(PreferencesManager.getUsername(context)) }
     var dateOfBirth by remember { mutableStateOf(PreferencesManager.getDateOfBirth(context)) }
+
+    // Error messages — null means valid
+    var usernameError by remember { mutableStateOf<String?>(null) }
+    var dobError by remember { mutableStateOf<String?>(null) }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(6.dp)) {
             Column(modifier = Modifier.fillMaxWidth().padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
                 Text(stringResource(R.string.pref_edit_profile), fontSize = 18.sp,
                     fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                OutlinedTextField(value = username, onValueChange = { username = it },
+
+                // Username field
+                OutlinedTextField(
+                    value = username,
+                    onValueChange = { username = it; usernameError = null },
                     label = { Text(stringResource(R.string.profile_username)) },
-                    singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = dateOfBirth, onValueChange = { dateOfBirth = it },
+                    singleLine = true,
+                    isError = usernameError != null,
+                    supportingText = {
+                        if (usernameError != null)
+                            Text(usernameError!!, color = MaterialTheme.colorScheme.error)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Date of birth field
+                OutlinedTextField(
+                    value = dateOfBirth,
+                    onValueChange = { dateOfBirth = it; dobError = null },
                     label = { Text(stringResource(R.string.profile_dob)) },
                     placeholder = { Text("dd/MM/YYYY") },
-                    singleLine = true, modifier = Modifier.fillMaxWidth())
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.lang_dialog_cancel)) }
+                    singleLine = true,
+                    isError = dobError != null,
+                    supportingText = {
+                        if (dobError != null)
+                            Text(dobError!!, color = MaterialTheme.colorScheme.error)
+                        else
+                            Text("Optional — format: dd/MM/YYYY",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = onDismiss) {
+                        Text(stringResource(R.string.lang_dialog_cancel))
+                    }
                     Spacer(Modifier.width(8.dp))
                     Button(onClick = {
-                        PreferencesManager.saveUsername(context, username)
-                        PreferencesManager.saveDateOfBirth(context, dateOfBirth)
-                        onDismiss()
-                    }) { Text(stringResource(R.string.lang_dialog_accept)) }
+                        // Validate all fields before saving
+                        usernameError = validateUsername(username)
+                        dobError = validateDateOfBirth(dateOfBirth)
+
+                        if (usernameError == null && dobError == null) {
+                            PreferencesManager.saveUsername(context, username.trim())
+                            PreferencesManager.saveDateOfBirth(context, dateOfBirth.trim())
+                            Log.i(TAG, "Profile saved — username=${username.trim()}")
+                            onDismiss()
+                        } else {
+                            Log.w(TAG, "Profile validation failed — usernameError=$usernameError dobError=$dobError")
+                        }
+                    }) {
+                        Text(stringResource(R.string.lang_dialog_accept))
+                    }
                 }
             }
         }
     }
 }
 
+// ── CURRENCY DIALOG ───────────────────────────────────────────
+
 @Composable
 fun CurrencyPickerDialog(currentCurrency: String, onDismiss: () -> Unit, onCurrencySelected: (String) -> Unit) {
     var selected by remember { mutableStateOf(currentCurrency) }
-    val options = listOf("EUR" to "EUR — Euro", "USD" to "USD — US Dollar", "GBP" to "GBP — British Pound", "JPY" to "JPY — Japanese Yen")
+    val options = listOf("EUR" to "EUR — Euro", "USD" to "USD — US Dollar",
+        "GBP" to "GBP — British Pound", "JPY" to "JPY — Japanese Yen")
 
     Dialog(onDismissRequest = onDismiss) {
         Card(shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(6.dp)) {
-            Column(modifier = Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.pref_currency), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Column(modifier = Modifier.fillMaxWidth().padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.pref_currency), fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(Modifier.height(4.dp))
                 options.forEach { (code, label) ->
                     Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
@@ -303,17 +339,22 @@ fun CurrencyPickerDialog(currentCurrency: String, onDismiss: () -> Unit, onCurre
     }
 }
 
+// ── LANGUAGE DIALOG ───────────────────────────────────────────
+
 @Composable
 fun LanguagePickerDialog(currentLanguage: String, onDismiss: () -> Unit, onLanguageSelected: (String) -> Unit) {
     var selected by remember { mutableStateOf(currentLanguage) }
-    val options = listOf(LanguageManager.LANG_EN to "English", LanguageManager.LANG_ES to "Castellano", LanguageManager.LANG_CA to "Català")
+    val options = listOf(LanguageManager.LANG_EN to "English",
+        LanguageManager.LANG_ES to "Castellano", LanguageManager.LANG_CA to "Català")
 
     Dialog(onDismissRequest = onDismiss) {
         Card(shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(6.dp)) {
-            Column(modifier = Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.lang_dialog_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Column(modifier = Modifier.fillMaxWidth().padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.lang_dialog_title), fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(Modifier.height(4.dp))
                 options.forEach { (code, name) ->
                     Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
@@ -342,7 +383,7 @@ fun languageDisplayName(code: String): String = when (code) {
     else -> "English"
 }
 
-// ── COMPONENTS ────────────────────────────────────────────────
+// ── REUSABLE COMPONENTS ───────────────────────────────────────
 
 @Composable
 fun PreferenceCategory(title: String, content: @Composable ColumnScope.() -> Unit) {
@@ -351,7 +392,8 @@ fun PreferenceCategory(title: String, content: @Composable ColumnScope.() -> Uni
             letterSpacing = 1.2.sp, color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(start = 4.dp, bottom = 6.dp))
         Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
             elevation = CardDefaults.cardElevation(0.dp)) {
             Column(modifier = Modifier.fillMaxWidth()) { content() }
         }
@@ -370,11 +412,13 @@ fun PreferenceToggleItem(
         Box(modifier = Modifier.size(40.dp).clip(RoundedCornerShape(10.dp))
             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = title, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+            Icon(icon, contentDescription = title,
+                tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
         }
         Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onBackground)
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onBackground)
             if (subtitle.isNotEmpty())
                 Text(subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -396,15 +440,18 @@ fun PreferenceButtonItem(
             else MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center) {
             Icon(icon, contentDescription = title,
-                tint = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                tint = if (isDestructive) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp))
         }
         Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium,
-                color = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground)
+                color = if (isDestructive) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.onBackground)
             if (subtitle.isNotEmpty())
-                Text(subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(subtitle, fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Icon(Icons.Default.ChevronRight, contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
