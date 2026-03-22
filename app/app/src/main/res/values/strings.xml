@@ -298,4 +298,6 @@
     <string name="terms_accept_s7_body">These Terms are governed by the laws of the European Union and the Kingdom of Spain. Any disputes shall be subject to the jurisdiction of the courts of Barcelona, Spain.</string>
     <string name="terms_accept_s8_title">8. Contact</string>
     <string name="terms_accept_s8_body">For questions about these Terms, contact us at:\nlegal@voyagetime.app</string>
+    <string name="profile_username">Username</string>
+    <string name="profile_dob">Date of birth</string>
 </resources>

@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.voyagetime.AppScreen
 import com.example.voyagetime.EXTRA_START_AFTER_SPLASH
+import com.example.voyagetime.LocalDarkMode
+import com.example.voyagetime.LocalOnDarkModeChange
 import com.example.voyagetime.MainActivity
 import com.example.voyagetime.R
 
@@ -38,17 +41,22 @@ fun Preferences(
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
-    var darkMode by remember { mutableStateOf(false) }
+    // Read dark mode from CompositionLocal — always in sync with the theme
+    val darkMode = LocalDarkMode.current
+    val onDarkModeChange = LocalOnDarkModeChange.current
+
     var notifications by remember { mutableStateOf(true) }
     var locationAccess by remember { mutableStateOf(true) }
     var offlineMode by remember { mutableStateOf(false) }
     var autoSync by remember { mutableStateOf(true) }
-    var showPrices by remember { mutableStateOf(true) }
 
-    var currentLanguage by remember {
-        mutableStateOf(LanguageManager.getSavedLanguage(context))
-    }
+    var showPrices by remember { mutableStateOf(PreferencesManager.getShowPrices(context)) }
+    var currency by remember { mutableStateOf(PreferencesManager.getCurrency(context)) }
+    var currentLanguage by remember { mutableStateOf(LanguageManager.getSavedLanguage(context)) }
+
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showProfileDialog by remember { mutableStateOf(false) }
+    var showCurrencyDialog by remember { mutableStateOf(false) }
 
     if (showLanguageDialog) {
         LanguagePickerDialog(
@@ -59,44 +67,53 @@ fun Preferences(
                     Log.i(TAG, "Language changed: $currentLanguage -> $langCode")
                     LanguageManager.saveLanguage(context, langCode)
                     currentLanguage = langCode
-                    // Restart with splash → preferences (skip Terms)
                     val intent = Intent(context, MainActivity::class.java).apply {
                         putExtra(EXTRA_START_AFTER_SPLASH, AppScreen.MAIN.name)
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     }
                     context.startActivity(intent)
                     (context as? Activity)?.finish()
-                } else {
-                    Log.d(TAG, "Language selected but unchanged: $langCode")
                 }
                 showLanguageDialog = false
             }
         )
     }
 
+    if (showProfileDialog) {
+        EditProfileDialog(onDismiss = { showProfileDialog = false })
+    }
+
+    if (showCurrencyDialog) {
+        CurrencyPickerDialog(
+            currentCurrency = currency,
+            onDismiss = { showCurrencyDialog = false },
+            onCurrencySelected = { selected ->
+                currency = selected
+                PreferencesManager.saveCurrency(context, selected)
+                showCurrencyDialog = false
+            }
+        )
+    }
+
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
+        modifier = modifier.fillMaxSize().verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Text(
             text = stringResource(R.string.preferences_title),
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 28.sp, fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        // ── APPEARANCE ──────────────────────────────────────
         PreferenceCategory(title = stringResource(R.string.pref_section_appearance)) {
             PreferenceToggleItem(
                 icon = Icons.Default.DarkMode,
                 title = stringResource(R.string.pref_dark_mode),
                 subtitle = stringResource(R.string.pref_dark_mode_sub),
                 checked = darkMode,
-                onCheckedChange = { darkMode = it }
+                onCheckedChange = { onDarkModeChange(it) }
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
             PreferenceButtonItem(
@@ -114,7 +131,6 @@ fun Preferences(
             )
         }
 
-        // ── NOTIFICATIONS ────────────────────────────────────
         PreferenceCategory(title = stringResource(R.string.pref_section_notifications)) {
             PreferenceToggleItem(
                 icon = Icons.Default.Notifications,
@@ -133,7 +149,6 @@ fun Preferences(
             )
         }
 
-        // ── DATA & STORAGE ───────────────────────────────────
         PreferenceCategory(title = stringResource(R.string.pref_section_data)) {
             PreferenceToggleItem(
                 icon = Icons.Default.WifiOff,
@@ -159,31 +174,29 @@ fun Preferences(
             )
         }
 
-        // ── DISPLAY ──────────────────────────────────────────
         PreferenceCategory(title = stringResource(R.string.pref_section_display)) {
             PreferenceToggleItem(
                 icon = Icons.Default.AttachMoney,
                 title = stringResource(R.string.pref_show_prices),
                 subtitle = stringResource(R.string.pref_show_prices_sub),
                 checked = showPrices,
-                onCheckedChange = { showPrices = it }
+                onCheckedChange = { showPrices = it; PreferencesManager.saveShowPrices(context, it) }
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
             PreferenceButtonItem(
                 icon = Icons.Default.Flag,
                 title = stringResource(R.string.pref_currency),
-                subtitle = stringResource(R.string.pref_currency_sub),
-                onClick = {}
+                subtitle = currency,
+                onClick = { showCurrencyDialog = true }
             )
         }
 
-        // ── ACCOUNT ──────────────────────────────────────────
         PreferenceCategory(title = stringResource(R.string.pref_section_account)) {
             PreferenceButtonItem(
                 icon = Icons.Default.Person,
                 title = stringResource(R.string.pref_edit_profile),
                 subtitle = stringResource(R.string.pref_edit_profile_sub),
-                onClick = {}
+                onClick = { showProfileDialog = true }
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
             PreferenceButtonItem(
@@ -208,7 +221,7 @@ fun Preferences(
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
             PreferenceButtonItem(
-                icon = Icons.Default.Logout,
+                icon = Icons.AutoMirrored.Filled.Logout,
                 title = stringResource(R.string.pref_logout),
                 subtitle = "",
                 onClick = {},
@@ -220,72 +233,103 @@ fun Preferences(
     }
 }
 
-// ── LANGUAGE PICKER DIALOG ───────────────────────────────────
+// ── DIALOGS ───────────────────────────────────────────────────
 
 @Composable
-fun LanguagePickerDialog(
-    currentLanguage: String,
-    onDismiss: () -> Unit,
-    onLanguageSelected: (String) -> Unit
-) {
-    var selected by remember { mutableStateOf(currentLanguage) }
-
-    val options = listOf(
-        LanguageManager.LANG_EN to "English",
-        LanguageManager.LANG_ES to "Castellano",
-        LanguageManager.LANG_CA to "Català"
-    )
+fun EditProfileDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    var username by remember { mutableStateOf(PreferencesManager.getUsername(context)) }
+    var dateOfBirth by remember { mutableStateOf(PreferencesManager.getDateOfBirth(context)) }
 
     Dialog(onDismissRequest = onDismiss) {
-        Card(
-            shape = RoundedCornerShape(20.dp),
+        Card(shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.lang_dialog_title),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                options.forEach { (code, name) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable { selected = code }
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = selected == code,
-                            onClick = { selected = code },
-                            colors = RadioButtonDefaults.colors(
-                                selectedColor = MaterialTheme.colorScheme.primary
-                            )
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = name, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
+            elevation = CardDefaults.cardElevation(6.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(stringResource(R.string.pref_edit_profile), fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                OutlinedTextField(value = username, onValueChange = { username = it },
+                    label = { Text(stringResource(R.string.profile_username)) },
+                    singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = dateOfBirth, onValueChange = { dateOfBirth = it },
+                    label = { Text(stringResource(R.string.profile_dob)) },
+                    placeholder = { Text("dd/MM/YYYY") },
+                    singleLine = true, modifier = Modifier.fillMaxWidth())
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.lang_dialog_cancel)) }
+                    Spacer(Modifier.width(8.dp))
+                    Button(onClick = {
+                        PreferencesManager.saveUsername(context, username)
+                        PreferencesManager.saveDateOfBirth(context, dateOfBirth)
+                        onDismiss()
+                    }) { Text(stringResource(R.string.lang_dialog_accept)) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CurrencyPickerDialog(currentCurrency: String, onDismiss: () -> Unit, onCurrencySelected: (String) -> Unit) {
+    var selected by remember { mutableStateOf(currentCurrency) }
+    val options = listOf("EUR" to "EUR — Euro", "USD" to "USD — US Dollar", "GBP" to "GBP — British Pound", "JPY" to "JPY — Japanese Yen")
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(6.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.pref_currency), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(4.dp))
+                options.forEach { (code, label) ->
+                    Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                        .clickable { selected = code }.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = selected == code, onClick = { selected = code },
+                            colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary))
+                        Spacer(Modifier.width(8.dp))
+                        Text(label, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text(stringResource(R.string.lang_dialog_cancel))
+                Spacer(Modifier.height(8.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.lang_dialog_cancel)) }
+                    Spacer(Modifier.width(8.dp))
+                    Button(onClick = { onCurrencySelected(selected) }) { Text(stringResource(R.string.lang_dialog_accept)) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LanguagePickerDialog(currentLanguage: String, onDismiss: () -> Unit, onLanguageSelected: (String) -> Unit) {
+    var selected by remember { mutableStateOf(currentLanguage) }
+    val options = listOf(LanguageManager.LANG_EN to "English", LanguageManager.LANG_ES to "Castellano", LanguageManager.LANG_CA to "Català")
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(6.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.lang_dialog_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(4.dp))
+                options.forEach { (code, name) ->
+                    Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                        .clickable { selected = code }.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = selected == code, onClick = { selected = code },
+                            colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary))
+                        Spacer(Modifier.width(8.dp))
+                        Text(name, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = { onLanguageSelected(selected) }) {
-                        Text(stringResource(R.string.lang_dialog_accept))
-                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.lang_dialog_cancel)) }
+                    Spacer(Modifier.width(8.dp))
+                    Button(onClick = { onLanguageSelected(selected) }) { Text(stringResource(R.string.lang_dialog_accept)) }
                 }
             }
         }
@@ -298,23 +342,19 @@ fun languageDisplayName(code: String): String = when (code) {
     else -> "English"
 }
 
-// ── COMPONENTS ───────────────────────────────────────────────
+// ── COMPONENTS ────────────────────────────────────────────────
 
 @Composable
 fun PreferenceCategory(title: String, content: @Composable ColumnScope.() -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
-        Text(
-            text = title.uppercase(),
-            fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.2.sp,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
-        )
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+        Text(text = title.uppercase(), fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+            letterSpacing = 1.2.sp, color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp))
+        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) { Column(modifier = Modifier.fillMaxWidth()) { content() } }
+            elevation = CardDefaults.cardElevation(0.dp)) {
+            Column(modifier = Modifier.fillMaxWidth()) { content() }
+        }
     }
 }
 
@@ -324,22 +364,19 @@ fun PreferenceToggleItem(
     title: String, subtitle: String, checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().clickable { onCheckedChange(!checked) }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    Row(modifier = Modifier.fillMaxWidth().clickable { onCheckedChange(!checked) }
+        .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically) {
         Box(modifier = Modifier.size(40.dp).clip(RoundedCornerShape(10.dp))
             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center) {
-            Icon(imageVector = icon, contentDescription = title,
-                tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+            Icon(icon, contentDescription = title, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
         }
-        Spacer(modifier = Modifier.width(14.dp))
+        Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onBackground)
             if (subtitle.isNotEmpty())
-                Text(text = subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                Text(subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
@@ -351,27 +388,25 @@ fun PreferenceButtonItem(
     title: String, subtitle: String, onClick: () -> Unit,
     isDestructive: Boolean = false
 ) {
-    val contentColor = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-    Row(
-        modifier = Modifier.fillMaxWidth().clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    Row(modifier = Modifier.fillMaxWidth().clickable { onClick() }
+        .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically) {
         Box(modifier = Modifier.size(40.dp).clip(RoundedCornerShape(10.dp))
             .background(if (isDestructive) MaterialTheme.colorScheme.error.copy(alpha = 0.12f)
             else MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center) {
-            Icon(imageVector = icon, contentDescription = title,
+            Icon(icon, contentDescription = title,
                 tint = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp))
         }
-        Spacer(modifier = Modifier.width(14.dp))
+        Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = contentColor)
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium,
+                color = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground)
             if (subtitle.isNotEmpty())
-                Text(text = subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                Text(subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Icon(imageVector = Icons.Default.ChevronRight, contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(20.dp))
+        Icon(Icons.Default.ChevronRight, contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
     }
 }

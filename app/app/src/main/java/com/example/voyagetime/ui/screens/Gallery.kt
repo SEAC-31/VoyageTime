@@ -65,10 +65,10 @@ fun Gallery(modifier: Modifier = Modifier) {
     if (selectedItem != null) {
         GalleryDetailScreen(item = selectedItem!!, onBack = { selectedItem = null })
     } else {
-        Box(modifier = modifier.fillMaxSize()) {
+        Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Text(text = stringResource(R.string.gallery_title), fontSize = 28.sp, fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp))
+                    color = if (MaterialTheme.colorScheme.background.red < 0.5f) Color(0xFFFFFFFF) else Color(0xFF111111), modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp))
 
                 Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChipItem(stringResource(R.string.gallery_filter_all), selectedFilter == "all", { selectedFilter = "all" })
@@ -83,7 +83,7 @@ fun Gallery(modifier: Modifier = Modifier) {
                 Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(text = stringResource(R.string.gallery_items_count, filteredItems.size), fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f), fontWeight = FontWeight.Medium)
+                        color = if (MaterialTheme.colorScheme.background.red < 0.5f) Color(0xFFFFFFFF).copy(alpha = 0.5f) else Color(0xFF111111).copy(alpha = 0.5f), fontWeight = FontWeight.Medium)
                     Box {
                         Row(modifier = Modifier.clickable { sortExpanded = true }.clip(RoundedCornerShape(8.dp))
                             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)).padding(horizontal = 10.dp, vertical = 6.dp),
