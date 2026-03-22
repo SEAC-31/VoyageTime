@@ -7,7 +7,6 @@ import com.example.voyagetime.ui.screens.TripItem
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.Locale
 
 class ItineraryRepositoryImpl(
     private val tripRepository: TripRepository = TripRepositoryImpl()
@@ -141,7 +140,7 @@ class ItineraryRepositoryImpl(
     }
 
     private fun buildTripDates(trip: TripItem): List<String> {
-        val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH)
+        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
         val parsedRange = parseDateRange(trip.dateRange)
         if (parsedRange != null) {
@@ -162,7 +161,7 @@ class ItineraryRepositoryImpl(
     }
 
     private fun parseDateRange(dateRange: String): Pair<LocalDate, LocalDate>? {
-        val formatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
+        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
         val parts = dateRange.split("-").map { it.trim() }
         if (parts.size != 2) return null
 
@@ -170,14 +169,8 @@ class ItineraryRepositoryImpl(
         val endRaw = parts[1]
 
         return try {
+            val start = LocalDate.parse(startRaw, formatter)
             val end = LocalDate.parse(endRaw, formatter)
-
-            val start = if (startRaw.takeLast(4).all { it.isDigit() }) {
-                LocalDate.parse(startRaw, formatter)
-            } else {
-                LocalDate.parse("$startRaw ${end.year}", formatter)
-            }
-
             start to end
         } catch (_: DateTimeParseException) {
             null

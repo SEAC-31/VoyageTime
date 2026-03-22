@@ -40,6 +40,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,13 +57,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.LaunchedEffect
 import com.example.voyagetime.R
 import com.example.voyagetime.ui.viewmodels.TripsViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.Locale
 
 enum class TripState {
     UPCOMING,
@@ -101,6 +100,7 @@ fun Trips(
     viewModel: TripsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     LaunchedEffect(Unit) {
         viewModel.reloadTrips()
     }
@@ -498,12 +498,12 @@ fun EditableUpcomingTripCard(
                         value = draftDateRange,
                         onValueChange = { newValue ->
                             draftDateRange = newValue.filter { char ->
-                                char.isDigit() || char.isLetter() || char == ' ' || char == '-'
+                                char.isDigit() || char == '/' || char == ' ' || char == '-'
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("Date Range") },
-                        placeholder = { Text("12 Jun 2026 - 18 Jun 2026") },
+                        placeholder = { Text("12/06/2026 - 18/06/2026") },
                         isError = dateRangeError != null,
                         supportingText = {
                             if (dateRangeError != null) {
@@ -614,6 +614,7 @@ fun EditableUpcomingTripCard(
         }
     }
 }
+
 @Composable
 private fun TripMainInfo(
     trip: TripItem,
@@ -1150,7 +1151,7 @@ private fun validateDateRangeMessage(value: String): String? {
         return "Date range is required"
     }
 
-    val parseResult = parseDateRange(trimmed) ?: return "Use real dates like: 12 Jun 2026 - 18 Jun 2026"
+    val parseResult = parseDateRange(trimmed) ?: return "Use real dates like: 12/06/2026 - 18/06/2026"
 
     val startDate = parseResult.first
     val endDate = parseResult.second
@@ -1164,50 +1165,18 @@ private fun validateDateRangeMessage(value: String): String? {
 
 private fun parseDateRange(value: String): Pair<LocalDate, LocalDate>? {
     val input = value.trim()
-
-    val formatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
-
-    val fullYearPattern = Regex(
-        """^(\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4})\s*-\s*(\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4})$""",
-        RegexOption.IGNORE_CASE
-    )
-
-    val shortStartPattern = Regex(
-        """^(\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))\s*-\s*(\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4})$""",
-        RegexOption.IGNORE_CASE
-    )
+    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    val fullPattern = Regex("""^(\d{2}/\d{2}/\d{4})\s*-\s*(\d{2}/\d{2}/\d{4})$""")
 
     return try {
-        val fullMatch = fullYearPattern.matchEntire(input)
-        if (fullMatch != null) {
-            val startText = fullMatch.groupValues[1]
-            val endText = fullMatch.groupValues[3]
+        val match = fullPattern.matchEntire(input) ?: return null
+        val startText = match.groupValues[1]
+        val endText = match.groupValues[2]
 
-            val startDate = LocalDate.parse(startText, formatter)
-            val endDate = LocalDate.parse(endText, formatter)
+        val startDate = LocalDate.parse(startText, formatter)
+        val endDate = LocalDate.parse(endText, formatter)
 
-            return startDate to endDate
-        }
-
-        val shortMatch = shortStartPattern.matchEntire(input)
-        if (shortMatch != null) {
-            val startWithoutYear = shortMatch.groupValues[1]
-            val endText = shortMatch.groupValues[3]
-
-            val endDate = LocalDate.parse(endText, formatter)
-            val startTextSameYear = "$startWithoutYear ${endDate.year}"
-            val tentativeStartDate = LocalDate.parse(startTextSameYear, formatter)
-
-            val startDate = if (tentativeStartDate.isAfter(endDate)) {
-                LocalDate.parse("$startWithoutYear ${endDate.year - 1}", formatter)
-            } else {
-                tentativeStartDate
-            }
-
-            return startDate to endDate
-        }
-
-        null
+        startDate to endDate
     } catch (_: DateTimeParseException) {
         null
     }
@@ -1215,16 +1184,12 @@ private fun parseDateRange(value: String): Pair<LocalDate, LocalDate>? {
 
 private fun normalizeDateRangeForStorage(value: String): String {
     val parsed = parseDateRange(value) ?: return value.trim()
-
-    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH)
-
+    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     return "${parsed.first.format(formatter)} - ${parsed.second.format(formatter)}"
 }
 
 private fun normalizeDateRangeForEditing(value: String): String {
     val parsed = parseDateRange(value) ?: return value.trim()
-
-    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH)
-
+    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     return "${parsed.first.format(formatter)} - ${parsed.second.format(formatter)}"
 }

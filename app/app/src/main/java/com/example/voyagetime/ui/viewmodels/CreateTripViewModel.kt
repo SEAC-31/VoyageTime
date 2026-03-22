@@ -50,7 +50,7 @@ class CreateTripViewModel(
     }
 
     private fun parseDate(value: String): LocalDate? {
-        val formatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
+        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
         return try {
             LocalDate.parse(value.trim(), formatter)
         } catch (_: DateTimeParseException) {
@@ -59,7 +59,7 @@ class CreateTripViewModel(
     }
 
     private fun formatDateRange(start: LocalDate, end: LocalDate): String {
-        val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH)
+        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
         return "${start.format(formatter)} - ${end.format(formatter)}"
     }
 

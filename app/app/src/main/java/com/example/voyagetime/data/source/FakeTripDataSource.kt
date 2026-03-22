@@ -11,7 +11,7 @@ object FakeTripDataSource {
             id = "paris",
             destination = "Paris",
             country = "France",
-            dateRange = "12 Jun - 18 Jun 2026",
+            dateRange = "12/06/2026 - 18/06/2026",
             duration = "6 days",
             budget = "€820",
             statusLabel = "Upcoming",
@@ -22,7 +22,7 @@ object FakeTripDataSource {
             id = "tokyo",
             destination = "Tokyo",
             country = "Japan",
-            dateRange = "02 Aug - 11 Aug 2026",
+            dateRange = "02/08/2026 - 11/08/2026",
             duration = "9 days",
             budget = "€2,450",
             statusLabel = "Planned",
@@ -33,7 +33,7 @@ object FakeTripDataSource {
             id = "barcelona",
             destination = "Barcelona",
             country = "Spain",
-            dateRange = "10 Mar - 13 Mar 2026",
+            dateRange = "10/03/2026 - 13/03/2026",
             duration = "3 days",
             budget = "€290",
             statusLabel = "Completed",
@@ -44,7 +44,7 @@ object FakeTripDataSource {
             id = "newyork",
             destination = "New York",
             country = "United States",
-            dateRange = "04 Dec - 10 Dec 2025",
+            dateRange = "04/12/2025 - 10/12/2025",
             duration = "6 days",
             budget = "€1,680",
             statusLabel = "Completed",
@@ -55,5 +55,5 @@ object FakeTripDataSource {
 
     var favoriteRegion: String = "Europe & North America"
     var travelGoal: String = "Complete 4 memorable trips with clear itineraries"
-    var nextDeparture: String = "Paris — 12 Jun 2026"
+    var nextDeparture: String = "Paris — 12/06/2026"
 }

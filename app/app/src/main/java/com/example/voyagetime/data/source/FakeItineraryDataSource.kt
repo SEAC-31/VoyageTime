@@ -30,7 +30,7 @@ object FakeItineraryDataSource {
         return mutableListOf(
             ItineraryDayData(
                 dayLabel = "Day 1",
-                dayDate = "13 Jun 2026",
+                dayDate = "13/06/2026",
                 morningPlan = mutableListOf(
                     ItineraryEvent("08:00", "Breakfast at Café de Flore", "Saint-Germain-des-Prés", "€14", Icons.Default.Restaurant),
                     ItineraryEvent("10:00", "Visit Louvre Museum", "Rue de Rivoli", "€22", Icons.Default.Tour)
@@ -46,7 +46,7 @@ object FakeItineraryDataSource {
             ),
             ItineraryDayData(
                 dayLabel = "Day 2",
-                dayDate = "14 Jun 2026",
+                dayDate = "14/06/2026",
                 morningPlan = mutableListOf(
                     ItineraryEvent("09:00", "Coffee and croissant", "Le Marais", "€9", Icons.Default.Restaurant)
                 ),
@@ -65,7 +65,7 @@ object FakeItineraryDataSource {
         return mutableListOf(
             ItineraryDayData(
                 dayLabel = "Day 1",
-                dayDate = "03 Aug 2026",
+                dayDate = "03/08/2026",
                 morningPlan = mutableListOf(
                     ItineraryEvent("08:30", "Breakfast in Shibuya", "Shibuya Station Area", "€12", Icons.Default.Restaurant),
                     ItineraryEvent("10:30", "Meiji Shrine Visit", "Shibuya", "Free", Icons.Default.Tour)
@@ -81,7 +81,7 @@ object FakeItineraryDataSource {
             ),
             ItineraryDayData(
                 dayLabel = "Day 2",
-                dayDate = "04 Aug 2026",
+                dayDate = "04/08/2026",
                 morningPlan = mutableListOf(
                     ItineraryEvent("09:00", "Ueno Park Walk", "Ueno", "Free", Icons.Default.Map)
                 ),
@@ -100,7 +100,7 @@ object FakeItineraryDataSource {
         return mutableListOf(
             ItineraryDayData(
                 dayLabel = "Day 1",
-                dayDate = "11 Mar 2026",
+                dayDate = "11/03/2026",
                 morningPlan = mutableListOf(
                     ItineraryEvent("09:00", "Breakfast near Plaça Catalunya", "City Center", "€9", Icons.Default.Restaurant),
                     ItineraryEvent("11:00", "Sagrada Família Visit", "Eixample", "€26", Icons.Default.Tour)
@@ -120,7 +120,7 @@ object FakeItineraryDataSource {
         return mutableListOf(
             ItineraryDayData(
                 dayLabel = "Day 1",
-                dayDate = "05 Dec 2025",
+                dayDate = "05/12/2025",
                 morningPlan = mutableListOf(
                     ItineraryEvent("08:30", "Breakfast near Bryant Park", "Midtown", "€16", Icons.Default.Restaurant),
                     ItineraryEvent("10:30", "Top of the Rock", "Rockefeller Center", "€38", Icons.Default.Place)

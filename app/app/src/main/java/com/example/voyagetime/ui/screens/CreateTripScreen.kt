@@ -30,7 +30,6 @@ import com.example.voyagetime.ui.viewmodels.CreateTripViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.Locale
 
 @Composable
 fun CreateTripScreen(
@@ -120,7 +119,7 @@ fun CreateTripScreen(
                         startDate = filterDateInput(newValue)
                     },
                     label = { Text("Start Date") },
-                    placeholder = { Text("12 Jun 2026") },
+                    placeholder = { Text("12/06/2026") },
                     modifier = Modifier.fillMaxWidth(),
                     isError = startDateError != null,
                     supportingText = {
@@ -136,7 +135,7 @@ fun CreateTripScreen(
                         endDate = filterDateInput(newValue)
                     },
                     label = { Text("End Date") },
-                    placeholder = { Text("18 Jun 2026") },
+                    placeholder = { Text("18/06/2026") },
                     modifier = Modifier.fillMaxWidth(),
                     isError = endDateError != null || dateOrderError != null,
                     supportingText = {
@@ -210,7 +209,7 @@ private fun validateBudgetField(value: String): String? {
 private fun validateSingleDateField(value: String, fieldName: String): String? {
     if (value.trim().isBlank()) return "$fieldName is required"
     return if (parseCreateTripDate(value) == null) {
-        "Use a real date like 12 Jun 2026"
+        "Use a real date like 12/06/2026"
     } else {
         null
     }
@@ -229,12 +228,12 @@ private fun validateDateOrder(startDate: String, endDate: String): String? {
 
 private fun filterDateInput(value: String): String {
     return value.filter { char ->
-        char.isDigit() || char.isLetter() || char == ' '
+        char.isDigit() || char == '/'
     }
 }
 
 private fun parseCreateTripDate(value: String): LocalDate? {
-    val formatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
+    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     return try {
         LocalDate.parse(value.trim(), formatter)
     } catch (_: DateTimeParseException) {
