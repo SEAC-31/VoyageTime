@@ -45,18 +45,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,30 +65,71 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.voyagetime.R
-import com.example.voyagetime.ui.viewmodel.EditSection
-import com.example.voyagetime.ui.viewmodel.FormMode
-import com.example.voyagetime.ui.viewmodel.IconOption
-import com.example.voyagetime.ui.viewmodel.ItineraryEvent
-import com.example.voyagetime.ui.viewmodel.ItinerarySummary
 import com.example.voyagetime.ui.viewmodel.ItineraryViewModel
-import com.example.voyagetime.ui.viewmodel.ItineraryViewModelFactory
+
+data class ItineraryEvent(
+    val time: String,
+    val title: String,
+    val location: String,
+    val cost: String,
+    val icon: ImageVector
+)
+
+data class ItinerarySummary(
+    val destination: String,
+    val dateRange: String,
+    val totalDays: String,
+    val estimatedBudget: String,
+    val imageRes: Int,
+    val status: String
+)
+
+data class ItineraryDayData(
+    val dayLabel: String,
+    val dayDate: String,
+    val morningPlan: MutableList<ItineraryEvent>,
+    val afternoonPlan: MutableList<ItineraryEvent>,
+    val eveningPlan: MutableList<ItineraryEvent>,
+    var notes: String
+)
+
+private enum class EditSection {
+    MORNING,
+    AFTERNOON,
+    EVENING,
+    NOTES
+}
+
+private enum class FormMode {
+    EDIT,
+    ADD
+}
+
+private data class IconOption(
+    val label: String,
+    val icon: ImageVector
+)
 
 @Composable
 fun Itinerary(
     tripId: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: ItineraryViewModel = viewModel()
 ) {
     val scrollState = rememberScrollState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val viewModel: ItineraryViewModel = viewModel(
-        factory = ItineraryViewModelFactory(tripId)
-    )
+    LaunchedEffect(tripId) {
+        viewModel.loadTrip(tripId)
+    }
 
-    val summary = viewModel.summary
-    val days by viewModel.days.collectAsState()
-    val isCompletedTrip = viewModel.isCompletedTrip
+    val summary = uiState.summary ?: return
+    val days = uiState.days
+    if (days.isEmpty()) return
+
+    val isCompletedTrip = tripId == "barcelona" || tripId == "newyork"
 
     val iconOptions = remember {
         listOf(
@@ -103,19 +141,23 @@ fun Itinerary(
         )
     }
 
-    var currentDayIndex by remember { mutableIntStateOf(0) }
+    var currentDayIndex by remember(tripId) { mutableIntStateOf(0) }
+    if (currentDayIndex > days.lastIndex) {
+        currentDayIndex = days.lastIndex
+    }
+
     val currentDay = days[currentDayIndex]
 
-    var editingSection by remember { mutableStateOf<EditSection?>(null) }
-    var formMode by remember { mutableStateOf(FormMode.EDIT) }
-    var editingEventIndex by remember { mutableIntStateOf(-1) }
+    var editingSection by remember(tripId) { mutableStateOf<EditSection?>(null) }
+    var formMode by remember(tripId) { mutableStateOf(FormMode.EDIT) }
+    var editingEventIndex by remember(tripId) { mutableIntStateOf(-1) }
 
-    var draftTitle by remember { mutableStateOf("") }
-    var draftLocation by remember { mutableStateOf("") }
-    var draftTime by remember { mutableStateOf("") }
-    var draftCost by remember { mutableStateOf("") }
-    var draftIcon by remember { mutableStateOf(Icons.Default.Restaurant) }
-    var draftNotes by remember { mutableStateOf("") }
+    var draftTitle by remember(tripId) { mutableStateOf("") }
+    var draftLocation by remember(tripId) { mutableStateOf("") }
+    var draftTime by remember(tripId) { mutableStateOf("") }
+    var draftCost by remember(tripId) { mutableStateOf("") }
+    var draftIcon by remember(tripId) { mutableStateOf(Icons.Default.Restaurant) }
+    var draftNotes by remember(tripId) { mutableStateOf("") }
 
     fun openEdit(section: EditSection, event: ItineraryEvent, index: Int) {
         editingSection = section
@@ -124,7 +166,7 @@ fun Itinerary(
         draftTitle = event.title
         draftLocation = event.location
         draftTime = event.time
-        draftCost = event.cost
+        draftCost = normalizeCostForEditing(event.cost)
         draftIcon = event.icon
     }
 
@@ -187,7 +229,7 @@ fun Itinerary(
                         showActionButtons = !isCompletedTrip,
                         onEditClick = { openEdit(EditSection.MORNING, event, index) },
                         onDeleteClick = {
-                            viewModel.deleteEvent(currentDayIndex, EditSection.MORNING, index)
+                            viewModel.deleteMorningEvent(currentDayIndex, index)
                             if (editingSection == EditSection.MORNING && editingEventIndex == index) {
                                 closeForm()
                             }
@@ -206,23 +248,23 @@ fun Itinerary(
                         locationValue = draftLocation,
                         onLocationChange = { draftLocation = it },
                         timeValue = draftTime,
-                        onTimeChange = { draftTime = it },
+                        onTimeChange = { draftTime = sanitizeTimeInput(it) },
                         costValue = draftCost,
-                        onCostChange = { draftCost = it },
+                        onCostChange = { draftCost = sanitizeCostInput(it) },
                         onCancel = { closeForm() },
                         onSave = {
                             val newEvent = ItineraryEvent(
-                                time = draftTime,
-                                title = draftTitle,
-                                location = draftLocation,
-                                cost = draftCost,
+                                time = draftTime.trim(),
+                                title = draftTitle.trim(),
+                                location = draftLocation.trim(),
+                                cost = normalizeCostForStorage(draftCost),
                                 icon = draftIcon
                             )
 
                             if (formMode == FormMode.ADD) {
-                                viewModel.addEvent(currentDayIndex, EditSection.MORNING, newEvent)
-                            } else if (editingEventIndex in currentDay.morningPlan.indices) {
-                                viewModel.updateEvent(currentDayIndex, EditSection.MORNING, editingEventIndex, newEvent)
+                                viewModel.addMorningEvent(currentDayIndex, newEvent)
+                            } else {
+                                viewModel.updateMorningEvent(currentDayIndex, editingEventIndex, newEvent)
                             }
 
                             closeForm()
@@ -242,7 +284,7 @@ fun Itinerary(
                         showActionButtons = !isCompletedTrip,
                         onEditClick = { openEdit(EditSection.AFTERNOON, event, index) },
                         onDeleteClick = {
-                            viewModel.deleteEvent(currentDayIndex, EditSection.AFTERNOON, index)
+                            viewModel.deleteAfternoonEvent(currentDayIndex, index)
                             if (editingSection == EditSection.AFTERNOON && editingEventIndex == index) {
                                 closeForm()
                             }
@@ -261,23 +303,23 @@ fun Itinerary(
                         locationValue = draftLocation,
                         onLocationChange = { draftLocation = it },
                         timeValue = draftTime,
-                        onTimeChange = { draftTime = it },
+                        onTimeChange = { draftTime = sanitizeTimeInput(it) },
                         costValue = draftCost,
-                        onCostChange = { draftCost = it },
+                        onCostChange = { draftCost = sanitizeCostInput(it) },
                         onCancel = { closeForm() },
                         onSave = {
                             val newEvent = ItineraryEvent(
-                                time = draftTime,
-                                title = draftTitle,
-                                location = draftLocation,
-                                cost = draftCost,
+                                time = draftTime.trim(),
+                                title = draftTitle.trim(),
+                                location = draftLocation.trim(),
+                                cost = normalizeCostForStorage(draftCost),
                                 icon = draftIcon
                             )
 
                             if (formMode == FormMode.ADD) {
-                                viewModel.addEvent(currentDayIndex, EditSection.AFTERNOON, newEvent)
-                            } else if (editingEventIndex in currentDay.afternoonPlan.indices) {
-                                viewModel.updateEvent(currentDayIndex, EditSection.AFTERNOON, editingEventIndex, newEvent)
+                                viewModel.addAfternoonEvent(currentDayIndex, newEvent)
+                            } else {
+                                viewModel.updateAfternoonEvent(currentDayIndex, editingEventIndex, newEvent)
                             }
 
                             closeForm()
@@ -297,7 +339,7 @@ fun Itinerary(
                         showActionButtons = !isCompletedTrip,
                         onEditClick = { openEdit(EditSection.EVENING, event, index) },
                         onDeleteClick = {
-                            viewModel.deleteEvent(currentDayIndex, EditSection.EVENING, index)
+                            viewModel.deleteEveningEvent(currentDayIndex, index)
                             if (editingSection == EditSection.EVENING && editingEventIndex == index) {
                                 closeForm()
                             }
@@ -316,23 +358,23 @@ fun Itinerary(
                         locationValue = draftLocation,
                         onLocationChange = { draftLocation = it },
                         timeValue = draftTime,
-                        onTimeChange = { draftTime = it },
+                        onTimeChange = { draftTime = sanitizeTimeInput(it) },
                         costValue = draftCost,
-                        onCostChange = { draftCost = it },
+                        onCostChange = { draftCost = sanitizeCostInput(it) },
                         onCancel = { closeForm() },
                         onSave = {
                             val newEvent = ItineraryEvent(
-                                time = draftTime,
-                                title = draftTitle,
-                                location = draftLocation,
-                                cost = draftCost,
+                                time = draftTime.trim(),
+                                title = draftTitle.trim(),
+                                location = draftLocation.trim(),
+                                cost = normalizeCostForStorage(draftCost),
                                 icon = draftIcon
                             )
 
                             if (formMode == FormMode.ADD) {
-                                viewModel.addEvent(currentDayIndex, EditSection.EVENING, newEvent)
-                            } else if (editingEventIndex in currentDay.eveningPlan.indices) {
-                                viewModel.updateEvent(currentDayIndex, EditSection.EVENING, editingEventIndex, newEvent)
+                                viewModel.addEveningEvent(currentDayIndex, newEvent)
+                            } else {
+                                viewModel.updateEveningEvent(currentDayIndex, editingEventIndex, newEvent)
                             }
 
                             closeForm()
@@ -356,7 +398,7 @@ fun Itinerary(
                             onValueChange = { draftNotes = it },
                             onCancel = { closeForm() },
                             onSave = {
-                                viewModel.updateNotes(currentDayIndex, draftNotes)
+                                viewModel.updateNotes(currentDayIndex, draftNotes.trim())
                                 closeForm()
                             }
                         )
@@ -369,16 +411,18 @@ fun Itinerary(
 
 @Composable
 private fun ItineraryHeroHeader(summary: ItinerarySummary) {
+    val sky = MaterialTheme.colorScheme.secondary
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(320.dp)
+            .height(300.dp)
     ) {
         Image(
             painter = painterResource(id = summary.imageRes),
             contentDescription = summary.destination,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
         )
 
         Box(
@@ -387,9 +431,9 @@ private fun ItineraryHeroHeader(summary: ItinerarySummary) {
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color.Black.copy(alpha = 0.08f),
-                            Color.Black.copy(alpha = 0.52f),
-                            Color.Black.copy(alpha = 0.78f)
+                            Color.Black.copy(alpha = 0.10f),
+                            Color.Black.copy(alpha = 0.28f),
+                            Color.Black.copy(alpha = 0.72f)
                         )
                     )
                 )
@@ -398,62 +442,65 @@ private fun ItineraryHeroHeader(summary: ItinerarySummary) {
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(horizontal = 20.dp, vertical = 22.dp),
+                .fillMaxWidth()
+                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Surface(
-                shape = RoundedCornerShape(999.dp),
-                color = Color.White.copy(alpha = 0.18f)
-            ) {
-                Text(
-                    text = summary.status,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
             Text(
                 text = summary.destination,
-                color = Color.White,
-                fontSize = 32.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                lineHeight = 34.sp
+                color = Color.White
             )
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ItineraryMiniInfo(
-                    icon = Icons.Default.CalendarMonth,
-                    text = summary.dateRange,
-                    contentColor = Color.White
-                )
-                Spacer(modifier = Modifier.width(14.dp))
-                ItineraryMiniInfo(
-                    icon = Icons.Default.LocationOn,
-                    text = summary.totalDays,
-                    contentColor = Color.White
-                )
-                Spacer(modifier = Modifier.width(14.dp))
-                ItineraryMiniInfo(
-                    icon = Icons.Default.AttachMoney,
-                    text = summary.estimatedBudget,
-                    contentColor = Color.White
-                )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                HeroChip(Icons.Default.CalendarMonth, summary.dateRange)
+                HeroChip(Icons.Default.Schedule, summary.totalDays)
             }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                HeroChip(Icons.Default.AttachMoney, summary.estimatedBudget)
+                HeroChip(Icons.Default.Place, summary.status, highlight = true)
+            }
+
+            HorizontalDivider(
+                modifier = Modifier.padding(top = 4.dp),
+                color = sky.copy(alpha = 0.22f)
+            )
+
+            Text(
+                text = "Plan each day with a clear morning, afternoon and evening structure.",
+                fontSize = 13.sp,
+                lineHeight = 19.sp,
+                color = Color.White.copy(alpha = 0.85f)
+            )
         }
     }
 }
 
 @Composable
-private fun ItineraryMiniInfo(
+private fun HeroChip(
     icon: ImageVector,
     text: String,
-    contentColor: Color
+    highlight: Boolean = false
 ) {
+    val background = if (highlight) {
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
+    } else {
+        Color.Black.copy(alpha = 0.34f)
+    }
+
+    val contentColor = if (highlight) {
+        MaterialTheme.colorScheme.secondary
+    } else {
+        Color.White
+    }
+
     Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(background)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -573,12 +620,13 @@ private fun PlannerSection(
                                     contentDescription = "Add event"
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Add")
+                                Text("Add Event")
                             }
                         }
                     }
                 } else {
                     Column(
+                        modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
@@ -589,13 +637,18 @@ private fun PlannerSection(
                         )
 
                         if (canAddEvent) {
-                            OutlinedButton(onClick = onAddClick) {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = "Add event"
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Add")
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                OutlinedButton(onClick = onAddClick) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = "Add event"
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Add Event")
+                                }
                             }
                         }
                     }
@@ -636,7 +689,7 @@ private fun PlannerNotesSection(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Notes",
+                            text = "Day Notes",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -656,30 +709,41 @@ private fun PlannerNotesSection(
                     }
                 } else {
                     Column(
+                        modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = "Notes",
+                            text = "Day Notes",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
                         if (canEditNotes) {
-                            OutlinedButton(onClick = onEditClick) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "Edit notes"
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Edit")
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                OutlinedButton(onClick = onEditClick) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Edit notes"
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Edit")
+                                }
                             }
                         }
                     }
                 }
             }
 
-            NotesCard(notes = notes)
+            NotesCard(
+                icon = Icons.Default.LocationOn,
+                title = "Notes",
+                text = notes
+            )
+
             content()
         }
     }
@@ -697,28 +761,31 @@ private fun AgendaEventCard(
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.background
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(14.dp)
         ) {
-            EventMainInfo(event = event)
+            val useSecondRowForButtons = maxWidth < 660.dp
 
-            if (showActionButtons) {
-                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+            if (!useSecondRowForButtons) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    EventMainInfo(event = event, modifier = Modifier.weight(1f))
 
-                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                    val stackActions = maxWidth < 520.dp
+                    if (showActionButtons) {
+                        Spacer(modifier = Modifier.width(12.dp))
 
-                    if (!stackActions) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
+                        Column(
+                            horizontalAlignment = Alignment.End,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            TextButton(onClick = onEditClick) {
+                            OutlinedButton(onClick = onEditClick) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
                                     contentDescription = "Edit event"
@@ -736,12 +803,22 @@ private fun AgendaEventCard(
                                 Text("Delete")
                             }
                         }
-                    } else {
-                        Column(
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    EventMainInfo(event = event)
+
+                    if (showActionButtons) {
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.End
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            TextButton(onClick = onEditClick) {
+                            OutlinedButton(onClick = onEditClick) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
                                     contentDescription = "Edit event"
@@ -857,6 +934,16 @@ private fun EventEditForm(
 ) {
     var iconMenuExpanded by remember { mutableStateOf(false) }
 
+    val titleError = validateRequiredMessage(titleValue, "Event title")
+    val locationError = validateRequiredMessage(locationValue, "Location")
+    val timeError = validateTimeMessage(timeValue)
+    val costError = validateCostMessage(costValue)
+
+    val canSave = titleError == null &&
+            locationError == null &&
+            timeError == null &&
+            costError == null
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -884,7 +971,7 @@ private fun EventEditForm(
                         contentDescription = "Selected icon"
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Choose icon")
+                    Text("Select Icon")
                 }
 
                 DropdownMenu(
@@ -913,63 +1000,64 @@ private fun EventEditForm(
                 value = titleValue,
                 onValueChange = onTitleChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Title") }
+                label = { Text("Event title") },
+                isError = titleError != null,
+                supportingText = {
+                    if (titleError != null) {
+                        Text(titleError)
+                    }
+                }
             )
 
             OutlinedTextField(
                 value = locationValue,
                 onValueChange = onLocationChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Location") }
+                label = { Text("Location") },
+                isError = locationError != null,
+                supportingText = {
+                    if (locationError != null) {
+                        Text(locationError)
+                    }
+                }
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(
-                    value = timeValue,
-                    onValueChange = onTimeChange,
-                    modifier = Modifier.weight(1f),
-                    label = { Text("Time") }
-                )
-
-                OutlinedTextField(
-                    value = costValue,
-                    onValueChange = onCostChange,
-                    modifier = Modifier.weight(1f),
-                    label = { Text("Cost") }
-                )
-            }
-
-            Row(
+            OutlinedTextField(
+                value = timeValue,
+                onValueChange = onTimeChange,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(onClick = onCancel) {
-                    Text("Cancel")
+                label = { Text("Time") },
+                placeholder = { Text("08:30") },
+                isError = timeError != null,
+                supportingText = {
+                    if (timeError != null) {
+                        Text(timeError)
+                    }
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = onSave) {
-                    Text("Save")
-                }
-            }
-        }
-    }
-}
+            )
 
-@Composable
-private fun NotesCard(notes: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.background
-        )
-    ) {
-        Text(
-            text = notes,
-            modifier = Modifier.padding(14.dp),
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.80f)
-        )
+            OutlinedTextField(
+                value = costValue,
+                onValueChange = onCostChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Cost") },
+                placeholder = { Text("12 or Free") },
+                isError = costError != null,
+                supportingText = {
+                    if (costError != null) {
+                        Text(costError)
+                    }
+                }
+            )
+
+            ResponsiveActionRow(
+                primaryText = "Save",
+                secondaryText = "Cancel",
+                onPrimaryClick = onSave,
+                onSecondaryClick = onCancel,
+                primaryEnabled = canSave
+            )
+        }
     }
 }
 
@@ -980,6 +1068,9 @@ private fun NotesEditForm(
     onCancel: () -> Unit,
     onSave: () -> Unit
 ) {
+    val notesError = validateNotesMessage(value)
+    val canSave = notesError == null
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -996,24 +1087,213 @@ private fun NotesEditForm(
             OutlinedTextField(
                 value = value,
                 onValueChange = onValueChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(140.dp),
-                label = { Text("Notes") }
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 4,
+                label = { Text("Edit notes") },
+                isError = notesError != null,
+                supportingText = {
+                    if (notesError != null) {
+                        Text(notesError)
+                    }
+                }
             )
 
+            ResponsiveActionRow(
+                primaryText = "Save",
+                secondaryText = "Cancel",
+                onPrimaryClick = onSave,
+                onSecondaryClick = onCancel,
+                primaryEnabled = canSave
+            )
+        }
+    }
+}
+
+@Composable
+private fun ResponsiveActionRow(
+    primaryText: String,
+    secondaryText: String,
+    onPrimaryClick: () -> Unit,
+    onSecondaryClick: () -> Unit,
+    primaryEnabled: Boolean = true
+) {
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val useSecondRow = maxWidth < 420.dp
+
+        if (!useSecondRow) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = onCancel) {
-                    Text("Cancel")
+                TextButton(onClick = onSecondaryClick) {
+                    Text(secondaryText)
                 }
+
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = onSave) {
-                    Text("Save")
+
+                Button(
+                    onClick = onPrimaryClick,
+                    enabled = primaryEnabled
+                ) {
+                    Text(primaryText)
+                }
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = onSecondaryClick) {
+                    Text(secondaryText)
+                }
+
+                Button(
+                    onClick = onPrimaryClick,
+                    enabled = primaryEnabled
+                ) {
+                    Text(primaryText)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun NotesCard(
+    icon: ImageVector,
+    title: String,
+    text: String
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.background
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f))
+                    .padding(10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = text,
+                    fontSize = 13.sp,
+                    lineHeight = 20.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.76f)
+                )
+            }
+        }
+    }
+}
+
+private fun sanitizeTimeInput(value: String): String {
+    return value.filter { char ->
+        char.isDigit() || char == ':'
+    }
+}
+
+private fun validateTimeMessage(value: String): String? {
+    val trimmed = value.trim()
+
+    if (trimmed.isBlank()) {
+        return "Time is required"
+    }
+
+    val regex = Regex("""^([01]?\d|2[0-3]):[0-5]\d$""")
+    return if (regex.matches(trimmed)) {
+        null
+    } else {
+        "Use a valid time like 08:30 or 19:00"
+    }
+}
+
+private fun sanitizeCostInput(value: String): String {
+    val trimmed = value.trim()
+
+    if (trimmed.equals("free", ignoreCase = true)) {
+        return "Free"
+    }
+
+    return value.filter { it.isDigit() }
+}
+
+private fun validateCostMessage(value: String): String? {
+    val trimmed = value.trim()
+
+    if (trimmed.isBlank()) {
+        return "Cost is required"
+    }
+
+    if (trimmed.equals("free", ignoreCase = true)) {
+        return null
+    }
+
+    return if (trimmed.all { it.isDigit() }) {
+        null
+    } else {
+        "Use numbers only or type Free"
+    }
+}
+
+private fun normalizeCostForEditing(value: String): String {
+    val trimmed = value.trim()
+
+    return if (trimmed.equals("free", ignoreCase = true)) {
+        "Free"
+    } else {
+        trimmed.filter { it.isDigit() }
+    }
+}
+
+private fun normalizeCostForStorage(value: String): String {
+    val trimmed = value.trim()
+
+    return if (trimmed.equals("free", ignoreCase = true)) {
+        "Free"
+    } else {
+        "€$trimmed"
+    }
+}
+
+private fun validateRequiredMessage(value: String, fieldName: String): String? {
+    return if (value.trim().isBlank()) {
+        "$fieldName is required"
+    } else {
+        null
+    }
+}
+
+private fun validateNotesMessage(value: String): String? {
+    return if (value.trim().isBlank()) {
+        "Notes cannot be empty"
+    } else {
+        null
     }
 }
