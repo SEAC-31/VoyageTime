@@ -1,6 +1,9 @@
 package com.example.voyagetime.data.repository
 
-import com.example.voyagetime.data.source.FakeItineraryDataSource
+import com.example.voyagetime.domain.repository.ItineraryRepository
+import com.example.voyagetime.domain.repository.TripRepository
+import com.example.voyagetime.data.repository.TripRepositoryImpl
+import com.example.voyagetime.domain.source.FakeItineraryDataSource
 import com.example.voyagetime.ui.screens.ItineraryDayData
 import com.example.voyagetime.ui.screens.ItineraryEvent
 import com.example.voyagetime.ui.screens.TripItem
@@ -140,17 +143,19 @@ class ItineraryRepositoryImpl(
     }
 
     private fun buildTripDates(trip: TripItem): List<String> {
-        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+        val formatter = DateTimeFormatter.ISO_LOCAL_DATE
 
         val parsedRange = parseDateRange(trip.dateRange)
         if (parsedRange != null) {
             val (start, end) = parsedRange
             val dates = mutableListOf<String>()
             var current = start
+
             while (!current.isAfter(end)) {
                 dates.add(current.format(formatter))
                 current = current.plusDays(1)
             }
+
             if (dates.isNotEmpty()) return dates
         }
 
@@ -161,20 +166,32 @@ class ItineraryRepositoryImpl(
     }
 
     private fun parseDateRange(dateRange: String): Pair<LocalDate, LocalDate>? {
-        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-        val parts = dateRange.split("-").map { it.trim() }
+        val parts = dateRange.split(" - ").map { it.trim() }
         if (parts.size != 2) return null
 
-        val startRaw = parts[0]
-        val endRaw = parts[1]
+        val start = parseFlexibleDate(parts[0]) ?: return null
+        val end = parseFlexibleDate(parts[1]) ?: return null
 
-        return try {
-            val start = LocalDate.parse(startRaw, formatter)
-            val end = LocalDate.parse(endRaw, formatter)
-            start to end
-        } catch (_: DateTimeParseException) {
-            null
+        return start to end
+    }
+
+    private fun parseFlexibleDate(value: String): LocalDate? {
+        val trimmed = value.trim()
+        if (trimmed.isBlank()) return null
+
+        val formatters = listOf(
+            DateTimeFormatter.ISO_LOCAL_DATE,
+            DateTimeFormatter.ofPattern("dd/MM/yyyy")
+        )
+
+        for (formatter in formatters) {
+            try {
+                return LocalDate.parse(trimmed, formatter)
+            } catch (_: DateTimeParseException) {
+            }
         }
+
+        return null
     }
 
     private fun ItineraryDayData.deepCopy(): ItineraryDayData {

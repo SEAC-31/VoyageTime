@@ -1,4 +1,4 @@
-package com.example.voyagetime.data.source
+package com.example.voyagetime.domain.source
 
 import com.example.voyagetime.R
 import com.example.voyagetime.ui.screens.TripItem

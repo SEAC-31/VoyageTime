@@ -1,4 +1,4 @@
-package com.example.voyagetime.data.source
+package com.example.voyagetime.domain.source
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Map

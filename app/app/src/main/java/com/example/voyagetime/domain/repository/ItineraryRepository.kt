@@ -1,4 +1,4 @@
-package com.example.voyagetime.data.repository
+package com.example.voyagetime.domain.repository
 
 import com.example.voyagetime.ui.screens.ItineraryDayData
 import com.example.voyagetime.ui.screens.ItineraryEvent

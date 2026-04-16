@@ -1,4 +1,4 @@
-package com.example.voyagetime.data.repository
+package com.example.voyagetime.domain.repository
 
 import com.example.voyagetime.ui.screens.TripItem
 
@@ -9,6 +9,7 @@ interface TripRepository {
 
     fun addTrip(newTrip: TripItem)
     fun updateTrip(updatedTrip: TripItem)
+    fun deleteTrip(tripId: String)
 
     fun getFavoriteRegion(): String
     fun updateFavoriteRegion(newValue: String)

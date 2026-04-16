@@ -2,7 +2,7 @@ package com.example.voyagetime.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import com.example.voyagetime.R
-import com.example.voyagetime.data.repository.TripRepository
+import com.example.voyagetime.domain.repository.TripRepository
 import com.example.voyagetime.data.repository.TripRepositoryImpl
 import com.example.voyagetime.ui.screens.TripItem
 import com.example.voyagetime.ui.screens.TripState
@@ -25,6 +25,11 @@ class CreateTripViewModel(
     ) {
         val start = parseDate(startDate) ?: return
         val end = parseDate(endDate) ?: return
+        val today = LocalDate.now()
+
+        if (start.isBefore(today) || end.isBefore(today) || end.isBefore(start)) {
+            return
+        }
 
         val normalizedDestination = destination.trim()
         val normalizedCountry = country.trim()
@@ -64,8 +69,7 @@ class CreateTripViewModel(
     }
 
     private fun calculateTripDays(start: LocalDate, end: LocalDate): Int {
-        val diff = ChronoUnit.DAYS.between(start, end).toInt()
-        return if (diff <= 0) 1 else diff
+        return ChronoUnit.DAYS.between(start, end).toInt() + 1
     }
 
     private fun formatDuration(days: Int): String {

@@ -53,6 +53,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,11 +63,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.voyagetime.R
 import com.example.voyagetime.ui.viewmodels.ItineraryViewModel
 
 data class ItineraryEvent(
@@ -113,6 +116,31 @@ private data class IconOption(
 )
 
 @Composable
+private fun localizedItineraryDuration(rawDuration: String): String {
+    val days = rawDuration.substringBefore(" ").trim().toIntOrNull() ?: return rawDuration
+    return if (days == 1) {
+        stringResource(R.string.duration_single_day)
+    } else {
+        stringResource(R.string.duration_multiple_days, days)
+    }
+}
+
+@Composable
+private fun localizedItineraryStatus(rawStatus: String): String {
+    return when {
+        rawStatus.equals("Upcoming", ignoreCase = true) -> stringResource(R.string.status_upcoming)
+        rawStatus.equals("Planned", ignoreCase = true) -> stringResource(R.string.status_planned)
+        rawStatus.equals("Completed", ignoreCase = true) -> stringResource(R.string.status_completed)
+        else -> rawStatus
+    }
+}
+
+@Composable
+private fun localizedCostLabel(rawCost: String): String {
+    return if (rawCost.equals("Free", ignoreCase = true)) stringResource(R.string.itinerary_free) else rawCost
+}
+
+@Composable
 fun Itinerary(
     tripId: String,
     modifier: Modifier = Modifier,
@@ -131,24 +159,36 @@ fun Itinerary(
 
     val isCompletedTrip = tripId == "barcelona" || tripId == "newyork"
 
-    val iconOptions = remember {
+    val restaurantLabel = stringResource(R.string.itinerary_icon_restaurant)
+    val tourLabel = stringResource(R.string.itinerary_icon_tour)
+    val placeLabel = stringResource(R.string.itinerary_icon_place)
+    val mapLabel = stringResource(R.string.itinerary_icon_map)
+    val trainLabel = stringResource(R.string.itinerary_icon_train)
+
+    val iconOptions = remember(
+        restaurantLabel,
+        tourLabel,
+        placeLabel,
+        mapLabel,
+        trainLabel
+    ) {
         listOf(
-            IconOption("Restaurant", Icons.Default.Restaurant),
-            IconOption("Tour", Icons.Default.Tour),
-            IconOption("Place", Icons.Default.Place),
-            IconOption("Map", Icons.Default.Map),
-            IconOption("Train", Icons.Default.Train)
+            IconOption(restaurantLabel, Icons.Default.Restaurant),
+            IconOption(tourLabel, Icons.Default.Tour),
+            IconOption(placeLabel, Icons.Default.Place),
+            IconOption(mapLabel, Icons.Default.Map),
+            IconOption(trainLabel, Icons.Default.Train)
         )
     }
 
-    var currentDayIndex by remember(tripId) { mutableIntStateOf(0) }
+    var currentDayIndex by remember (tripId) { mutableIntStateOf(0) }
     if (currentDayIndex > days.lastIndex) {
         currentDayIndex = days.lastIndex
     }
 
     val currentDay = days[currentDayIndex]
 
-    var editingSection by remember(tripId) { mutableStateOf<EditSection?>(null) }
+    var editingSection by remember (tripId) { mutableStateOf<EditSection?>(null) }
     var formMode by remember(tripId) { mutableStateOf(FormMode.EDIT) }
     var editingEventIndex by remember(tripId) { mutableIntStateOf(-1) }
 
@@ -219,7 +259,7 @@ fun Itinerary(
             )
 
             PlannerSection(
-                title = "Morning Plan",
+                title = stringResource(R.string.itinerary_morning),
                 canAddEvent = !isCompletedTrip,
                 onAddClick = { openAdd(EditSection.MORNING) }
             ) {
@@ -239,7 +279,7 @@ fun Itinerary(
 
                 if (editingSection == EditSection.MORNING && !isCompletedTrip) {
                     EventEditForm(
-                        title = if (formMode == FormMode.ADD) "Add Morning Event" else "Edit Morning Event",
+                        title = if (formMode == FormMode.ADD) stringResource(R.string.itinerary_add_morning) else stringResource(R.string.itinerary_edit_morning),
                         iconOptions = iconOptions,
                         selectedIcon = draftIcon,
                         onIconSelected = { draftIcon = it },
@@ -274,7 +314,7 @@ fun Itinerary(
             }
 
             PlannerSection(
-                title = "Afternoon Plan",
+                title = stringResource(R.string.itinerary_afternoon),
                 canAddEvent = !isCompletedTrip,
                 onAddClick = { openAdd(EditSection.AFTERNOON) }
             ) {
@@ -294,7 +334,7 @@ fun Itinerary(
 
                 if (editingSection == EditSection.AFTERNOON && !isCompletedTrip) {
                     EventEditForm(
-                        title = if (formMode == FormMode.ADD) "Add Afternoon Event" else "Edit Afternoon Event",
+                        title = if (formMode == FormMode.ADD) stringResource(R.string.itinerary_add_afternoon) else stringResource(R.string.itinerary_edit_afternoon),
                         iconOptions = iconOptions,
                         selectedIcon = draftIcon,
                         onIconSelected = { draftIcon = it },
@@ -329,7 +369,7 @@ fun Itinerary(
             }
 
             PlannerSection(
-                title = "Evening Plan",
+                title = stringResource(R.string.itinerary_evening),
                 canAddEvent = !isCompletedTrip,
                 onAddClick = { openAdd(EditSection.EVENING) }
             ) {
@@ -349,7 +389,7 @@ fun Itinerary(
 
                 if (editingSection == EditSection.EVENING && !isCompletedTrip) {
                     EventEditForm(
-                        title = if (formMode == FormMode.ADD) "Add Evening Event" else "Edit Evening Event",
+                        title = if (formMode == FormMode.ADD) stringResource(R.string.itinerary_add_evening) else stringResource(R.string.itinerary_edit_evening),
                         iconOptions = iconOptions,
                         selectedIcon = draftIcon,
                         onIconSelected = { draftIcon = it },
@@ -455,12 +495,12 @@ private fun ItineraryHeroHeader(summary: ItinerarySummary) {
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 HeroChip(Icons.Default.CalendarMonth, summary.dateRange)
-                HeroChip(Icons.Default.Schedule, summary.totalDays)
+                HeroChip(Icons.Default.Schedule, localizedItineraryDuration(summary.totalDays))
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 HeroChip(Icons.Default.AttachMoney, summary.estimatedBudget)
-                HeroChip(Icons.Default.Place, summary.status, highlight = true)
+                HeroChip(Icons.Default.Place, localizedItineraryStatus(summary.status), highlight = true)
             }
 
             HorizontalDivider(
@@ -469,7 +509,7 @@ private fun ItineraryHeroHeader(summary: ItinerarySummary) {
             )
 
             Text(
-                text = "Plan each day with a clear morning, afternoon and evening structure.",
+                text = stringResource(R.string.itinerary_hero_subtitle),
                 fontSize = 13.sp,
                 lineHeight = 19.sp,
                 color = Color.White.copy(alpha = 0.85f)
@@ -544,7 +584,7 @@ private fun DayNavigator(
             IconButton(onClick = onPrevious, enabled = canGoPrevious) {
                 Icon(
                     imageVector = Icons.Default.ChevronLeft,
-                    contentDescription = "Previous day",
+                    contentDescription = stringResource(R.string.itinerary_previous_day),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -569,7 +609,7 @@ private fun DayNavigator(
             IconButton(onClick = onNext, enabled = canGoNext) {
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
-                    contentDescription = "Next day",
+                    contentDescription = stringResource(R.string.itinerary_next_day),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -594,11 +634,11 @@ private fun PlannerSection(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(18.dp),
+                .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                val stackActions = maxWidth < 560.dp
+                val stackActions = maxWidth < 150.dp
 
                 if (!stackActions) {
                     Row(
@@ -617,10 +657,10 @@ private fun PlannerSection(
                             OutlinedButton(onClick = onAddClick) {
                                 Icon(
                                     imageVector = Icons.Default.Add,
-                                    contentDescription = "Add event"
+                                    contentDescription = stringResource(R.string.itinerary_add_event)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Add Event")
+                                Text(stringResource(R.string.itinerary_add_event))
                             }
                         }
                     }
@@ -644,10 +684,10 @@ private fun PlannerSection(
                                 OutlinedButton(onClick = onAddClick) {
                                     Icon(
                                         imageVector = Icons.Default.Add,
-                                        contentDescription = "Add event"
+                                        contentDescription = stringResource(R.string.itinerary_add_event)
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Add Event")
+                                    Text(stringResource(R.string.itinerary_add_event))
                                 }
                             }
                         }
@@ -681,7 +721,7 @@ private fun PlannerNotesSection(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                val stackActions = maxWidth < 560.dp
+                val stackActions = maxWidth < 150.dp
 
                 if (!stackActions) {
                     Row(
@@ -689,7 +729,7 @@ private fun PlannerNotesSection(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Day Notes",
+                            text = stringResource(R.string.itinerary_day_notes),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -700,10 +740,10 @@ private fun PlannerNotesSection(
                             OutlinedButton(onClick = onEditClick) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
-                                    contentDescription = "Edit notes"
+                                    contentDescription = stringResource(R.string.itinerary_field_notes)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Edit")
+                                Text(stringResource(R.string.itinerary_btn_edit))
                             }
                         }
                     }
@@ -713,7 +753,7 @@ private fun PlannerNotesSection(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = "Day Notes",
+                            text = stringResource(R.string.itinerary_day_notes),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -727,10 +767,10 @@ private fun PlannerNotesSection(
                                 OutlinedButton(onClick = onEditClick) {
                                     Icon(
                                         imageVector = Icons.Default.Edit,
-                                        contentDescription = "Edit notes"
+                                        contentDescription = stringResource(R.string.itinerary_field_notes)
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Edit")
+                                    Text(stringResource(R.string.itinerary_btn_edit))
                                 }
                             }
                         }
@@ -740,7 +780,7 @@ private fun PlannerNotesSection(
 
             NotesCard(
                 icon = Icons.Default.LocationOn,
-                title = "Notes",
+                title = stringResource(R.string.itinerary_notes_label),
                 text = notes
             )
 
@@ -788,19 +828,19 @@ private fun AgendaEventCard(
                             OutlinedButton(onClick = onEditClick) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
-                                    contentDescription = "Edit event"
+                                    contentDescription = stringResource(R.string.itinerary_edit_event_cd)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Edit")
+                                Text(stringResource(R.string.itinerary_btn_edit))
                             }
 
                             TextButton(onClick = onDeleteClick) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete event"
+                                    contentDescription = stringResource(R.string.itinerary_delete_event_cd)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("Delete")
+                                Text(stringResource(R.string.itinerary_btn_delete))
                             }
                         }
                     }
@@ -821,19 +861,19 @@ private fun AgendaEventCard(
                             OutlinedButton(onClick = onEditClick) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
-                                    contentDescription = "Edit event"
+                                    contentDescription = stringResource(R.string.itinerary_edit_event_cd)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Edit")
+                                Text(stringResource(R.string.itinerary_btn_edit))
                             }
 
                             TextButton(onClick = onDeleteClick) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete event"
+                                    contentDescription = stringResource(R.string.itinerary_delete_event_cd)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("Delete")
+                                Text(stringResource(R.string.itinerary_btn_delete))
                             }
                         }
                     }
@@ -886,7 +926,7 @@ private fun EventMainInfo(
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 EventMeta(icon = Icons.Default.Schedule, text = event.time)
-                EventMeta(icon = Icons.Default.AttachMoney, text = event.cost)
+                EventMeta(icon = Icons.Default.AttachMoney, text = localizedCostLabel(event.cost))
             }
         }
     }
@@ -934,10 +974,10 @@ private fun EventEditForm(
 ) {
     var iconMenuExpanded by remember { mutableStateOf(false) }
 
-    val titleError = validateRequiredMessage(titleValue, "Event title")
-    val locationError = validateRequiredMessage(locationValue, "Location")
-    val timeError = validateTimeMessage(timeValue)
-    val costError = validateCostMessage(costValue)
+    val titleError = validateRequiredMessage(titleValue, stringResource(R.string.validation_field_required, stringResource(R.string.itinerary_field_title)))
+    val locationError = validateRequiredMessage(locationValue, stringResource(R.string.validation_field_required, stringResource(R.string.itinerary_field_location)))
+    val timeError = validateTimeMessage(timeValue, stringResource(R.string.itinerary_time_required), stringResource(R.string.itinerary_time_example))
+    val costError = validateCostMessage(costValue, stringResource(R.string.itinerary_cost_required), stringResource(R.string.itinerary_cost_digits_or_free))
 
     val canSave = titleError == null &&
             locationError == null &&
@@ -968,10 +1008,10 @@ private fun EventEditForm(
                 OutlinedButton(onClick = { iconMenuExpanded = true }) {
                     Icon(
                         imageVector = selectedIcon,
-                        contentDescription = "Selected icon"
+                        contentDescription = stringResource(R.string.itinerary_selected_icon_cd)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Select Icon")
+                    Text(stringResource(R.string.itinerary_btn_select_icon))
                 }
 
                 DropdownMenu(
@@ -1000,7 +1040,7 @@ private fun EventEditForm(
                 value = titleValue,
                 onValueChange = onTitleChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Event title") },
+                label = { Text(stringResource(R.string.itinerary_field_title)) },
                 isError = titleError != null,
                 supportingText = {
                     if (titleError != null) {
@@ -1013,7 +1053,7 @@ private fun EventEditForm(
                 value = locationValue,
                 onValueChange = onLocationChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Location") },
+                label = { Text(stringResource(R.string.itinerary_field_location)) },
                 isError = locationError != null,
                 supportingText = {
                     if (locationError != null) {
@@ -1026,8 +1066,8 @@ private fun EventEditForm(
                 value = timeValue,
                 onValueChange = onTimeChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Time") },
-                placeholder = { Text("08:30") },
+                label = { Text(stringResource(R.string.itinerary_field_time)) },
+                placeholder = { Text(stringResource(R.string.itinerary_time_placeholder)) },
                 isError = timeError != null,
                 supportingText = {
                     if (timeError != null) {
@@ -1040,8 +1080,8 @@ private fun EventEditForm(
                 value = costValue,
                 onValueChange = onCostChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Cost") },
-                placeholder = { Text("12 or Free") },
+                label = { Text(stringResource(R.string.itinerary_field_cost)) },
+                placeholder = { Text(stringResource(R.string.itinerary_cost_placeholder)) },
                 isError = costError != null,
                 supportingText = {
                     if (costError != null) {
@@ -1051,8 +1091,8 @@ private fun EventEditForm(
             )
 
             ResponsiveActionRow(
-                primaryText = "Save",
-                secondaryText = "Cancel",
+                primaryText = stringResource(R.string.itinerary_btn_save),
+                secondaryText = stringResource(R.string.itinerary_btn_cancel),
                 onPrimaryClick = onSave,
                 onSecondaryClick = onCancel,
                 primaryEnabled = canSave
@@ -1068,7 +1108,7 @@ private fun NotesEditForm(
     onCancel: () -> Unit,
     onSave: () -> Unit
 ) {
-    val notesError = validateNotesMessage(value)
+    val notesError = validateNotesMessage(value, stringResource(R.string.itinerary_notes_empty))
     val canSave = notesError == null
 
     Card(
@@ -1089,7 +1129,7 @@ private fun NotesEditForm(
                 onValueChange = onValueChange,
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 4,
-                label = { Text("Edit notes") },
+                label = { Text(stringResource(R.string.itinerary_field_notes)) },
                 isError = notesError != null,
                 supportingText = {
                     if (notesError != null) {
@@ -1099,8 +1139,8 @@ private fun NotesEditForm(
             )
 
             ResponsiveActionRow(
-                primaryText = "Save",
-                secondaryText = "Cancel",
+                primaryText = stringResource(R.string.itinerary_btn_save),
+                secondaryText = stringResource(R.string.itinerary_btn_cancel),
                 onPrimaryClick = onSave,
                 onSecondaryClick = onCancel,
                 primaryEnabled = canSave
@@ -1219,18 +1259,18 @@ private fun sanitizeTimeInput(value: String): String {
     }
 }
 
-private fun validateTimeMessage(value: String): String? {
+private fun validateTimeMessage(value: String, requiredMessage: String, exampleMessage: String): String? {
     val trimmed = value.trim()
 
     if (trimmed.isBlank()) {
-        return "Time is required"
+        return requiredMessage
     }
 
     val regex = Regex("""^([01]?\d|2[0-3]):[0-5]\d$""")
     return if (regex.matches(trimmed)) {
         null
     } else {
-        "Use a valid time like 08:30 or 19:00"
+        exampleMessage
     }
 }
 
@@ -1244,11 +1284,11 @@ private fun sanitizeCostInput(value: String): String {
     return value.filter { it.isDigit() }
 }
 
-private fun validateCostMessage(value: String): String? {
+private fun validateCostMessage(value: String, requiredMessage: String, digitsOrFreeMessage: String): String? {
     val trimmed = value.trim()
 
     if (trimmed.isBlank()) {
-        return "Cost is required"
+        return requiredMessage
     }
 
     if (trimmed.equals("free", ignoreCase = true)) {
@@ -1258,7 +1298,7 @@ private fun validateCostMessage(value: String): String? {
     return if (trimmed.all { it.isDigit() }) {
         null
     } else {
-        "Use numbers only or type Free"
+        digitsOrFreeMessage
     }
 }
 
@@ -1282,17 +1322,17 @@ private fun normalizeCostForStorage(value: String): String {
     }
 }
 
-private fun validateRequiredMessage(value: String, fieldName: String): String? {
+private fun validateRequiredMessage(value: String, requiredMessage: String): String? {
     return if (value.trim().isBlank()) {
-        "$fieldName is required"
+        requiredMessage
     } else {
         null
     }
 }
 
-private fun validateNotesMessage(value: String): String? {
+private fun validateNotesMessage(value: String, emptyMessage: String): String? {
     return if (value.trim().isBlank()) {
-        "Notes cannot be empty"
+        emptyMessage
     } else {
         null
     }

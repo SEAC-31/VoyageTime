@@ -29,19 +29,36 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.voyagetime.R
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 data class GalleryItem(
-    val id: Int, val name: String, val location: String, val dateAdded: String,
+    val id: Int, val name: String, val location: String, val dateAdded: LocalDate,
     val type: String, val isFavorite: Boolean, val size: String, val color: Color,
     @DrawableRes val imageRes: Int? = null
 )
 
 val sampleGalleryItems = listOf(
-    GalleryItem(1, "Barcelona", "Barcelona, Spain", "March 2, 2025", "photo", true, "3.2 MB", Color(0xFFFF7043), R.drawable.barcelona),
-    GalleryItem(2, "New York", "New York, USA", "January 15, 2025", "photo", false, "2.8 MB", Color(0xFF42A5F5), R.drawable.newyork),
-    GalleryItem(3, "Paris", "Paris, France", "December 10, 2024", "photo", true, "2.1 MB", Color(0xFFAB47BC), R.drawable.paris),
-    GalleryItem(4, "Tokyo", "Tokyo, Japan", "November 5, 2024", "photo", false, "4.1 MB", Color(0xFF66BB6A), R.drawable.tokyo),
+    GalleryItem(1, "Barcelona", "Barcelona, Spain", LocalDate.of(2025, 3, 2), "photo", true, "3.2 MB", Color(0xFFFF7043), R.drawable.barcelona),
+    GalleryItem(2, "New York", "New York, USA", LocalDate.of(2025, 1, 15), "photo", false, "2.8 MB", Color(0xFF42A5F5), R.drawable.newyork),
+    GalleryItem(3, "Paris", "Paris, France", LocalDate.of(2024, 12, 10), "photo", true, "2.1 MB", Color(0xFFAB47BC), R.drawable.paris),
+    GalleryItem(4, "Tokyo", "Tokyo, Japan", LocalDate.of(2024, 11, 5), "photo", false, "4.1 MB", Color(0xFF66BB6A), R.drawable.tokyo),
 )
+
+
+private fun localizedGalleryDate(date: LocalDate): String {
+    return date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
+}
+
+@Composable
+private fun localizedGalleryType(type: String): String {
+    return if (type.equals("video", ignoreCase = true)) {
+        stringResource(R.string.gallery_type_video)
+    } else {
+        stringResource(R.string.gallery_type_photo)
+    }
+}
 
 @Composable
 fun Gallery(modifier: Modifier = Modifier) {
@@ -200,9 +217,9 @@ fun GalleryDetailScreen(item: GalleryItem, onBack: () -> Unit) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         DetailInfoRow(Icons.Default.LocationOn, stringResource(R.string.gallery_detail_location), item.location)
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        DetailInfoRow(Icons.Default.DateRange, stringResource(R.string.gallery_detail_date), item.dateAdded)
+                        DetailInfoRow(Icons.Default.DateRange, stringResource(R.string.gallery_detail_date), localizedGalleryDate(item.dateAdded))
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        DetailInfoRow(Icons.Default.PhotoLibrary, stringResource(R.string.gallery_detail_type), item.type.replaceFirstChar { it.uppercase() })
+                        DetailInfoRow(Icons.Default.PhotoLibrary, stringResource(R.string.gallery_detail_type), localizedGalleryType(item.type))
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                         DetailInfoRow(Icons.Default.Info, stringResource(R.string.gallery_detail_size), item.size)
                     }

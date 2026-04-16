@@ -46,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,6 +70,26 @@ data class HomeTripSummary(
 
 enum class HomeDialogType {
     TRIPS, DAYS, BUDGET
+}
+
+@Composable
+private fun localizedDuration(rawDuration: String): String {
+    val days = rawDuration.substringBefore(" ").trim().toIntOrNull() ?: return rawDuration
+    return if (days == 1) {
+        stringResource(R.string.duration_single_day)
+    } else {
+        stringResource(R.string.duration_multiple_days, days)
+    }
+}
+
+@Composable
+private fun localizedTripStatus(rawStatus: String): String {
+    return when {
+        rawStatus.equals("Upcoming", ignoreCase = true) -> stringResource(R.string.status_upcoming)
+        rawStatus.equals("Planned", ignoreCase = true) -> stringResource(R.string.status_planned)
+        rawStatus.equals("Completed", ignoreCase = true) -> stringResource(R.string.status_completed)
+        else -> rawStatus
+    }
 }
 
 @Composable
@@ -111,16 +132,16 @@ fun Home(
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
-                contentDescription = "Add new trip"
+                contentDescription = stringResource(R.string.home_add_trip)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Add New Trip",
+                text = stringResource(R.string.home_add_trip),
                 fontWeight = FontWeight.SemiBold
             )
         }
 
-        HomeSection(title = "Overview") {
+        HomeSection(title = stringResource(R.string.home_section_overview)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -144,7 +165,7 @@ fun Home(
         }
 
         uiState.nextTrip?.let { nextTrip ->
-            HomeSection(title = "Next Trip") {
+            HomeSection(title = stringResource(R.string.home_section_next_trip)) {
                 NextTripCard(
                     trip = nextTrip,
                     onClick = { onTripClick(nextTrip.id) }
@@ -153,7 +174,7 @@ fun Home(
         }
 
         if (uiState.featuredTrips.isNotEmpty()) {
-            HomeSection(title = "Featured Trips") {
+            HomeSection(title = stringResource(R.string.home_section_featured)) {
                 uiState.featuredTrips.forEachIndexed { index, trip ->
                     HomeFeaturedTripCard(
                         trip = trip,
@@ -169,11 +190,11 @@ fun Home(
             }
         }
 
-        HomeSection(title = "Quick Info") {
+        HomeSection(title = stringResource(R.string.home_section_quick_info)) {
             HomeInfoRow(
                 icon = Icons.Default.LocationOn,
-                title = "Departure City",
-                subtitle = "Barcelona",
+                title = stringResource(R.string.home_departure_city),
+                subtitle = stringResource(R.string.home_departure_default),
                 onClick = onDepartureCityClick
             )
             HorizontalDivider(
@@ -182,8 +203,8 @@ fun Home(
             )
             HomeInfoRow(
                 icon = Icons.Default.Explore,
-                title = "Travel Style",
-                subtitle = "City break, culture and food",
+                title = stringResource(R.string.home_travel_style),
+                subtitle = stringResource(R.string.home_style_default),
                 onClick = onTravelStyleClick
             )
         }
@@ -203,9 +224,9 @@ fun HomeOverviewDialog(
 
     when (dialogType) {
         HomeDialogType.TRIPS -> {
-            title = "Trips Overview"
+            title = stringResource(R.string.dialog_trips_title)
             text = buildString {
-                appendLine("You currently have ${trips.size} trips:")
+                appendLine(stringResource(R.string.dialog_trips_header, trips.size))
                 appendLine()
                 trips.forEach { trip ->
                     appendLine("• ${trip.destination} (${trip.country})")
@@ -214,9 +235,9 @@ fun HomeOverviewDialog(
         }
 
         HomeDialogType.DAYS -> {
-            title = "Days Planned"
+            title = stringResource(R.string.dialog_days_title)
             text = buildString {
-                appendLine("Trip dates:")
+                appendLine(stringResource(R.string.dialog_days_header))
                 appendLine()
                 trips.forEach { trip ->
                     appendLine("• ${trip.destination}: ${trip.startDate} - ${trip.endDate}")
@@ -226,15 +247,15 @@ fun HomeOverviewDialog(
 
         HomeDialogType.BUDGET -> {
             val total = trips.sumOf { it.budget }
-            title = "Budget Details"
+            title = stringResource(R.string.dialog_budget_title)
             text = buildString {
-                appendLine("Estimated costs by trip:")
+                appendLine(stringResource(R.string.dialog_budget_header))
                 appendLine()
                 trips.forEach { trip ->
                     appendLine("• ${trip.destination}: €${trip.budget}")
                 }
                 appendLine()
-                append("Total budget: €$total")
+                append(stringResource(R.string.dialog_budget_total, total))
             }
         }
     }
@@ -243,7 +264,7 @@ fun HomeOverviewDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text(stringResource(R.string.dialog_close))
             }
         },
         title = {
@@ -276,7 +297,7 @@ fun HomeHeader() {
         ) {
             Image(
                 painter = painterResource(id = R.drawable.logo_no_background),
-                contentDescription = "VoyageTime logo",
+                contentDescription = stringResource(R.string.app_logo_content_description),
                 modifier = Modifier.size(80.dp),
                 contentScale = ContentScale.FillHeight
             )
@@ -287,14 +308,14 @@ fun HomeHeader() {
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "VoyageTime",
+                text = stringResource(R.string.app_name),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
             Text(
-                text = "Your travel dashboard for plans, itineraries and memorable trips.",
+                text = stringResource(R.string.home_dashboard_subtitle),
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f)
@@ -367,7 +388,7 @@ fun NextTripCard(
             ) {
                 Icon(
                     imageVector = Icons.Default.FlightTakeoff,
-                    contentDescription = "Next trip",
+                    contentDescription = stringResource(R.string.home_section_next_trip),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -389,7 +410,7 @@ fun NextTripCard(
             }
 
             Text(
-                text = trip.status,
+                text = localizedTripStatus(trip.status),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary
@@ -399,7 +420,7 @@ fun NextTripCard(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             HomeMiniInfo(
                 icon = Icons.Default.CalendarMonth,
-                text = trip.duration
+                text = localizedDuration(trip.duration)
             )
             HomeMiniInfo(
                 icon = Icons.Default.AttachMoney,
@@ -408,7 +429,7 @@ fun NextTripCard(
         }
 
         Text(
-            text = "Tap to open the itinerary of this trip.",
+            text = stringResource(R.string.home_tap_itinerary),
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f)
         )
@@ -444,16 +465,10 @@ fun HomeFeaturedTripCard(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = trip.destination,
+                text = "${trip.destination}, ${trip.country}",
                 fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Text(
-                text = trip.country,
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
             )
 
             HomeMiniInfo(
@@ -537,7 +552,7 @@ fun HomeInfoRow(
 
         Icon(
             imageVector = Icons.Default.Edit,
-            contentDescription = "Edit",
+            contentDescription = stringResource(R.string.trips_btn_edit),
             tint = MaterialTheme.colorScheme.primary
         )
     }

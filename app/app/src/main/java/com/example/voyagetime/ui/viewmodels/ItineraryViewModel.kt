@@ -1,9 +1,9 @@
 package com.example.voyagetime.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
-import com.example.voyagetime.data.repository.ItineraryRepository
+import com.example.voyagetime.domain.repository.ItineraryRepository
 import com.example.voyagetime.data.repository.ItineraryRepositoryImpl
-import com.example.voyagetime.data.repository.TripRepository
+import com.example.voyagetime.domain.repository.TripRepository
 import com.example.voyagetime.data.repository.TripRepositoryImpl
 import com.example.voyagetime.ui.screens.ItineraryDayData
 import com.example.voyagetime.ui.screens.ItineraryEvent

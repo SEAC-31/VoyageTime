@@ -5,7 +5,8 @@ import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.TravelExplore
 import androidx.lifecycle.ViewModel
-import com.example.voyagetime.data.repository.TripRepository
+import com.example.voyagetime.R
+import com.example.voyagetime.domain.repository.TripRepository
 import com.example.voyagetime.data.repository.TripRepositoryImpl
 import com.example.voyagetime.ui.screens.HomeStat
 import com.example.voyagetime.ui.screens.HomeTripSummary
@@ -64,9 +65,9 @@ class HomeViewModel(
         val totalDays = allTrips.sumOf { extractDays(it.duration) }
 
         val stats = listOf(
-            HomeStat(allTrips.size.toString(), "Trips", Icons.Default.TravelExplore),
-            HomeStat(totalDays.toString(), "Days Planned", Icons.Default.CalendarMonth),
-            HomeStat("€$totalBudget", "Budget", Icons.Default.AttachMoney)
+            HomeStat(allTrips.size.toString(), R.string.home_stat_trips, Icons.Default.TravelExplore),
+            HomeStat(totalDays.toString(), R.string.home_stat_days_planned, Icons.Default.CalendarMonth),
+            HomeStat("€$totalBudget", R.string.home_stat_budget, Icons.Default.AttachMoney)
         )
 
         _uiState.update {
@@ -83,25 +84,11 @@ class HomeViewModel(
 }
 
 private fun parseTripDateRange(dateRange: String): Pair<String, String> {
-    val parts = dateRange.split("-").map { it.trim() }
-
-    return when {
-        parts.size != 2 -> "" to ""
-        else -> {
-            val start = parts[0]
-            val end = parts[1]
-
-            val startHasYear = start.takeLast(4).all { it.isDigit() }
-            val endYear = end.takeLast(4).takeIf { it.length == 4 && it.all { ch -> ch.isDigit() } }
-
-            val normalizedStart = if (!startHasYear && endYear != null) {
-                "$start $endYear"
-            } else {
-                start
-            }
-
-            normalizedStart to end
-        }
+    val parts = dateRange.split(" - ").map { it.trim() }
+    return if (parts.size == 2) {
+        parts[0] to parts[1]
+    } else {
+        "" to ""
     }
 }
 

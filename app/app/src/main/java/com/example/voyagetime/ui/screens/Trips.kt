@@ -1,5 +1,7 @@
 package com.example.voyagetime.ui.screens
 
+import androidx.annotation.StringRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,22 +12,28 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.FlightTakeoff
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.TravelExplore
 import androidx.compose.material3.AlertDialog
@@ -34,6 +42,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -44,6 +53,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +61,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -59,9 +70,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.voyagetime.R
 import com.example.voyagetime.ui.viewmodels.TripsViewModel
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.time.format.TextStyle
+import java.time.temporal.ChronoUnit
+import java.util.Locale
 
 enum class TripState {
     UPCOMING,
@@ -89,9 +105,31 @@ data class TripItem(
 
 data class HomeStat(
     val value: String,
-    val label: String,
+    @StringRes val labelRes: Int,
     val icon: ImageVector
 )
+
+@Composable
+private fun localizedTripDuration(rawDuration: String): String {
+    val days = rawDuration.substringBefore(" ").trim().toIntOrNull() ?: return rawDuration
+    return if (days == 1) {
+        stringResource(R.string.duration_single_day)
+    } else {
+        stringResource(R.string.duration_multiple_days, days)
+    }
+}
+
+@Composable
+private fun localizedTripStateLabel(state: TripState): String = when (state) {
+    TripState.UPCOMING -> stringResource(R.string.status_upcoming)
+    TripState.PLANNED -> stringResource(R.string.status_planned)
+    TripState.COMPLETED -> stringResource(R.string.status_completed)
+}
+
+@Composable
+private fun localizedInsightValue(value: String, @StringRes defaultRes: Int, englishDefault: String): String {
+    return if (value == englishDefault) stringResource(defaultRes) else value
+}
 
 @Composable
 fun Trips(
@@ -125,7 +163,7 @@ fun Trips(
     ) {
         TripsHeader(totalTrips = uiState.allTrips.size)
 
-        TripCategory(title = "Overview") {
+        TripCategory(title = stringResource(R.string.trips_section_overview)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -148,11 +186,12 @@ fun Trips(
             }
         }
 
-        TripCategory(title = "Upcoming Trips") {
+        TripCategory(title = stringResource(R.string.trips_section_upcoming)) {
             uiState.upcomingTrips.forEachIndexed { index, trip ->
                 EditableUpcomingTripCard(
                     trip = trip,
                     onViewClick = { onTripClick(trip.id) },
+                    onDeleteClick = { viewModel.deleteTrip(trip.id) },
                     onSave = { updatedTrip -> viewModel.updateTrip(updatedTrip) }
                 )
 
@@ -165,11 +204,12 @@ fun Trips(
             }
         }
 
-        TripCategory(title = "Past Trips") {
+        TripCategory(title = stringResource(R.string.trips_section_past)) {
             uiState.pastTrips.forEachIndexed { index, trip ->
                 PastTripCard(
                     trip = trip,
-                    onViewClick = { onTripClick(trip.id) }
+                    onViewClick = { onTripClick(trip.id) },
+                    onDeleteClick = { viewModel.deleteTrip(trip.id) }
                 )
 
                 if (index != uiState.pastTrips.lastIndex) {
@@ -181,11 +221,11 @@ fun Trips(
             }
         }
 
-        TripCategory(title = "Travel Insights") {
+        TripCategory(title = stringResource(R.string.trips_section_insights)) {
             EditableInsightRow(
                 icon = Icons.Default.Explore,
-                title = "Favorite Region",
-                value = uiState.favoriteRegion,
+                title = stringResource(R.string.trips_insight_region),
+                value = localizedInsightValue(uiState.favoriteRegion, R.string.trips_insight_region_default, "Europe & North America"),
                 onSave = { viewModel.updateFavoriteRegion(it) }
             )
 
@@ -196,7 +236,7 @@ fun Trips(
 
             StaticInsightRow(
                 icon = Icons.Default.FlightTakeoff,
-                title = "Next Departure",
+                title = stringResource(R.string.trips_insight_departure),
                 subtitle = uiState.nextDeparture
             )
 
@@ -207,8 +247,8 @@ fun Trips(
 
             EditableInsightRow(
                 icon = Icons.AutoMirrored.Filled.TrendingUp,
-                title = "Travel Goal",
-                value = uiState.travelGoal,
+                title = stringResource(R.string.trips_insight_goal),
+                value = localizedInsightValue(uiState.travelGoal, R.string.trips_insight_goal_default, "Complete 4 memorable trips with clear itineraries"),
                 onSave = { viewModel.updateTravelGoal(it) }
             )
         }
@@ -238,7 +278,7 @@ fun TripsHeader(totalTrips: Int) {
         ) {
             Image(
                 painter = painterResource(id = R.drawable.logo_no_background),
-                contentDescription = "VoyageTime logo",
+                contentDescription = stringResource(R.string.app_logo_content_description),
                 modifier = Modifier.size(80.dp),
                 contentScale = ContentScale.Fit
             )
@@ -249,21 +289,21 @@ fun TripsHeader(totalTrips: Int) {
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "Trips",
+                text = stringResource(R.string.trips_title),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
             Text(
-                text = "Review your planned and completed trips in one place.",
+                text = stringResource(R.string.trips_header_subtitle),
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f)
             )
 
             Text(
-                text = "Total trips: $totalTrips",
+                text = stringResource(R.string.trips_total_count, totalTrips),
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Medium
@@ -283,9 +323,9 @@ fun TripOverviewDialog(
 
     when (dialogType) {
         TripDialogType.TRIPS -> {
-            title = "Trips Overview"
+            title = stringResource(R.string.dialog_trips_title)
             text = buildString {
-                appendLine("Total trips planned: ${trips.size}")
+                appendLine(stringResource(R.string.trips_total_planned, trips.size))
                 appendLine()
                 trips.forEach { trip ->
                     appendLine("• ${trip.destination} (${trip.country})")
@@ -294,9 +334,9 @@ fun TripOverviewDialog(
         }
 
         TripDialogType.DAYS -> {
-            title = "Days Planned"
+            title = stringResource(R.string.dialog_days_title)
             text = buildString {
-                appendLine("Trip dates:")
+                appendLine(stringResource(R.string.trips_trip_dates))
                 appendLine()
                 trips.forEach { trip ->
                     appendLine("• ${trip.destination}: ${trip.dateRange}")
@@ -306,15 +346,15 @@ fun TripOverviewDialog(
 
         TripDialogType.BUDGET -> {
             val total = trips.sumOf { it.budgetValue() }
-            title = "Budget Details"
+            title = stringResource(R.string.dialog_budget_title)
             text = buildString {
-                appendLine("Estimated costs by trip:")
+                appendLine(stringResource(R.string.dialog_budget_header))
                 appendLine()
                 trips.forEach { trip ->
                     appendLine("• ${trip.destination}: ${trip.budget}")
                 }
                 appendLine()
-                append("Total budget: €$total")
+                append(stringResource(R.string.dialog_budget_total, total))
             }
         }
     }
@@ -323,7 +363,7 @@ fun TripOverviewDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text(stringResource(R.string.dialog_close))
             }
         },
         title = { Text(text = title) },
@@ -365,252 +405,257 @@ fun TripCategory(
 fun EditableUpcomingTripCard(
     trip: TripItem,
     onViewClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     onSave: (TripItem) -> Unit
 ) {
-    var isEditing by remember(trip.id) { mutableStateOf(false) }
-    var draftDestination by remember(trip.id, trip.destination) { mutableStateOf(trip.destination) }
-    var draftCountry by remember(trip.id, trip.country) { mutableStateOf(trip.country) }
-    var draftDateRange by remember(trip.id, trip.dateRange) { mutableStateOf(normalizeDateRangeForEditing(trip.dateRange)) }
-    var draftDuration by remember(trip.id, trip.duration) { mutableStateOf(trip.duration) }
-    var draftBudget by remember(trip.id, trip.budget) { mutableStateOf(extractBudgetDigits(trip.budget)) }
+    var isEditing by rememberSaveable(trip.id) { mutableStateOf(false) }
+    var draftDestination by rememberSaveable(trip.id, trip.destination) { mutableStateOf(trip.destination) }
+    var draftCountry by rememberSaveable(trip.id, trip.country) { mutableStateOf(trip.country) }
+    var draftDateRange by rememberSaveable(trip.id, trip.dateRange) {
+        mutableStateOf(normalizeDateRangeForEditing(trip.dateRange))
+    }
+    var draftBudget by rememberSaveable(trip.id, trip.budget) {
+        mutableStateOf(extractBudgetDigits(trip.budget))
+    }
 
-    val destinationError = if (draftDestination.trim().isBlank()) "Destination is required" else null
-    val countryError = if (draftCountry.trim().isBlank()) "Country is required" else null
-    val dateRangeError = validateDateRangeMessage(draftDateRange)
-    val durationError = validateDurationMessage(draftDuration)
-    val budgetError = validateBudgetMessage(draftBudget)
+    val destinationError = if (draftDestination.trim().isBlank()) stringResource(R.string.validation_destination_required) else null
+    val countryError = if (draftCountry.trim().isBlank()) stringResource(R.string.validation_country_required) else null
+    val dateRangeError = validateDateRangeMessage(
+        draftDateRange,
+        requiredMessage = stringResource(R.string.validation_date_range_required),
+        exampleMessage = stringResource(R.string.validation_date_range_example),
+        pastMessage = stringResource(R.string.validation_date_past),
+        endBeforeStartMessage = stringResource(R.string.validation_end_before_start)
+    )
+    val budgetError = validateBudgetMessage(
+        draftBudget,
+        requiredMessage = stringResource(R.string.validation_budget_required),
+        digitsOnlyMessage = stringResource(R.string.validation_budget_digits)
+    )
+    val computedDuration = calculateDurationFromDateRange(draftDateRange)
 
     val canSave = destinationError == null &&
             countryError == null &&
             dateRangeError == null &&
-            durationError == null &&
-            budgetError == null
+            budgetError == null &&
+            computedDuration != null
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(16.dp)
     ) {
-        if (!isEditing) {
-            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                val useSecondRowForButtons = maxWidth < 700.dp
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (!isEditing) {
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val useSecondRowForButtons = maxWidth < 700.dp
 
-                if (!useSecondRowForButtons) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TripMainInfo(
-                            trip = trip,
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        Spacer(modifier = Modifier.width(12.dp))
-
-                        Column(
-                            horizontalAlignment = Alignment.End,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            OutlinedButton(onClick = { isEditing = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "Edit trip"
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Edit")
-                            }
-
-                            Button(onClick = onViewClick) {
-                                Text("View Trip")
-                            }
-                        }
-                    }
-                } else {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        TripMainInfo(trip = trip)
-
+                    if (!useSecondRowForButtons) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            OutlinedButton(onClick = { isEditing = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "Edit trip"
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Edit")
-                            }
+                            TripMainInfo(
+                                trip = trip,
+                                modifier = Modifier.weight(1f)
+                            )
 
-                            Button(onClick = onViewClick) {
-                                Text("View Trip")
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedTextField(
-                        value = draftDestination,
-                        onValueChange = { draftDestination = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Destination") },
-                        isError = destinationError != null,
-                        supportingText = {
-                            if (destinationError != null) {
-                                Text(destinationError)
-                            }
-                        }
-                    )
+                            Spacer(modifier = Modifier.width(12.dp))
 
-                    OutlinedTextField(
-                        value = draftCountry,
-                        onValueChange = { draftCountry = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Country") },
-                        isError = countryError != null,
-                        supportingText = {
-                            if (countryError != null) {
-                                Text(countryError)
-                            }
-                        }
-                    )
-
-                    OutlinedTextField(
-                        value = draftDateRange,
-                        onValueChange = { newValue ->
-                            draftDateRange = newValue.filter { char ->
-                                char.isDigit() || char == '/' || char == ' ' || char == '-'
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Date Range") },
-                        placeholder = { Text("12/06/2026 - 18/06/2026") },
-                        isError = dateRangeError != null,
-                        supportingText = {
-                            if (dateRangeError != null) {
-                                Text(dateRangeError)
-                            }
-                        }
-                    )
-
-                    OutlinedTextField(
-                        value = draftDuration,
-                        onValueChange = { newValue ->
-                            draftDuration = sanitizeDurationInput(newValue)
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Duration") },
-                        placeholder = { Text("6 days") },
-                        isError = durationError != null,
-                        supportingText = {
-                            if (durationError != null) {
-                                Text(durationError)
-                            }
-                        }
-                    )
-
-                    OutlinedTextField(
-                        value = draftBudget,
-                        onValueChange = { newValue ->
-                            draftBudget = newValue.filter { it.isDigit() }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Budget") },
-                        placeholder = { Text("820") },
-                        isError = budgetError != null,
-                        supportingText = {
-                            if (budgetError != null) {
-                                Text(budgetError)
-                            }
-                        }
-                    )
-
-                    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                        val useSecondRowForButtons = maxWidth < 420.dp
-
-                        val cancelAction = {
-                            draftDestination = trip.destination
-                            draftCountry = trip.country
-                            draftDateRange = normalizeDateRangeForEditing(trip.dateRange)
-                            draftDuration = trip.duration
-                            draftBudget = extractBudgetDigits(trip.budget)
-                            isEditing = false
-                        }
-
-                        val saveAction = {
-                            if (canSave) {
-                                onSave(
-                                    trip.copy(
-                                        destination = draftDestination.trim(),
-                                        country = draftCountry.trim(),
-                                        dateRange = normalizeDateRangeForStorage(draftDateRange),
-                                        duration = normalizeDuration(draftDuration),
-                                        budget = "€${draftBudget.trim()}"
-                                    )
-                                )
-                                isEditing = false
-                            }
-                        }
-
-                        if (!useSecondRowForButtons) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End,
-                                verticalAlignment = Alignment.CenterVertically
+                            Column(
+                                horizontalAlignment = Alignment.End,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                TextButton(onClick = cancelAction) {
-                                    Text("Cancel")
+                                OutlinedButton(onClick = { isEditing = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = stringResource(R.string.trips_btn_edit)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(stringResource(R.string.trips_btn_edit))
                                 }
 
-                                Spacer(modifier = Modifier.width(8.dp))
-
-                                Button(
-                                    onClick = saveAction,
-                                    enabled = canSave
-                                ) {
-                                    Text("Save")
+                                Button(onClick = onViewClick) {
+                                    Text(stringResource(R.string.trips_btn_view))
                                 }
                             }
-                        } else {
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            TripMainInfo(trip = trip)
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                TextButton(onClick = cancelAction) {
-                                    Text("Cancel")
+                                OutlinedButton(onClick = { isEditing = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = stringResource(R.string.trips_btn_edit)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(stringResource(R.string.trips_btn_edit))
                                 }
 
-                                Button(
-                                    onClick = saveAction,
-                                    enabled = canSave
+                                Button(onClick = onViewClick) {
+                                    Text(stringResource(R.string.trips_btn_view))
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.background
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = draftDestination,
+                            onValueChange = { draftDestination = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text(stringResource(R.string.trips_field_destination)) },
+                            isError = destinationError != null,
+                            supportingText = {
+                                if (destinationError != null) {
+                                    Text(destinationError)
+                                }
+                            }
+                        )
+
+                        OutlinedTextField(
+                            value = draftCountry,
+                            onValueChange = { draftCountry = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text(stringResource(R.string.trips_field_country)) },
+                            isError = countryError != null,
+                            supportingText = {
+                                if (countryError != null) {
+                                    Text(countryError)
+                                }
+                            }
+                        )
+
+                        DateRangePickerField(
+                            value = draftDateRange,
+                            errorMessage = dateRangeError,
+                            onValueChange = { draftDateRange = it }
+                        )
+
+                        AutoDurationField(
+                            value = computedDuration ?: "",
+                            errorMessage = if (dateRangeError == null && computedDuration == null) {
+                                stringResource(R.string.field_select_valid_date_range)
+                            } else {
+                                null
+                            }
+                        )
+
+                        OutlinedTextField(
+                            value = draftBudget,
+                            onValueChange = { newValue ->
+                                draftBudget = newValue.filter { it.isDigit() }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text(stringResource(R.string.trips_field_budget)) },
+                            placeholder = { Text("820") },
+                            isError = budgetError != null,
+                            supportingText = {
+                                if (budgetError != null) {
+                                    Text(budgetError)
+                                }
+                            }
+                        )
+
+                        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                            val useSecondRowForButtons = maxWidth < 420.dp
+
+                            val cancelAction: () -> Unit = {
+                                draftDestination = trip.destination
+                                draftCountry = trip.country
+                                draftDateRange = normalizeDateRangeForEditing(trip.dateRange)
+                                draftBudget = extractBudgetDigits(trip.budget)
+                                isEditing = false
+                            }
+
+                            val saveAction: () -> Unit = {
+                                computedDuration?.let { safeDuration ->
+                                    onSave(
+                                        trip.copy(
+                                            destination = draftDestination.trim(),
+                                            country = draftCountry.trim(),
+                                            dateRange = normalizeDateRangeForStorage(draftDateRange),
+                                            duration = safeDuration,
+                                            budget = "€${draftBudget.trim()}"
+                                        )
+                                    )
+                                    isEditing = false
+                                }
+                            }
+
+                            if (!useSecondRowForButtons) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("Save")
+                                    TextButton(onClick = cancelAction) {
+                                        Text(stringResource(R.string.trips_btn_cancel))
+                                    }
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    Button(
+                                        onClick = saveAction,
+                                        enabled = canSave
+                                    ) {
+                                        Text(stringResource(R.string.trips_btn_save))
+                                    }
+                                }
+                            } else {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    TextButton(onClick = cancelAction) {
+                                        Text(stringResource(R.string.trips_btn_cancel))
+                                    }
+
+                                    Button(
+                                        onClick = saveAction,
+                                        enabled = canSave
+                                    ) {
+                                        Text(stringResource(R.string.trips_btn_save))
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+
+        if (!isEditing) {
+            TripDeleteButton(
+                modifier = Modifier.align(Alignment.TopEnd),
+                onClick = onDeleteClick
+            )
         }
     }
 }
@@ -641,20 +686,10 @@ private fun TripMainInfo(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = trip.destination,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Text(
-                text = trip.country,
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                text = "${trip.destination}, ${trip.country}",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -667,7 +702,7 @@ private fun TripMainInfo(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MiniInfo(
                     icon = Icons.Default.Schedule,
-                    text = trip.duration
+                    text = localizedTripDuration(trip.duration)
                 )
                 MiniInfo(
                     icon = Icons.Default.AttachMoney,
@@ -676,7 +711,7 @@ private fun TripMainInfo(
             }
 
             Text(
-                text = trip.statusLabel,
+                text = localizedTripStateLabel(trip.state),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary,
@@ -690,75 +725,98 @@ private fun TripMainInfo(
 @Composable
 fun PastTripCard(
     trip: TripItem,
-    onViewClick: () -> Unit
+    onViewClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onViewClick() }
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(16.dp)
     ) {
-        Image(
-            painter = painterResource(id = trip.image),
-            contentDescription = trip.destination,
-            contentScale = ContentScale.Crop,
+        Row(
             modifier = Modifier
-                .width(100.dp)
-                .height(100.dp)
-                .clip(RoundedCornerShape(18.dp))
-        )
-
-        Spacer(modifier = Modifier.width(14.dp))
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+                .fillMaxWidth()
+                .clickable { onViewClick() },
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = trip.destination,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+            Image(
+                painter = painterResource(id = trip.image),
+                contentDescription = trip.destination,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .width(100.dp)
+                    .height(100.dp)
+                    .clip(RoundedCornerShape(18.dp))
             )
 
-            Text(
-                text = trip.country,
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+            Spacer(modifier = Modifier.width(14.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MiniInfo(
-                    icon = Icons.Default.CalendarMonth,
-                    text = trip.dateRange
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "${trip.destination}, ${trip.country}",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MiniInfo(
+                        icon = Icons.Default.CalendarMonth,
+                        text = trip.dateRange
+                    )
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MiniInfo(
+                        icon = Icons.Default.Schedule,
+                        text = localizedTripDuration(trip.duration)
+                    )
+                    MiniInfo(
+                        icon = Icons.Default.AttachMoney,
+                        text = trip.budget
+                    )
+                }
+
+                Text(
+                    text = localizedTripStateLabel(trip.state),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MiniInfo(
-                    icon = Icons.Default.Schedule,
-                    text = trip.duration
-                )
-                MiniInfo(
-                    icon = Icons.Default.AttachMoney,
-                    text = trip.budget
-                )
-            }
-
-            Text(
-                text = trip.statusLabel,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
         }
+
+        TripDeleteButton(
+            modifier = Modifier.align(Alignment.TopEnd),
+            onClick = onDeleteClick
+        )
+    }
+}
+
+@Composable
+private fun TripDeleteButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .size(width = 32.dp, height = 32.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.95f))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Close,
+            contentDescription = stringResource(R.string.trips_delete_cd),
+            tint = MaterialTheme.colorScheme.onErrorContainer,
+            modifier = Modifier.size(16.dp)
+        )
     }
 }
 
@@ -769,8 +827,8 @@ fun EditableInsightRow(
     value: String,
     onSave: (String) -> Unit
 ) {
-    var isEditing by remember { mutableStateOf(false) }
-    var draftValue by remember(value) { mutableStateOf(value) }
+    var isEditing by rememberSaveable { mutableStateOf(false) }
+    var draftValue by rememberSaveable(value) { mutableStateOf(value) }
 
     Column(
         modifier = Modifier
@@ -824,10 +882,10 @@ fun EditableInsightRow(
                     }) {
                         Icon(
                             imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit insight"
+                            contentDescription = stringResource(R.string.trips_btn_edit)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Edit")
+                        Text(stringResource(R.string.trips_btn_edit))
                     }
                 }
             } else {
@@ -881,10 +939,10 @@ fun EditableInsightRow(
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit insight"
+                                contentDescription = stringResource(R.string.trips_btn_edit)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Edit")
+                            Text(stringResource(R.string.trips_btn_edit))
                         }
                     }
                 }
@@ -928,7 +986,7 @@ fun EditableInsightRow(
                                         isEditing = false
                                     }
                                 ) {
-                                    Text("Cancel")
+                                    Text(stringResource(R.string.trips_btn_cancel))
                                 }
 
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -939,7 +997,7 @@ fun EditableInsightRow(
                                         isEditing = false
                                     }
                                 ) {
-                                    Text("Save")
+                                    Text(stringResource(R.string.trips_btn_save))
                                 }
                             }
                         } else {
@@ -954,7 +1012,7 @@ fun EditableInsightRow(
                                         isEditing = false
                                     }
                                 ) {
-                                    Text("Cancel")
+                                    Text(stringResource(R.string.trips_btn_cancel))
                                 }
 
                                 Button(
@@ -963,7 +1021,7 @@ fun EditableInsightRow(
                                         isEditing = false
                                     }
                                 ) {
-                                    Text("Save")
+                                    Text(stringResource(R.string.trips_btn_save))
                                 }
                             }
                         }
@@ -1071,7 +1129,7 @@ fun HomeStatCard(
         ) {
             Icon(
                 imageVector = stat.icon,
-                contentDescription = stat.label,
+                contentDescription = stringResource(stat.labelRes),
                 tint = MaterialTheme.colorScheme.primary
             )
 
@@ -1083,13 +1141,16 @@ fun HomeStatCard(
             )
 
             Text(
-                text = stat.label,
+                text = stringResource(stat.labelRes),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
             )
         }
     }
 }
+
+private val EUROPEAN_DATE_FORMATTER: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
 private fun TripItem.budgetValue(): Int {
     return budget.replace("€", "").replace(",", "").trim().toIntOrNull() ?: 0
@@ -1099,97 +1160,607 @@ private fun extractBudgetDigits(budget: String): String {
     return budget.filter { it.isDigit() }
 }
 
-private fun validateBudgetMessage(value: String): String? {
-    if (value.isBlank()) return "Budget is required"
-    if (!value.all { it.isDigit() }) return "Budget must contain numbers only"
+private fun validateBudgetMessage(
+    value: String,
+    requiredMessage: String,
+    digitsOnlyMessage: String
+): String? {
+    if (value.isBlank()) return requiredMessage
+    if (!value.all { it.isDigit() }) return digitsOnlyMessage
     return null
 }
 
-private fun sanitizeDurationInput(value: String): String {
-    return value.filter { char ->
-        char.isDigit() || char.isLetter() || char == ' '
-    }
-}
+private fun calculateDurationFromDateRange(value: String): String? {
+    val parsed = parseDateRange(value) ?: return null
+    val startDate = parsed.first
+    val endDate = parsed.second
 
-private fun validateDurationMessage(value: String): String? {
-    val trimmed = value.trim()
+    if (endDate.isBefore(startDate)) return null
 
-    if (trimmed.isBlank()) {
-        return "Duration is required"
-    }
-
-    val regex = Regex("""^\d+\s+(day|days|month|months|year|years)$""", RegexOption.IGNORE_CASE)
-
-    if (!regex.matches(trimmed)) {
-        return "Use format like: 6 days, 2 months, 1 year"
-    }
-
-    return null
-}
-
-private fun normalizeDuration(value: String): String {
-    val trimmed = value.trim().lowercase()
-    val parts = trimmed.split(Regex("""\s+"""))
-
-    if (parts.size != 2) return value.trim()
-
-    val amount = parts[0]
-    val unit = when (parts[1]) {
-        "day", "days" -> if (amount == "1") "day" else "days"
-        "month", "months" -> if (amount == "1") "month" else "months"
-        "year", "years" -> if (amount == "1") "year" else "years"
-        else -> parts[1]
-    }
-
-    return "$amount $unit"
-}
-
-private fun validateDateRangeMessage(value: String): String? {
-    val trimmed = value.trim()
-
-    if (trimmed.isBlank()) {
-        return "Date range is required"
-    }
-
-    val parseResult = parseDateRange(trimmed) ?: return "Use real dates like: 12/06/2026 - 18/06/2026"
-
-    val startDate = parseResult.first
-    val endDate = parseResult.second
-
-    if (endDate.isBefore(startDate)) {
-        return "End date cannot be before start date"
-    }
-
-    return null
+    val totalDays = ChronoUnit.DAYS.between(startDate, endDate).toInt() + 1
+    return if (totalDays == 1) "1 day" else "$totalDays days"
 }
 
 private fun parseDateRange(value: String): Pair<LocalDate, LocalDate>? {
     val input = value.trim()
-    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-    val fullPattern = Regex("""^(\d{2}/\d{2}/\d{4})\s*-\s*(\d{2}/\d{2}/\d{4})$""")
+    val fullPattern = Regex(
+        """^(\d{2}/\d{2}/\d{4}|\d{4}-\d{2}-\d{2})\s+-\s+(\d{2}/\d{2}/\d{4}|\d{4}-\d{2}-\d{2})$"""
+    )
 
-    return try {
-        val match = fullPattern.matchEntire(input) ?: return null
-        val startText = match.groupValues[1]
-        val endText = match.groupValues[2]
+    val match = fullPattern.matchEntire(input) ?: return null
+    val startDate = parseFlexibleDate(match.groupValues[1]) ?: return null
+    val endDate = parseFlexibleDate(match.groupValues[2]) ?: return null
 
-        val startDate = LocalDate.parse(startText, formatter)
-        val endDate = LocalDate.parse(endText, formatter)
+    return startDate to endDate
+}
 
-        startDate to endDate
-    } catch (_: DateTimeParseException) {
-        null
+private fun parseFlexibleDate(value: String): LocalDate? {
+    val trimmed = value.trim()
+    if (trimmed.isBlank()) return null
+
+    val formatters = listOf(
+        EUROPEAN_DATE_FORMATTER,
+        DateTimeFormatter.ISO_LOCAL_DATE
+    )
+
+    for (formatter in formatters) {
+        try {
+            return LocalDate.parse(trimmed, formatter)
+        } catch (_: DateTimeParseException) {
+        }
     }
+
+    return null
 }
 
 private fun normalizeDateRangeForStorage(value: String): String {
     val parsed = parseDateRange(value) ?: return value.trim()
-    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-    return "${parsed.first.format(formatter)} - ${parsed.second.format(formatter)}"
+    return "${parsed.first.format(EUROPEAN_DATE_FORMATTER)} - ${parsed.second.format(EUROPEAN_DATE_FORMATTER)}"
 }
 
 private fun normalizeDateRangeForEditing(value: String): String {
     val parsed = parseDateRange(value) ?: return value.trim()
-    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-    return "${parsed.first.format(formatter)} - ${parsed.second.format(formatter)}"
+    return "${parsed.first.format(EUROPEAN_DATE_FORMATTER)} - ${parsed.second.format(EUROPEAN_DATE_FORMATTER)}"
+}
+
+private fun validateDateRangeMessage(
+    value: String,
+    requiredMessage: String,
+    exampleMessage: String,
+    pastMessage: String,
+    endBeforeStartMessage: String
+): String? {
+    val trimmed = value.trim()
+
+    if (trimmed.isBlank()) {
+        return requiredMessage
+    }
+
+    val parseResult = parseDateRange(trimmed)
+        ?: return exampleMessage
+
+    val startDate = parseResult.first
+    val endDate = parseResult.second
+    val today = LocalDate.now()
+
+    if (startDate.isBefore(today) || endDate.isBefore(today)) {
+        return pastMessage
+    }
+
+    if (endDate.isBefore(startDate)) {
+        return endBeforeStartMessage
+    }
+
+    return null
+}
+
+private data class CalendarDayCell(
+    val date: LocalDate?,
+    val isFromCurrentMonth: Boolean
+)
+
+private fun buildMonthGrid(month: YearMonth): List<List<CalendarDayCell>> {
+    val firstDayOfMonth = month.atDay(1)
+    val daysInMonth = month.lengthOfMonth()
+    val leadingEmptyCells = firstDayOfMonth.dayOfWeek.value - DayOfWeek.MONDAY.value
+
+    val cells = MutableList(42) { index ->
+        val dayNumber = index - leadingEmptyCells + 1
+
+        if (dayNumber in 1..daysInMonth) {
+            CalendarDayCell(
+                date = month.atDay(dayNumber),
+                isFromCurrentMonth = true
+            )
+        } else {
+            CalendarDayCell(
+                date = null,
+                isFromCurrentMonth = false
+            )
+        }
+    }
+
+    return cells.chunked(7)
+}
+
+private fun isDateInRange(
+    date: LocalDate,
+    startDate: LocalDate?,
+    endDate: LocalDate?
+): Boolean {
+    if (startDate == null || endDate == null) return false
+    return !date.isBefore(startDate) && !date.isAfter(endDate)
+}
+
+private fun isSameDay(date: LocalDate?, other: LocalDate?): Boolean {
+    return date != null && other != null && date == other
+}
+
+private fun formatYearMonthLabel(yearMonth: YearMonth): String {
+    val monthName = yearMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
+    return "${monthName.replaceFirstChar { it.uppercase() }} ${yearMonth.year}"
+}
+
+@Composable
+private fun AutoDurationField(
+    value: String,
+    errorMessage: String?
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.trips_field_duration),
+            fontSize = 12.sp,
+            color = if (errorMessage != null) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            }
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+            ),
+            border = BorderStroke(
+                1.dp,
+                if (errorMessage != null) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                }
+            )
+        ) {
+            Text(
+                text = if (value.isBlank()) stringResource(R.string.field_duration_auto_placeholder) else localizedTripDuration(value),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
+                color = if (value.isBlank()) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                }
+            )
+        }
+
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+    }
+}
+
+@Composable
+private fun YearPickerDialog(
+    currentYear: Int,
+    onYearSelected: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var startYear by remember(currentYear) { mutableStateOf(currentYear - 5) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.dialog_close))
+            }
+        },
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { startYear -= 12 }) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowLeft,
+                        contentDescription = stringResource(R.string.date_picker_prev_years)
+                    )
+                }
+
+                Text(
+                    text = "${startYear} - ${startYear + 11}",
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                IconButton(onClick = { startYear += 12 }) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowRight,
+                        contentDescription = stringResource(R.string.date_picker_next_years)
+                    )
+                }
+            }
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                repeat(4) { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        repeat(3) { column ->
+                            val year = startYear + row * 3 + column
+                            val isSelected = year == currentYear
+
+                            Card(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { onYearSelected(year) },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isSelected) {
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                                    } else {
+                                        MaterialTheme.colorScheme.surface
+                                    }
+                                ),
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (isSelected) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                                    }
+                                )
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 14.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = year.toString(),
+                                        color = if (isSelected) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        },
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+}
+
+@Composable
+private fun CustomDateRangeDialog(
+    initialStartDate: LocalDate?,
+    initialEndDate: LocalDate?,
+    onDismiss: () -> Unit,
+    onConfirm: (LocalDate, LocalDate) -> Unit
+) {
+    var displayedMonth by remember(initialStartDate, initialEndDate) {
+        mutableStateOf(
+            YearMonth.from(initialStartDate ?: initialEndDate ?: LocalDate.now())
+        )
+    }
+
+    var selectedStartDate by remember(initialStartDate) { mutableStateOf(initialStartDate) }
+    var selectedEndDate by remember(initialEndDate) { mutableStateOf(initialEndDate) }
+    var showYearDialog by remember { mutableStateOf(false) }
+    val today = remember { LocalDate.now() }
+
+    val monthGrid = remember(displayedMonth) {
+        buildMonthGrid(displayedMonth)
+    }
+
+    val weekdayLabels = remember {
+        DayOfWeek.values().map { day ->
+            day.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val start = selectedStartDate
+                    val end = selectedEndDate
+                    if (start != null && end != null) {
+                        onConfirm(start, end)
+                    }
+                },
+                enabled = selectedStartDate != null && selectedEndDate != null
+            ) {
+                Text(stringResource(R.string.action_ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.trips_btn_cancel))
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(
+                        onClick = { displayedMonth = displayedMonth.minusMonths(1) }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowLeft,
+                            contentDescription = stringResource(R.string.date_picker_prev_month)
+                        )
+                    }
+
+                    Text(
+                        text = formatYearMonthLabel(displayedMonth),
+                        modifier = Modifier.clickable { showYearDialog = true },
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    IconButton(
+                        onClick = { displayedMonth = displayedMonth.plusMonths(1) }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowRight,
+                            contentDescription = stringResource(R.string.date_picker_next_month)
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    weekdayLabels.forEach { label ->
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = label,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    monthGrid.forEach { week ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            week.forEach { cell ->
+                                val date = cell.date
+                                val isDisabled = date == null || date.isBefore(today)
+                                val isStart = isSameDay(date, selectedStartDate)
+                                val isEnd = isSameDay(date, selectedEndDate)
+                                val isSingleDayRange =
+                                    selectedStartDate != null &&
+                                            selectedEndDate != null &&
+                                            selectedStartDate == selectedEndDate &&
+                                            isStart && isEnd
+
+                                val isBetween = if (date != null) {
+                                    isDateInRange(date, selectedStartDate, selectedEndDate) &&
+                                            !isStart && !isEnd
+                                } else {
+                                    false
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .aspectRatio(1f)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(
+                                            when {
+                                                isDisabled -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+                                                isSingleDayRange -> MaterialTheme.colorScheme.primary
+                                                isStart || isEnd -> MaterialTheme.colorScheme.primary
+                                                isBetween -> MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                                                else -> MaterialTheme.colorScheme.surface
+                                            }
+                                        )
+                                        .clickable(enabled = !isDisabled) {
+                                            if (date == null || date.isBefore(today)) return@clickable
+
+                                            when {
+                                                selectedStartDate == null -> {
+                                                    selectedStartDate = date
+                                                    selectedEndDate = null
+                                                }
+
+                                                selectedEndDate == null -> {
+                                                    if (date.isBefore(selectedStartDate)) {
+                                                        selectedStartDate = date
+                                                    } else {
+                                                        selectedEndDate = date
+                                                    }
+                                                }
+
+                                                else -> {
+                                                    selectedStartDate = date
+                                                    selectedEndDate = null
+                                                }
+                                            }
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = date?.dayOfMonth?.toString().orEmpty(),
+                                        color = when {
+                                            date == null -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0f)
+                                            isDisabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+                                            isStart || isEnd -> MaterialTheme.colorScheme.onPrimary
+                                            else -> MaterialTheme.colorScheme.onSurface
+                                        },
+                                        fontWeight = if (isStart || isEnd) {
+                                            FontWeight.SemiBold
+                                        } else {
+                                            FontWeight.Normal
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Text(
+                    text = when {
+                        selectedStartDate != null && selectedEndDate != null ->
+                            "${selectedStartDate!!.format(EUROPEAN_DATE_FORMATTER)} - ${selectedEndDate!!.format(EUROPEAN_DATE_FORMATTER)}"
+                        selectedStartDate != null ->
+                            selectedStartDate!!.format(EUROPEAN_DATE_FORMATTER)
+                        else ->
+                            stringResource(R.string.date_picker_select_start_end)
+                    },
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    )
+
+    if (showYearDialog) {
+        YearPickerDialog(
+            currentYear = displayedMonth.year,
+            onYearSelected = { selectedYear ->
+                displayedMonth = YearMonth.of(selectedYear, displayedMonth.month)
+                showYearDialog = false
+            },
+            onDismiss = { showYearDialog = false }
+        )
+    }
+}
+
+@Composable
+private fun DateRangePickerField(
+    value: String,
+    errorMessage: String?,
+    onValueChange: (String) -> Unit
+) {
+    var showDialog by rememberSaveable { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.trips_field_date_range),
+            fontSize = 12.sp,
+            color = if (errorMessage != null) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            }
+        )
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showDialog = true },
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            border = BorderStroke(
+                1.dp,
+                if (errorMessage != null) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.outline
+                }
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = if (value.isBlank()) stringResource(R.string.date_picker_select_range) else value,
+                    color = if (value.isBlank()) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
+                )
+
+                Icon(
+                    imageVector = Icons.Default.CalendarMonth,
+                    contentDescription = stringResource(R.string.date_picker_select_range),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+    }
+
+    if (showDialog) {
+        val currentRange = parseDateRange(value)
+
+        CustomDateRangeDialog(
+            initialStartDate = currentRange?.first,
+            initialEndDate = currentRange?.second,
+            onDismiss = { showDialog = false },
+            onConfirm = { startDate, endDate ->
+                onValueChange(
+                    "${startDate.format(EUROPEAN_DATE_FORMATTER)} - ${endDate.format(EUROPEAN_DATE_FORMATTER)}"
+                )
+                showDialog = false
+            }
+        )
+    }
 }

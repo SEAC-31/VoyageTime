@@ -29,32 +29,49 @@ import com.example.voyagetime.LocalDarkMode
 import com.example.voyagetime.LocalOnDarkModeChange
 import com.example.voyagetime.MainActivity
 import com.example.voyagetime.R
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberDatePickerState
+import java.time.Instant
+import java.time.ZoneOffset
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 private const val TAG = "Preferences"
-private val DOB_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+private val DOB_FORMATTER: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 
 // ── VALIDATION HELPERS ────────────────────────────────────────
 
-private fun validateUsername(value: String): String? {
-    if (value.isBlank()) return "Username cannot be empty"
-    if (value.trim().length < 2) return "Username must be at least 2 characters"
+private fun validateUsername(
+    value: String,
+    emptyMessage: String,
+    minMessage: String
+): String? {
+    if (value.isBlank()) return emptyMessage
+    if (value.trim().length < 2) return minMessage
     return null
 }
 
-private fun validateDateOfBirth(value: String): String? {
-    if (value.isBlank()) return null // optional field
+private fun validateDateOfBirth(
+    value: String,
+    futureMessage: String,
+    invalidMessage: String
+): String? {
+    if (value.isBlank()) return null
+
     return try {
         val date = LocalDate.parse(value.trim(), DOB_FORMATTER)
-        if (date.isAfter(LocalDate.now())) "Date of birth cannot be in the future"
-        else null
-    } catch (e: DateTimeParseException) {
-        "Use format dd/MM/YYYY (e.g. 15/03/1995)"
+        if (date.isAfter(LocalDate.now())) {
+            futureMessage
+        } else {
+            null
+        }
+    } catch (_: DateTimeParseException) {
+        invalidMessage
     }
 }
-
 // ── MAIN SCREEN ───────────────────────────────────────────────
 
 @Composable
@@ -231,6 +248,11 @@ fun EditProfileDialog(onDismiss: () -> Unit) {
     var usernameError by remember { mutableStateOf<String?>(null) }
     var dobError by remember { mutableStateOf<String?>(null) }
 
+    val usernameEmptyError = stringResource(R.string.pref_username_empty)
+    val usernameMinError = stringResource(R.string.pref_username_min)
+    val dobFutureError = stringResource(R.string.pref_dob_future)
+    val dobInvalidError = stringResource(R.string.pref_dob_invalid)
+
     Dialog(onDismissRequest = onDismiss) {
         Card(shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -256,21 +278,13 @@ fun EditProfileDialog(onDismiss: () -> Unit) {
                 )
 
                 // Date of birth field
-                OutlinedTextField(
+                DateOfBirthPickerField(
                     value = dateOfBirth,
-                    onValueChange = { dateOfBirth = it; dobError = null },
-                    label = { Text(stringResource(R.string.profile_dob)) },
-                    placeholder = { Text("dd/MM/YYYY") },
-                    singleLine = true,
-                    isError = dobError != null,
-                    supportingText = {
-                        if (dobError != null)
-                            Text(dobError!!, color = MaterialTheme.colorScheme.error)
-                        else
-                            Text("Optional — format: dd/MM/YYYY",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    },
-                    modifier = Modifier.fillMaxWidth()
+                    errorMessage = dobError,
+                    onDateSelected = {
+                        dateOfBirth = it
+                        dobError = null
+                    }
                 )
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End,
@@ -281,8 +295,17 @@ fun EditProfileDialog(onDismiss: () -> Unit) {
                     Spacer(Modifier.width(8.dp))
                     Button(onClick = {
                         // Validate all fields before saving
-                        usernameError = validateUsername(username)
-                        dobError = validateDateOfBirth(dateOfBirth)
+                        usernameError = validateUsername(
+                            username,
+                            usernameEmptyError,
+                            usernameMinError
+                        )
+
+                        dobError = validateDateOfBirth(
+                            dateOfBirth,
+                            dobFutureError,
+                            dobInvalidError
+                        )
 
                         if (usernameError == null && dobError == null) {
                             PreferencesManager.saveUsername(context, username.trim())
@@ -306,8 +329,12 @@ fun EditProfileDialog(onDismiss: () -> Unit) {
 @Composable
 fun CurrencyPickerDialog(currentCurrency: String, onDismiss: () -> Unit, onCurrencySelected: (String) -> Unit) {
     var selected by remember { mutableStateOf(currentCurrency) }
-    val options = listOf("EUR" to "EUR — Euro", "USD" to "USD — US Dollar",
-        "GBP" to "GBP — British Pound", "JPY" to "JPY — Japanese Yen")
+    val options = listOf(
+        "EUR" to stringResource(R.string.currency_eur),
+        "USD" to stringResource(R.string.currency_usd),
+        "GBP" to stringResource(R.string.currency_gbp),
+        "JPY" to stringResource(R.string.currency_jpy)
+    )
 
     Dialog(onDismissRequest = onDismiss) {
         Card(shape = RoundedCornerShape(20.dp),
@@ -344,8 +371,11 @@ fun CurrencyPickerDialog(currentCurrency: String, onDismiss: () -> Unit, onCurre
 @Composable
 fun LanguagePickerDialog(currentLanguage: String, onDismiss: () -> Unit, onLanguageSelected: (String) -> Unit) {
     var selected by remember { mutableStateOf(currentLanguage) }
-    val options = listOf(LanguageManager.LANG_EN to "English",
-        LanguageManager.LANG_ES to "Castellano", LanguageManager.LANG_CA to "Català")
+    val options = listOf(
+        LanguageManager.LANG_EN to stringResource(R.string.lang_english),
+        LanguageManager.LANG_ES to stringResource(R.string.lang_spanish),
+        LanguageManager.LANG_CA to stringResource(R.string.lang_catalan)
+    )
 
     Dialog(onDismissRequest = onDismiss) {
         Card(shape = RoundedCornerShape(20.dp),
@@ -377,10 +407,11 @@ fun LanguagePickerDialog(currentLanguage: String, onDismiss: () -> Unit, onLangu
     }
 }
 
+@Composable
 fun languageDisplayName(code: String): String = when (code) {
-    LanguageManager.LANG_ES -> "Castellano"
-    LanguageManager.LANG_CA -> "Català"
-    else -> "English"
+    LanguageManager.LANG_ES -> stringResource(R.string.lang_spanish)
+    LanguageManager.LANG_CA -> stringResource(R.string.lang_catalan)
+    else -> stringResource(R.string.lang_english)
 }
 
 // ── REUSABLE COMPONENTS ───────────────────────────────────────
@@ -455,5 +486,83 @@ fun PreferenceButtonItem(
         }
         Icon(Icons.Default.ChevronRight, contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+    }
+}
+
+private fun LocalDate.toUtcMillis(): Long {
+    return atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
+}
+
+private fun utcMillisToLocalDate(millis: Long): LocalDate {
+    return Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DateOfBirthPickerField(
+    value: String,
+    errorMessage: String?,
+    onDateSelected: (String) -> Unit
+) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = {},
+        readOnly = true,
+        singleLine = true,
+        label = { Text(stringResource(R.string.profile_dob)) },
+        placeholder = { Text(stringResource(R.string.pref_dob_placeholder)) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { showDialog = true },
+        isError = errorMessage != null,
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.Default.CalendarMonth,
+                contentDescription = stringResource(R.string.pref_select_dob)
+            )
+        },
+        supportingText = {
+            if (errorMessage != null) {
+                Text(errorMessage, color = MaterialTheme.colorScheme.error)
+            }
+        }
+    )
+
+    if (showDialog) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = value
+                .takeIf { it.isNotBlank() }
+                ?.let {
+                    runCatching { LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE).toUtcMillis() }
+                        .getOrNull()
+                }
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { showDialog = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { selectedMillis ->
+                            val selectedDate = utcMillisToLocalDate(selectedMillis)
+                            onDateSelected(selectedDate.format(DateTimeFormatter.ISO_LOCAL_DATE))
+                        }
+                        showDialog = false
+                    },
+                    enabled = datePickerState.selectedDateMillis != null
+                ) {
+                    Text(stringResource(R.string.action_ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text(stringResource(R.string.lang_dialog_cancel))
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
     }
 }

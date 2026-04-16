@@ -5,7 +5,8 @@ import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.TravelExplore
 import androidx.lifecycle.ViewModel
-import com.example.voyagetime.data.repository.TripRepository
+import com.example.voyagetime.R
+import com.example.voyagetime.domain.repository.TripRepository
 import com.example.voyagetime.data.repository.TripRepositoryImpl
 import com.example.voyagetime.ui.screens.HomeStat
 import com.example.voyagetime.ui.screens.TripItem
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlin.collections.listOf
 
 data class TripsUiState(
     val upcomingTrips: List<TripItem> = emptyList(),
@@ -32,9 +34,9 @@ data class TripsUiState(
 
     val stats: List<HomeStat>
         get() = listOf(
-            HomeStat(allTrips.size.toString(), "Trips", Icons.Default.TravelExplore),
-            HomeStat(totalDays.toString(), "Days Planned", Icons.Default.CalendarMonth),
-            HomeStat("€$totalBudget", "Budget", Icons.Default.AttachMoney)
+            HomeStat(allTrips.size.toString(), R.string.home_stat_trips, Icons.Default.TravelExplore),
+            HomeStat(totalDays.toString(), R.string.home_stat_days_planned, Icons.Default.CalendarMonth),
+            HomeStat("€$totalBudget", R.string.home_stat_budget, Icons.Default.AttachMoney)
         )
 }
 
@@ -68,6 +70,11 @@ class TripsViewModel(
 
     fun updateTrip(updatedTrip: TripItem) {
         repository.updateTrip(updatedTrip)
+        reloadTrips()
+    }
+
+    fun deleteTrip(tripId: String) {
+        repository.deleteTrip(tripId)
         reloadTrips()
     }
 

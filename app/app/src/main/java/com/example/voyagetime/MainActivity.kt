@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
@@ -32,6 +33,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.compose.ui.res.stringResource
 import com.example.voyagetime.ui.screens.AboutUs
 import com.example.voyagetime.ui.screens.DepartureCityScreen
 import com.example.voyagetime.ui.screens.Gallery
@@ -114,17 +116,17 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-data class NavItem(val route: String, val label: String, val icon: ImageVector)
+data class NavItem(val route: String, @StringRes val labelRes: Int, val icon: ImageVector)
 
 @Composable
 fun VoyageTimeApp() {
     val navController = rememberNavController()
 
     val items = listOf(
-        NavItem(Routes.HOME, "Home", Icons.Default.Home),
-        NavItem(Routes.TRIPS, "Trips", Icons.Default.Place),
-        NavItem(Routes.GALLERY, "Gallery", Icons.Default.PhotoLibrary),
-        NavItem(Routes.PREFERENCES, "Preferences", Icons.Default.AccountBox),
+        NavItem(Routes.HOME, R.string.nav_home, Icons.Default.Home),
+        NavItem(Routes.TRIPS, R.string.nav_trips, Icons.Default.Place),
+        NavItem(Routes.GALLERY, R.string.nav_gallery, Icons.Default.PhotoLibrary),
+        NavItem(Routes.PREFERENCES, R.string.nav_preferences, Icons.Default.AccountBox),
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -135,8 +137,8 @@ fun VoyageTimeApp() {
             items.forEach { item ->
                 val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
                 item(
-                    icon = { Icon(item.icon, contentDescription = item.label) },
-                    label = { Text(item.label) },
+                    icon = { Icon(item.icon, contentDescription = stringResource(item.labelRes)) },
+                    label = { Text(stringResource(item.labelRes)) },
                     selected = selected,
                     onClick = {
                         navController.navigate(item.route) {
