@@ -3,9 +3,9 @@ package com.example.voyagetime.data.local.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.example.voyagetime.data.local.converters.RoomTypeConverters
-import com.example.voyagetime.data.local.entities.ItineraryItemEntity
-import com.example.voyagetime.data.local.entities.TripEntity
+import com.example.voyagetime.utils.RoomTypeConverters
+import com.example.voyagetime.data.local.entity.ItineraryItemEntity
+import com.example.voyagetime.data.local.entity.TripEntity
 
 @Database(
     entities = [
