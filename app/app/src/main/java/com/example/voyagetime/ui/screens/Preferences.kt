@@ -1,7 +1,6 @@
 package com.example.voyagetime.ui.screens
 
 import android.app.Activity
-import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,11 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.example.voyagetime.AppScreen
-import com.example.voyagetime.EXTRA_START_AFTER_SPLASH
 import com.example.voyagetime.LocalDarkMode
 import com.example.voyagetime.LocalOnDarkModeChange
-import com.example.voyagetime.MainActivity
 import com.example.voyagetime.R
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -107,11 +103,8 @@ fun Preferences(
                     Log.i(TAG, "Language changed: $currentLanguage -> $langCode")
                     LanguageManager.saveLanguage(context, langCode)
                     currentLanguage = langCode
-                    val intent = Intent(context, MainActivity::class.java).apply {
-                        putExtra(EXTRA_START_AFTER_SPLASH, AppScreen.MAIN.name)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    }
-                    context.startActivity(intent)
+                    showLanguageDialog = false
+
                     (context as? Activity)?.finish()
                 }
                 showLanguageDialog = false

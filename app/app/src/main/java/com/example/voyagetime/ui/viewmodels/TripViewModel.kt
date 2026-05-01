@@ -1,20 +1,26 @@
 package com.example.voyagetime.ui.viewmodels
 
+import android.app.Application
+import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.TravelExplore
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.voyagetime.R
-import com.example.voyagetime.domain.repository.TripRepository
+import com.example.voyagetime.data.local.database.VoyageTimeDatabase
 import com.example.voyagetime.data.repository.TripRepositoryImpl
+import com.example.voyagetime.domain.repository.TripRepository
 import com.example.voyagetime.ui.screens.HomeStat
 import com.example.voyagetime.ui.screens.TripItem
+import com.example.voyagetime.ui.screens.TripState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
-import kotlin.collections.listOf
+import kotlinx.coroutines.launch
 
 data class TripsUiState(
     val upcomingTrips: List<TripItem> = emptyList(),
@@ -40,52 +46,80 @@ data class TripsUiState(
         )
 }
 
-class TripsViewModel(
-    private val repository: TripRepository = TripRepositoryImpl()
-) : ViewModel() {
+class TripsViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val _uiState = MutableStateFlow(
-        TripsUiState(
-            upcomingTrips = repository.getUpcomingTrips(),
-            pastTrips = repository.getPastTrips(),
-            favoriteRegion = repository.getFavoriteRegion(),
-            travelGoal = repository.getTravelGoal(),
-            nextDeparture = repository.getNextDeparture()
-        )
-    )
+    private val repository: TripRepository
 
+    private val _uiState = MutableStateFlow(TripsUiState())
     val uiState: StateFlow<TripsUiState> = _uiState.asStateFlow()
 
-    fun reloadTrips() {
-        _uiState.update { current ->
-            current.copy(
-                upcomingTrips = repository.getUpcomingTrips(),
-                pastTrips = repository.getPastTrips(),
-                favoriteRegion = repository.getFavoriteRegion(),
-                travelGoal = repository.getTravelGoal(),
-                nextDeparture = repository.getNextDeparture()
-            )
+    init {
+        val database = VoyageTimeDatabase.getDatabase(application)
+        repository = TripRepositoryImpl(database.tripDao())
+
+        viewModelScope.launch {
+            repository.getAllTrips()
+                .catch { error ->
+                    Log.e(TAG, "Error observing trips", error)
+                }
+                .collect { trips ->
+                    _uiState.update { current ->
+                        current.copy(
+                            upcomingTrips = trips.filter {
+                                it.state == TripState.UPCOMING || it.state == TripState.PLANNED
+                            },
+                            pastTrips = trips.filter {
+                                it.state == TripState.COMPLETED
+                            },
+                            favoriteRegion = repository.getFavoriteRegion(),
+                            travelGoal = repository.getTravelGoal(),
+                            nextDeparture = buildNextDeparture(trips)
+                        )
+                    }
+                }
         }
     }
 
+    fun reloadTrips() = Unit
+
     fun updateTrip(updatedTrip: TripItem) {
-        repository.updateTrip(updatedTrip)
-        reloadTrips()
+        viewModelScope.launch {
+            repository.updateTrip(updatedTrip)
+        }
     }
 
     fun deleteTrip(tripId: String) {
-        repository.deleteTrip(tripId)
-        reloadTrips()
+        viewModelScope.launch {
+            repository.deleteTrip(tripId)
+        }
     }
 
     fun updateFavoriteRegion(newValue: String) {
         repository.updateFavoriteRegion(newValue)
-        reloadTrips()
+        _uiState.update { current ->
+            current.copy(favoriteRegion = newValue)
+        }
     }
 
     fun updateTravelGoal(newValue: String) {
         repository.updateTravelGoal(newValue)
-        reloadTrips()
+        _uiState.update { current ->
+            current.copy(travelGoal = newValue)
+        }
+    }
+
+    private fun buildNextDeparture(trips: List<TripItem>): String {
+        val nextTrip = trips.firstOrNull {
+            it.state == TripState.UPCOMING || it.state == TripState.PLANNED
+        }
+
+        return nextTrip
+            ?.let { "${it.destination} — ${it.dateRange.substringBefore(" - ").trim()}" }
+            .orEmpty()
+    }
+
+    companion object {
+        private const val TAG = "TripsViewModel"
     }
 }
 

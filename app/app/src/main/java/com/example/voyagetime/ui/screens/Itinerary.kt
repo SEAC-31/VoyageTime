@@ -157,7 +157,7 @@ fun Itinerary(
     val days = uiState.days
     if (days.isEmpty()) return
 
-    val isCompletedTrip = tripId == "barcelona" || tripId == "newyork"
+    val isCompletedTrip = summary.status.equals("Completed", ignoreCase = true)
 
     val restaurantLabel = stringResource(R.string.itinerary_icon_restaurant)
     val tourLabel = stringResource(R.string.itinerary_icon_tour)
@@ -263,20 +263,6 @@ fun Itinerary(
                 canAddEvent = !isCompletedTrip,
                 onAddClick = { openAdd(EditSection.MORNING) }
             ) {
-                currentDay.morningPlan.forEachIndexed { index, event ->
-                    AgendaEventCard(
-                        event = event,
-                        showActionButtons = !isCompletedTrip,
-                        onEditClick = { openEdit(EditSection.MORNING, event, index) },
-                        onDeleteClick = {
-                            viewModel.deleteMorningEvent(currentDayIndex, index)
-                            if (editingSection == EditSection.MORNING && editingEventIndex == index) {
-                                closeForm()
-                            }
-                        }
-                    )
-                }
-
                 if (editingSection == EditSection.MORNING && !isCompletedTrip) {
                     EventEditForm(
                         title = if (formMode == FormMode.ADD) stringResource(R.string.itinerary_add_morning) else stringResource(R.string.itinerary_edit_morning),
@@ -311,6 +297,20 @@ fun Itinerary(
                         }
                     )
                 }
+
+                currentDay.morningPlan.forEachIndexed { index, event ->
+                    AgendaEventCard(
+                        event = event,
+                        showActionButtons = !isCompletedTrip,
+                        onEditClick = { openEdit(EditSection.MORNING, event, index) },
+                        onDeleteClick = {
+                            viewModel.deleteMorningEvent(currentDayIndex, index)
+                            if (editingSection == EditSection.MORNING && editingEventIndex == index) {
+                                closeForm()
+                            }
+                        }
+                    )
+                }
             }
 
             PlannerSection(
@@ -318,20 +318,6 @@ fun Itinerary(
                 canAddEvent = !isCompletedTrip,
                 onAddClick = { openAdd(EditSection.AFTERNOON) }
             ) {
-                currentDay.afternoonPlan.forEachIndexed { index, event ->
-                    AgendaEventCard(
-                        event = event,
-                        showActionButtons = !isCompletedTrip,
-                        onEditClick = { openEdit(EditSection.AFTERNOON, event, index) },
-                        onDeleteClick = {
-                            viewModel.deleteAfternoonEvent(currentDayIndex, index)
-                            if (editingSection == EditSection.AFTERNOON && editingEventIndex == index) {
-                                closeForm()
-                            }
-                        }
-                    )
-                }
-
                 if (editingSection == EditSection.AFTERNOON && !isCompletedTrip) {
                     EventEditForm(
                         title = if (formMode == FormMode.ADD) stringResource(R.string.itinerary_add_afternoon) else stringResource(R.string.itinerary_edit_afternoon),
@@ -366,6 +352,20 @@ fun Itinerary(
                         }
                     )
                 }
+
+                currentDay.afternoonPlan.forEachIndexed { index, event ->
+                    AgendaEventCard(
+                        event = event,
+                        showActionButtons = !isCompletedTrip,
+                        onEditClick = { openEdit(EditSection.AFTERNOON, event, index) },
+                        onDeleteClick = {
+                            viewModel.deleteAfternoonEvent(currentDayIndex, index)
+                            if (editingSection == EditSection.AFTERNOON && editingEventIndex == index) {
+                                closeForm()
+                            }
+                        }
+                    )
+                }
             }
 
             PlannerSection(
@@ -373,20 +373,6 @@ fun Itinerary(
                 canAddEvent = !isCompletedTrip,
                 onAddClick = { openAdd(EditSection.EVENING) }
             ) {
-                currentDay.eveningPlan.forEachIndexed { index, event ->
-                    AgendaEventCard(
-                        event = event,
-                        showActionButtons = !isCompletedTrip,
-                        onEditClick = { openEdit(EditSection.EVENING, event, index) },
-                        onDeleteClick = {
-                            viewModel.deleteEveningEvent(currentDayIndex, index)
-                            if (editingSection == EditSection.EVENING && editingEventIndex == index) {
-                                closeForm()
-                            }
-                        }
-                    )
-                }
-
                 if (editingSection == EditSection.EVENING && !isCompletedTrip) {
                     EventEditForm(
                         title = if (formMode == FormMode.ADD) stringResource(R.string.itinerary_add_evening) else stringResource(R.string.itinerary_edit_evening),
@@ -418,6 +404,20 @@ fun Itinerary(
                             }
 
                             closeForm()
+                        }
+                    )
+                }
+
+                currentDay.eveningPlan.forEachIndexed { index, event ->
+                    AgendaEventCard(
+                        event = event,
+                        showActionButtons = !isCompletedTrip,
+                        onEditClick = { openEdit(EditSection.EVENING, event, index) },
+                        onDeleteClick = {
+                            viewModel.deleteEveningEvent(currentDayIndex, index)
+                            if (editingSection == EditSection.EVENING && editingEventIndex == index) {
+                                closeForm()
+                            }
                         }
                     )
                 }

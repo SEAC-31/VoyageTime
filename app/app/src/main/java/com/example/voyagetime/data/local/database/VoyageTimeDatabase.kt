@@ -1,6 +1,8 @@
 package com.example.voyagetime.data.local.database
 
+import android.content.Context
 import androidx.room.Database
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.voyagetime.data.local.dao.ItineraryItemDao
@@ -25,5 +27,21 @@ abstract class VoyageTimeDatabase : RoomDatabase() {
 
     companion object {
         const val DATABASE_NAME = "voyagetime.db"
+
+        @Volatile
+        private var INSTANCE: VoyageTimeDatabase? = null
+
+        fun getDatabase(context: Context): VoyageTimeDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    VoyageTimeDatabase::class.java,
+                    DATABASE_NAME
+                ).build()
+
+                INSTANCE = instance
+                instance
+            }
+        }
     }
 }
