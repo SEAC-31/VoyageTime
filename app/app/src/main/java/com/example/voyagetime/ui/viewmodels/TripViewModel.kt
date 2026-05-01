@@ -5,16 +5,16 @@ import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.TravelExplore
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.voyagetime.R
 import com.example.voyagetime.domain.repository.TripRepository
-import com.example.voyagetime.data.repository.TripRepositoryImpl
 import com.example.voyagetime.ui.screens.HomeStat
 import com.example.voyagetime.ui.screens.TripItem
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlin.collections.listOf
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class TripsUiState(
     val upcomingTrips: List<TripItem> = emptyList(),
@@ -41,58 +41,59 @@ data class TripsUiState(
 }
 
 class TripsViewModel(
-    private val repository: TripRepository = TripRepositoryImpl()
+    private val repository: TripRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(
+    // Combinamos los dos flows de Room en un único StateFlow de UI.
+    // Cada vez que Room emite (insert/update/delete), la UI recompone automáticamente.
+    val uiState: StateFlow<TripsUiState> = combine(
+        repository.getUpcomingTrips(),
+        repository.getPastTrips()
+    ) { upcoming, past ->
+        val nextDeparture = upcoming.firstOrNull()
+            ?.let { "${it.destination} — ${it.dateRange.substringBefore(" -").trim()}" }
+            ?: ""
+
         TripsUiState(
-            upcomingTrips = repository.getUpcomingTrips(),
-            pastTrips = repository.getPastTrips(),
+            upcomingTrips = upcoming,
+            pastTrips = past,
             favoriteRegion = repository.getFavoriteRegion(),
             travelGoal = repository.getTravelGoal(),
-            nextDeparture = repository.getNextDeparture()
+            nextDeparture = nextDeparture
         )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = TripsUiState()
     )
 
-    val uiState: StateFlow<TripsUiState> = _uiState.asStateFlow()
-
-    fun reloadTrips() {
-        _uiState.update { current ->
-            current.copy(
-                upcomingTrips = repository.getUpcomingTrips(),
-                pastTrips = repository.getPastTrips(),
-                favoriteRegion = repository.getFavoriteRegion(),
-                travelGoal = repository.getTravelGoal(),
-                nextDeparture = repository.getNextDeparture()
-            )
+    fun updateTrip(updatedTrip: TripItem) {
+        viewModelScope.launch {
+            repository.updateTrip(updatedTrip)
         }
     }
 
-    fun updateTrip(updatedTrip: TripItem) {
-        repository.updateTrip(updatedTrip)
-        reloadTrips()
-    }
-
     fun deleteTrip(tripId: String) {
-        repository.deleteTrip(tripId)
-        reloadTrips()
+        viewModelScope.launch {
+            repository.deleteTrip(tripId)
+        }
     }
 
     fun updateFavoriteRegion(newValue: String) {
-        repository.updateFavoriteRegion(newValue)
-        reloadTrips()
+        viewModelScope.launch {
+            repository.updateFavoriteRegion(newValue)
+        }
     }
 
     fun updateTravelGoal(newValue: String) {
-        repository.updateTravelGoal(newValue)
-        reloadTrips()
+        viewModelScope.launch {
+            repository.updateTravelGoal(newValue)
+        }
     }
 }
 
-private fun TripItem.budgetValue(): Int {
-    return budget.replace("€", "").replace(",", "").trim().toIntOrNull() ?: 0
-}
+private fun TripItem.budgetValue(): Int =
+    budget.replace("€", "").replace(",", "").trim().toIntOrNull() ?: 0
 
-private fun TripItem.durationValue(): Int {
-    return duration.substringBefore(" ").trim().toIntOrNull() ?: 0
-}
+private fun TripItem.durationValue(): Int =
+    duration.substringBefore(" ").trim().toIntOrNull() ?: 0
