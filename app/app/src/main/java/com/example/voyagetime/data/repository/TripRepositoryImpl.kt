@@ -1,81 +1,141 @@
 package com.example.voyagetime.data.repository
 
 import android.util.Log
+import com.example.voyagetime.data.local.dao.TripDao
+import com.example.voyagetime.data.local.entity.TripEntity
+import com.example.voyagetime.domain.repository.AuthRepository
 import com.example.voyagetime.domain.repository.TripRepository
-import com.example.voyagetime.domain.source.FakeTripDataSource
 import com.example.voyagetime.ui.screens.TripItem
 import com.example.voyagetime.ui.screens.TripState
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
-class TripRepositoryImpl : TripRepository {
+class TripRepositoryImpl(
+    private val tripDao: TripDao,
+    private val authRepository: AuthRepository   // para obtener el userId del usuario logueado
+) : TripRepository {
 
-    override fun getUpcomingTrips(): List<TripItem> {
-        return FakeTripDataSource.trips.filter {
-            it.state == TripState.UPCOMING || it.state == TripState.PLANNED
+    // ── Queries ───────────────────────────────────────────────────────────────
+
+    override fun getAllTrips(): Flow<List<TripItem>> {
+        val uid = currentUid() ?: return emptyFlow()
+        return tripDao.getAllTrips(uid).map { list -> list.map { it.toTripItem() } }
+    }
+
+    override fun getUpcomingTrips(): Flow<List<TripItem>> {
+        val uid = currentUid() ?: return emptyFlow()
+        return tripDao.getUpcomingTrips(uid).map { list -> list.map { it.toTripItem() } }
+    }
+
+    override fun getPastTrips(): Flow<List<TripItem>> {
+        val uid = currentUid() ?: return emptyFlow()
+        return tripDao.getPastTrips(uid).map { list -> list.map { it.toTripItem() } }
+    }
+
+    // ── Mutations ─────────────────────────────────────────────────────────────
+
+    override suspend fun addTrip(newTrip: TripItem) {
+        val uid = currentUid() ?: run {
+            Log.e(TAG, "addTrip: no authenticated user")
+            return
+        }
+        val entity = newTrip.toEntity(userId = uid)
+        val insertedId = tripDao.insertTrip(entity)
+        Log.i(TAG, "Trip inserted: id=$insertedId destination=${newTrip.destination} userId=$uid")
+    }
+
+    override suspend fun updateTrip(updatedTrip: TripItem) {
+        val uid = currentUid() ?: return
+        tripDao.updateTrip(updatedTrip.toEntity(userId = uid))
+        Log.i(TAG, "Trip updated: id=${updatedTrip.id}")
+    }
+
+    override suspend fun deleteTrip(tripId: String) {
+        val uid = currentUid() ?: return
+        val id = tripId.toLongOrNull() ?: run {
+            Log.e(TAG, "deleteTrip: invalid id '$tripId'")
+            return
+        }
+        tripDao.deleteTripById(tripId = id, userId = uid)
+        Log.i(TAG, "Trip deleted: id=$tripId")
+    }
+
+    // ── Preferences ───────────────────────────────────────────────────────────
+    // Migrarán a UserEntity en T4.1 cuando haya perfil de usuario.
+    // Por ahora se mantienen en memoria.
+
+    private var favoriteRegion = "Europe & North America"
+    private var travelGoal     = "Complete memorable trips with clear itineraries"
+
+    override fun getFavoriteRegion(): String = favoriteRegion
+    override fun updateFavoriteRegion(newValue: String) { favoriteRegion = newValue }
+
+    override fun getTravelGoal(): String = travelGoal
+    override fun updateTravelGoal(newValue: String) { travelGoal = newValue }
+
+    override fun getNextDeparture(): String = ""   // derivado del Flow en ViewModel
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private fun currentUid(): String? = authRepository.currentUserId()
+
+    // ── Mappers ───────────────────────────────────────────────────────────────
+
+    private fun TripEntity.toTripItem(): TripItem {
+        val fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+        return TripItem(
+            id          = id.toString(),
+            destination = destination,
+            country     = country,
+            dateRange   = "${startDateTime.format(fmt)} - ${endDateTime.format(fmt)}",
+            duration    = "$durationDays days",
+            budget      = "€$budgetAmount",
+            statusLabel = statusLabel,
+            state       = when (statusLabel.uppercase()) {
+                "COMPLETED" -> TripState.COMPLETED
+                "PLANNED"   -> TripState.PLANNED
+                else        -> TripState.UPCOMING
+            },
+            image = imageRes
+        )
+    }
+
+    private fun TripItem.toEntity(userId: String): TripEntity {
+        val fmt    = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+        val parts  = dateRange.split(" - ").map { it.trim() }
+        val startDT = parseDate(parts.getOrNull(0), fmt)
+        val endDT   = parseDate(parts.getOrNull(1), fmt)
+        val days    = duration.substringBefore(" ").toIntOrNull() ?: 1
+        val budget  = budget.replace("€", "").replace(",", "").trim().toIntOrNull() ?: 0
+
+        return TripEntity(
+            id           = id.toLongOrNull() ?: 0L,
+            userId       = userId,
+            destination  = destination,
+            country      = country,
+            startDateTime = startDT,
+            endDateTime   = endDT,
+            durationDays  = days,
+            budgetAmount  = budget,
+            statusLabel   = statusLabel,
+            imageRes      = image
+        )
+    }
+
+    private fun parseDate(value: String?, fmt: DateTimeFormatter): LocalDateTime {
+        if (value.isNullOrBlank()) return LocalDateTime.now()
+        return try {
+            java.time.LocalDate.parse(value, fmt).atStartOfDay()
+        } catch (_: DateTimeParseException) {
+            LocalDateTime.now()
         }
     }
 
-    override fun getPastTrips(): List<TripItem> {
-        return FakeTripDataSource.trips.filter {
-            it.state == TripState.COMPLETED
-        }
-    }
-
-    override fun getAllTrips(): List<TripItem> {
-        return FakeTripDataSource.trips.toList()
-    }
-
-    override fun addTrip(newTrip: TripItem) {
-        FakeTripDataSource.trips.add(0, newTrip)
-        Log.i("TripRepository", "Trip added: ${newTrip.id}")
-    }
-
-    override fun updateTrip(updatedTrip: TripItem) {
-        val index = FakeTripDataSource.trips.indexOfFirst { it.id == updatedTrip.id }
-
-        if (index != -1) {
-            FakeTripDataSource.trips[index] = updatedTrip
-            Log.i("TripRepository", "Trip updated: ${updatedTrip.id}")
-        } else {
-            Log.e("TripRepository", "Trip not found: ${updatedTrip.id}")
-        }
-    }
-
-    override fun deleteTrip(tripId: String) {
-        val wasRemoved = FakeTripDataSource.trips.removeAll { it.id == tripId }
-
-        if (wasRemoved) {
-            Log.i("TripRepository", "Trip deleted: $tripId")
-        } else {
-            Log.e("TripRepository", "Trip not found for deletion: $tripId")
-        }
-    }
-
-    override fun getFavoriteRegion(): String {
-        return FakeTripDataSource.favoriteRegion
-    }
-
-    override fun updateFavoriteRegion(newValue: String) {
-        FakeTripDataSource.favoriteRegion = newValue
-        Log.i("TripRepository", "Favorite region updated")
-    }
-
-    override fun getTravelGoal(): String {
-        return FakeTripDataSource.travelGoal
-    }
-
-    override fun updateTravelGoal(newValue: String) {
-        FakeTripDataSource.travelGoal = newValue
-        Log.i("TripRepository", "Travel goal updated")
-    }
-
-    override fun getNextDeparture(): String {
-        return getUpcomingTrips()
-            .firstOrNull()
-            ?.let { "${it.destination} — ${extractDisplayStartDate(it.dateRange)}" }
-            ?: FakeTripDataSource.nextDeparture
-    }
-
-    private fun extractDisplayStartDate(dateRange: String): String {
-        return dateRange.substringBefore("-").trim()
+    companion object {
+        private const val TAG = "TripRepository"
     }
 }
