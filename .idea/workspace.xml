@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="439175dc-64c9-4ba6-933c-1ab67c55a5bf" name="Changes" comment="firebase avance u integracion">
+      <change beforePath="$PROJECT_DIR$/app/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/local/VoyageTimeDatabase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/local/database/VoyageTimeDatabase.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/local/dao/ItineraryItemDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/local/dao/ItineraryItemDao.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/local/entity/ItineraryItemEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/local/entity/ItineraryItemEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/repository/ItineraryRepositoryImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/repository/ItineraryRepositoryImpl.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/domain/repository/Itineraryrepositoryimpl.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/domain/repository/TripRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/domain/repository/TripRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/domain/repository/Triprepositoryimpl.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/Itinerary.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/Itinerary.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/Preferences.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/Preferences.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/PreferencesManager.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/PreferencesManager.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/Terms &amp; Conditions.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/TermsAcceptanceScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/TermsAcceptanceScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/viewmodels/HomeViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/viewmodels/HomeViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/viewmodels/ItineraryViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/viewmodels/ItineraryViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/viewmodels/TripViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/viewmodels/TripViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/utils/RoomTypeConverters.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/utils/RoomTypeConverters.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/gradle.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/gradle.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/gradle/libs.versions.toml" beforeDir="false" afterPath="$PROJECT_DIR$/app/gradle/libs.versions.toml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
+  <component name="ProjectId" id="3CQxRmQOfXys6qGY9jEWGsgk4Oz" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "com.google.services.firebase.aqiPopupShown": "true",
+    "git-widget-placeholder": "Merging joan",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/home/jonsama/universidad/aplicacions_per_a_dispositius_mobils/VoyageTime"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="439175dc-64c9-4ba6-933c-1ab67c55a5bf" name="Changes" comment="" />
+      <created>1776331589269</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1776331589269</updated>
+    </task>
+    <task id="LOCAL-00001" summary="t1.3 done">
+      <option name="closed" value="true" />
+      <created>1777219761640</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1777219761640</updated>
+    </task>
+    <task id="LOCAL-00002" summary="t1.4 done -&gt; los Fake de domain fuera">
+      <option name="closed" value="true" />
+      <created>1777220323686</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1777220323686</updated>
+    </task>
+    <task id="LOCAL-00003" summary="firebase implementation v1">
+      <option name="closed" value="true" />
+      <created>1777634746976</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1777634746976</updated>
+    </task>
+    <task id="LOCAL-00004" summary="firebase y databse avances">
+      <option name="closed" value="true" />
+      <created>1777651977312</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1777651977312</updated>
+    </task>
+    <task id="LOCAL-00005" summary="firebase avance u integracion">
+      <option name="closed" value="true" />
+      <created>1777656250518</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1777656250518</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="t1.3 done" />
+    <MESSAGE value="t1.4 done -&gt; los Fake de domain fuera" />
+    <MESSAGE value="firebase implementation v1" />
+    <MESSAGE value="firebase y databse avances" />
+    <MESSAGE value="firebase avance u integracion" />
+    <option name="LAST_COMMIT_MESSAGE" value="firebase avance u integracion" />
+  </component>
+</project>

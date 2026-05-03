@@ -7,6 +7,7 @@ interface TripRepository {
     fun getUpcomingTrips(): Flow<List<TripItem>>
     fun getPastTrips(): Flow<List<TripItem>>
     fun getAllTrips(): Flow<List<TripItem>>
+    fun observeTrip(tripId: String): Flow<TripItem?>
 
     suspend fun addTrip(newTrip: TripItem)
     suspend fun updateTrip(updatedTrip: TripItem)
