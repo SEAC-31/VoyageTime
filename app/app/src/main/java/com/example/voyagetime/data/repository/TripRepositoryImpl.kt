@@ -16,7 +16,7 @@ import java.time.format.DateTimeParseException
 
 class TripRepositoryImpl(
     private val tripDao: TripDao,
-    private val authRepository: AuthRepository   // para obtener el userId del usuario logueado
+    private val authRepository: AuthRepository
 ) : TripRepository {
 
     // ── Queries ───────────────────────────────────────────────────────────────
@@ -36,6 +36,12 @@ class TripRepositoryImpl(
         return tripDao.getPastTrips(uid).map { list -> list.map { it.toTripItem() } }
     }
 
+    override fun observeTrip(tripId: String): Flow<TripItem?> {
+        val uid = currentUid() ?: return emptyFlow()
+        val id  = tripId.toLongOrNull() ?: return emptyFlow()
+        return tripDao.observeTripById(id, uid).map { it?.toTripItem() }
+    }
+
     // ── Mutations ─────────────────────────────────────────────────────────────
 
     override suspend fun addTrip(newTrip: TripItem) {
@@ -43,9 +49,8 @@ class TripRepositoryImpl(
             Log.e(TAG, "addTrip: no authenticated user")
             return
         }
-        val entity = newTrip.toEntity(userId = uid)
-        val insertedId = tripDao.insertTrip(entity)
-        Log.i(TAG, "Trip inserted: id=$insertedId destination=${newTrip.destination} userId=$uid")
+        val insertedId = tripDao.insertTrip(newTrip.toEntity(userId = uid))
+        Log.i(TAG, "Trip inserted: id=$insertedId destination=${newTrip.destination}")
     }
 
     override suspend fun updateTrip(updatedTrip: TripItem) {
@@ -56,7 +61,7 @@ class TripRepositoryImpl(
 
     override suspend fun deleteTrip(tripId: String) {
         val uid = currentUid() ?: return
-        val id = tripId.toLongOrNull() ?: run {
+        val id  = tripId.toLongOrNull() ?: run {
             Log.e(TAG, "deleteTrip: invalid id '$tripId'")
             return
         }
@@ -64,20 +69,16 @@ class TripRepositoryImpl(
         Log.i(TAG, "Trip deleted: id=$tripId")
     }
 
-    // ── Preferences ───────────────────────────────────────────────────────────
-    // Migrarán a UserEntity en T4.1 cuando haya perfil de usuario.
-    // Por ahora se mantienen en memoria.
+    // ── Preferences (en memoria hasta T4.1 completo) ──────────────────────────
 
     private var favoriteRegion = "Europe & North America"
     private var travelGoal     = "Complete memorable trips with clear itineraries"
 
     override fun getFavoriteRegion(): String = favoriteRegion
     override fun updateFavoriteRegion(newValue: String) { favoriteRegion = newValue }
-
     override fun getTravelGoal(): String = travelGoal
     override fun updateTravelGoal(newValue: String) { travelGoal = newValue }
-
-    override fun getNextDeparture(): String = ""   // derivado del Flow en ViewModel
+    override fun getNextDeparture(): String = ""
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -111,12 +112,11 @@ class TripRepositoryImpl(
         val endDT   = parseDate(parts.getOrNull(1), fmt)
         val days    = duration.substringBefore(" ").toIntOrNull() ?: 1
         val budget  = budget.replace("€", "").replace(",", "").trim().toIntOrNull() ?: 0
-
         return TripEntity(
-            id           = id.toLongOrNull() ?: 0L,
-            userId       = userId,
-            destination  = destination,
-            country      = country,
+            id            = id.toLongOrNull() ?: 0L,
+            userId        = userId,
+            destination   = destination,
+            country       = country,
             startDateTime = startDT,
             endDateTime   = endDT,
             durationDays  = days,

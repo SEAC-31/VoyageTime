@@ -34,7 +34,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.compose.ui.res.stringResource
-import com.example.voyagetime.data.repository.FakeAuthRepositoryImpl
+import com.example.voyagetime.data.repository.FirebaseAuthRepositoryImpl
 import com.example.voyagetime.ui.screens.AboutUs
 import com.example.voyagetime.ui.screens.DepartureCityScreen
 import com.example.voyagetime.ui.screens.ForgotPasswordScreen

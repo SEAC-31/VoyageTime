@@ -5,26 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="439175dc-64c9-4ba6-933c-1ab67c55a5bf" name="Changes" comment="firebase avance u integracion">
-      <change beforePath="$PROJECT_DIR$/app/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/build.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/local/VoyageTimeDatabase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/local/database/VoyageTimeDatabase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/local/dao/ItineraryItemDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/local/dao/ItineraryItemDao.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/local/entity/ItineraryItemEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/local/entity/ItineraryItemEntity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/repository/ItineraryRepositoryImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/data/repository/ItineraryRepositoryImpl.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/domain/repository/Itineraryrepositoryimpl.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/domain/repository/TripRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/domain/repository/TripRepository.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/domain/repository/Triprepositoryimpl.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/Itinerary.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/Itinerary.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/Preferences.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/Preferences.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/PreferencesManager.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/PreferencesManager.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/Terms &amp; Conditions.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/TermsAcceptanceScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/screens/TermsAcceptanceScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/viewmodels/HomeViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/viewmodels/HomeViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/viewmodels/ItineraryViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/viewmodels/ItineraryViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/viewmodels/TripViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/ui/viewmodels/TripViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/utils/RoomTypeConverters.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/src/main/java/com/example/voyagetime/utils/RoomTypeConverters.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/gradle.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/gradle.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/gradle/libs.versions.toml" beforeDir="false" afterPath="$PROJECT_DIR$/app/gradle/libs.versions.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/practica.zip" beforeDir="false" afterPath="$PROJECT_DIR$/practica.zip" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,7 +38,7 @@
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "com.google.services.firebase.aqiPopupShown": "true",
-    "git-widget-placeholder": "Merging joan",
+    "git-widget-placeholder": "joan",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/home/jonsama/universidad/aplicacions_per_a_dispositius_mobils/VoyageTime"
   }

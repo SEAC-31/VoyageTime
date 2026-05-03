@@ -1,6 +1,8 @@
 package com.example.voyagetime.data.local.database
 
+import android.content.Context
 import androidx.room.Database
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
@@ -36,15 +38,8 @@ abstract class VoyageTimeDatabase : RoomDatabase() {
     companion object {
         const val DATABASE_NAME = "voyagetime.db"
 
-        /**
-         * Migración v1 → v2:
-         * - Crea tabla users
-         * - Añade columna user_id a trips (nullable para no romper datos existentes)
-         * - Crea tabla access_log
-         */
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // Tabla users
                 db.execSQL("""
                     CREATE TABLE IF NOT EXISTS users (
                         firebase_uid TEXT NOT NULL PRIMARY KEY,
@@ -62,11 +57,9 @@ abstract class VoyageTimeDatabase : RoomDatabase() {
                 db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_users_username ON users(username)")
                 db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_users_firebase_uid ON users(firebase_uid)")
 
-                // Añadir user_id a trips (nullable — los trips existentes quedan con null)
                 db.execSQL("ALTER TABLE trips ADD COLUMN user_id TEXT REFERENCES users(firebase_uid) ON DELETE CASCADE")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_trips_user_id ON trips(user_id)")
 
-                // Tabla access_log
                 db.execSQL("""
                     CREATE TABLE IF NOT EXISTS access_log (
                         id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -90,8 +83,9 @@ abstract class VoyageTimeDatabase : RoomDatabase() {
                     context.applicationContext,
                     VoyageTimeDatabase::class.java,
                     DATABASE_NAME
-                ).build()
-
+                )
+                    .addMigrations(MIGRATION_1_2)
+                    .build()
                 INSTANCE = instance
                 instance
             }

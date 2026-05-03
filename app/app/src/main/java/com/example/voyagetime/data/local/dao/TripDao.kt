@@ -32,6 +32,9 @@ interface TripDao {
     fun getPastTrips(userId: String): Flow<List<TripEntity>>
 
     @Query("SELECT * FROM trips WHERE id = :tripId AND user_id = :userId LIMIT 1")
+    fun observeTripById(tripId: Long, userId: String): Flow<TripEntity?>
+
+    @Query("SELECT * FROM trips WHERE id = :tripId AND user_id = :userId LIMIT 1")
     suspend fun getTripById(tripId: Long, userId: String): TripEntity?
 
     @Query("SELECT * FROM trips WHERE user_id = :userId ORDER BY start_datetime ASC")
