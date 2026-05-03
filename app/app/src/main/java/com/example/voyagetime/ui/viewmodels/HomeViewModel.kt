@@ -40,14 +40,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
+        Log.d(TAG, "Initializing HomeViewModel")
         val database = VoyageTimeDatabase.getDatabase(application)
         val authRepository = FirebaseAuthRepositoryImpl()
         repository = TripRepositoryImpl(database.tripDao(), authRepository)
 
         viewModelScope.launch {
+            Log.d(TAG, "Starting trips observation")
             repository.getAllTrips()
                 .catch { error -> Log.e(TAG, "Error observing home trips", error) }
                 .collect { trips ->
+                    Log.i(TAG, "Trips updated: ${trips.size} trips loaded")
                     val summaries = trips.map { trip ->
                         val (start, end) = parseTripDateRange(trip.dateRange)
                         HomeTripSummary(
@@ -72,6 +75,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     val totalBudget = summaries.sumOf { it.budget }
                     val totalDays   = summaries.sumOf { extractDays(it.duration) }
 
+                    Log.d(TAG, "Next trip: ${nextTrip?.destination ?: "none"}, totalBudget=€$totalBudget, totalDays=$totalDays")
+
                     val stats = listOf(
                         HomeStat(summaries.size.toString(), R.string.home_stat_trips, Icons.Default.TravelExplore),
                         HomeStat(totalDays.toString(), R.string.home_stat_days_planned, Icons.Default.CalendarMonth),
@@ -92,7 +97,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun reload() = Unit
+    fun reload() {
+        Log.d(TAG, "reload() called")
+    }
 
     companion object {
         private const val TAG = "HomeViewModel"

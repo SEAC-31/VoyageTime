@@ -35,6 +35,7 @@ class CreateTripViewModel(application: Application) : AndroidViewModel(applicati
     val uiState: StateFlow<CreateTripUiState> = _uiState.asStateFlow()
 
     init {
+        Log.d(TAG, "Initializing CreateTripViewModel")
         val database       = VoyageTimeDatabase.getDatabase(application)
         val authRepository = FirebaseAuthRepositoryImpl()
         repository = TripRepositoryImpl(database.tripDao(), authRepository)
@@ -47,12 +48,20 @@ class CreateTripViewModel(application: Application) : AndroidViewModel(applicati
         endDate: String,
         budget: String
     ) {
-        val start = parseDate(startDate) ?: return
-        val end   = parseDate(endDate)   ?: return
+        Log.d(TAG, "createTrip called: destination=$destination, country=$country, start=$startDate, end=$endDate")
+
+        val start = parseDate(startDate) ?: run {
+            Log.e(TAG, "createTrip: invalid startDate format — $startDate")
+            return
+        }
+        val end = parseDate(endDate) ?: run {
+            Log.e(TAG, "createTrip: invalid endDate format — $endDate")
+            return
+        }
         val today = LocalDate.now()
 
         if (start.isBefore(today) || end.isBefore(today) || end.isBefore(start)) {
-            Log.e(TAG, "Invalid date range")
+            Log.e(TAG, "createTrip: invalid date range — start=$start, end=$end, today=$today")
             return
         }
 
@@ -62,6 +71,7 @@ class CreateTripViewModel(application: Application) : AndroidViewModel(applicati
         val durationDays          = ChronoUnit.DAYS.between(start, end).toInt() + 1
         val imageRes              = resolveTripImage(normalizedDestination, normalizedCountry)
 
+        Log.d(TAG, "createTrip: durationDays=$durationDays, imageRes=$imageRes")
         _uiState.value = CreateTripUiState(isLoading = true)
 
         viewModelScope.launch {
@@ -77,11 +87,13 @@ class CreateTripViewModel(application: Application) : AndroidViewModel(applicati
                 image       = imageRes
             )
             repository.addTrip(newTrip)
+            Log.i(TAG, "createTrip: trip saved successfully — destination=$normalizedDestination")
             _uiState.value = CreateTripUiState(isSaved = true)
         }
     }
 
     fun resetState() {
+        Log.d(TAG, "resetState called")
         _uiState.value = CreateTripUiState()
     }
 

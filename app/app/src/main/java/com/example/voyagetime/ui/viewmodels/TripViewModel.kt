@@ -55,14 +55,17 @@ class TripsViewModel(application: Application) : AndroidViewModel(application) {
     val uiState: StateFlow<TripsUiState> = _uiState.asStateFlow()
 
     init {
+        Log.d(TAG, "Initializing TripsViewModel")
         val database = VoyageTimeDatabase.getDatabase(application)
         val authRepository = FirebaseAuthRepositoryImpl()
         repository = TripRepositoryImpl(database.tripDao(), authRepository)
 
         viewModelScope.launch {
+            Log.d(TAG, "Starting trips observation")
             repository.getAllTrips()
                 .catch { error -> Log.e(TAG, "Error observing trips", error) }
                 .collect { trips ->
+                    Log.i(TAG, "Trips updated: ${trips.size} total (upcoming+past)")
                     _uiState.update { current ->
                         current.copy(
                             upcomingTrips  = trips.filter { it.state == TripState.UPCOMING || it.state == TripState.PLANNED },
@@ -76,22 +79,34 @@ class TripsViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun reloadTrips() = Unit
+    fun reloadTrips() {
+        Log.d(TAG, "reloadTrips() called")
+    }
 
     fun updateTrip(updatedTrip: TripItem) {
-        viewModelScope.launch { repository.updateTrip(updatedTrip) }
+        Log.i(TAG, "updateTrip: id=${updatedTrip.id}, destination=${updatedTrip.destination}")
+        viewModelScope.launch {
+            repository.updateTrip(updatedTrip)
+            Log.i(TAG, "updateTrip: success id=${updatedTrip.id}")
+        }
     }
 
     fun deleteTrip(tripId: String) {
-        viewModelScope.launch { repository.deleteTrip(tripId) }
+        Log.i(TAG, "deleteTrip: id=$tripId")
+        viewModelScope.launch {
+            repository.deleteTrip(tripId)
+            Log.i(TAG, "deleteTrip: success id=$tripId")
+        }
     }
 
     fun updateFavoriteRegion(newValue: String) {
+        Log.d(TAG, "updateFavoriteRegion: $newValue")
         repository.updateFavoriteRegion(newValue)
         _uiState.update { it.copy(favoriteRegion = newValue) }
     }
 
     fun updateTravelGoal(newValue: String) {
+        Log.d(TAG, "updateTravelGoal: $newValue")
         repository.updateTravelGoal(newValue)
         _uiState.update { it.copy(travelGoal = newValue) }
     }
