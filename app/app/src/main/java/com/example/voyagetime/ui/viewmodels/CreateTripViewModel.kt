@@ -1,15 +1,19 @@
 package com.example.voyagetime.ui.viewmodels
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.voyagetime.R
+import com.example.voyagetime.data.local.database.VoyageTimeDatabase
+import com.example.voyagetime.data.repository.FirebaseAuthRepositoryImpl
+import com.example.voyagetime.data.repository.TripRepositoryImpl
 import com.example.voyagetime.domain.repository.TripRepository
 import com.example.voyagetime.ui.screens.TripItem
 import com.example.voyagetime.ui.screens.TripState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -23,12 +27,18 @@ data class CreateTripUiState(
     val error: String? = null
 )
 
-class CreateTripViewModel(
+class CreateTripViewModel(application: Application) : AndroidViewModel(application) {
+
     private val repository: TripRepository
-) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateTripUiState())
     val uiState: StateFlow<CreateTripUiState> = _uiState.asStateFlow()
+
+    init {
+        val database       = VoyageTimeDatabase.getDatabase(application)
+        val authRepository = FirebaseAuthRepositoryImpl()
+        repository = TripRepositoryImpl(database.tripDao(), authRepository)
+    }
 
     fun createTrip(
         destination: String,
@@ -41,7 +51,10 @@ class CreateTripViewModel(
         val end   = parseDate(endDate)   ?: return
         val today = LocalDate.now()
 
-        if (start.isBefore(today) || end.isBefore(today) || end.isBefore(start)) return
+        if (start.isBefore(today) || end.isBefore(today) || end.isBefore(start)) {
+            Log.e(TAG, "Invalid date range")
+            return
+        }
 
         val normalizedDestination = destination.trim()
         val normalizedCountry     = country.trim()
@@ -52,11 +65,8 @@ class CreateTripViewModel(
         _uiState.value = CreateTripUiState(isLoading = true)
 
         viewModelScope.launch {
-            // Generamos el ID comprobando duplicados contra Room
-            val tripId = buildTripId(normalizedDestination)
-
             val newTrip = TripItem(
-                id          = tripId,
+                id          = "0",
                 destination = normalizedDestination,
                 country     = normalizedCountry,
                 dateRange   = formatDateRange(start, end),
@@ -66,7 +76,6 @@ class CreateTripViewModel(
                 state       = TripState.PLANNED,
                 image       = imageRes
             )
-
             repository.addTrip(newTrip)
             _uiState.value = CreateTripUiState(isSaved = true)
         }
@@ -76,39 +85,15 @@ class CreateTripViewModel(
         _uiState.value = CreateTripUiState()
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private suspend fun buildTripId(destination: String): String {
-        val base = destination
-            .trim()
-            .lowercase(Locale.ENGLISH)
-            .replace(Regex("[^a-z0-9]+"), "")
-            .ifBlank { "trip" }
-
-        // Recogemos la lista una sola vez (no necesitamos el flow reactivo aquí)
-        val existingIds = repository.getAllTrips().first().map { it.id }.toSet()
-
-        var candidate = base
-        var counter   = 1
-        while (candidate in existingIds) {
-            counter++
-            candidate = "$base$counter"
-        }
-        return candidate
-    }
-
     private fun parseDate(value: String): LocalDate? {
-        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
         return try {
-            LocalDate.parse(value.trim(), formatter)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+            LocalDate.parse(value.trim(), DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+        } catch (_: DateTimeParseException) { null }
     }
 
     private fun formatDateRange(start: LocalDate, end: LocalDate): String {
-        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-        return "${start.format(formatter)} - ${end.format(formatter)}"
+        val fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+        return "${start.format(fmt)} - ${end.format(fmt)}"
     }
 
     private fun formatDuration(days: Int): String =
@@ -117,11 +102,15 @@ class CreateTripViewModel(
     private fun resolveTripImage(destination: String, country: String): Int {
         val key = "${destination.lowercase(Locale.ENGLISH)} ${country.lowercase(Locale.ENGLISH)}"
         return when {
-            "paris"    in key || "france"        in key -> R.drawable.paris
-            "tokyo"    in key || "japan"         in key -> R.drawable.tokyo
-            "barcelona" in key || "spain"        in key -> R.drawable.barcelona
-            "new york" in key || "united states" in key || "usa" in key -> R.drawable.newyork
+            "paris"     in key || "france"        in key -> R.drawable.paris
+            "tokyo"     in key || "japan"         in key -> R.drawable.tokyo
+            "barcelona" in key || "spain"         in key -> R.drawable.barcelona
+            "new york"  in key || "united states" in key || "usa" in key -> R.drawable.newyork
             else -> R.drawable.logo_no_background
         }
+    }
+
+    companion object {
+        private const val TAG = "CreateTripViewModel"
     }
 }

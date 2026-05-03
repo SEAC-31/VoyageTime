@@ -9,7 +9,9 @@ import com.example.voyagetime.ui.screens.TripItem
 import com.example.voyagetime.ui.screens.TripState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -19,57 +21,46 @@ class TripRepositoryImpl(
     private val authRepository: AuthRepository
 ) : TripRepository {
 
-    // ── Queries ───────────────────────────────────────────────────────────────
-
     override fun getAllTrips(): Flow<List<TripItem>> {
         val uid = currentUid() ?: return emptyFlow()
-        return tripDao.getAllTrips(uid).map { list -> list.map { it.toTripItem() } }
+        return tripDao.getAllTrips(uid).map { it.map { e -> e.toTripItem() } }
     }
 
     override fun getUpcomingTrips(): Flow<List<TripItem>> {
         val uid = currentUid() ?: return emptyFlow()
-        return tripDao.getUpcomingTrips(uid).map { list -> list.map { it.toTripItem() } }
+        return tripDao.getUpcomingTrips(uid).map { it.map { e -> e.toTripItem() } }
     }
 
     override fun getPastTrips(): Flow<List<TripItem>> {
         val uid = currentUid() ?: return emptyFlow()
-        return tripDao.getPastTrips(uid).map { list -> list.map { it.toTripItem() } }
+        return tripDao.getPastTrips(uid).map { it.map { e -> e.toTripItem() } }
     }
 
     override fun observeTrip(tripId: String): Flow<TripItem?> {
-        val uid = currentUid() ?: return emptyFlow()
-        val id  = tripId.toLongOrNull() ?: return emptyFlow()
+        val uid = currentUid() ?: return flowOf(null)
+        val id  = tripId.toLongOrNull() ?: return flowOf(null)
         return tripDao.observeTripById(id, uid).map { it?.toTripItem() }
     }
 
-    // ── Mutations ─────────────────────────────────────────────────────────────
-
     override suspend fun addTrip(newTrip: TripItem) {
-        val uid = currentUid() ?: run {
-            Log.e(TAG, "addTrip: no authenticated user")
-            return
-        }
-        val insertedId = tripDao.insertTrip(newTrip.toEntity(userId = uid))
-        Log.i(TAG, "Trip inserted: id=$insertedId destination=${newTrip.destination}")
+        val uid = currentUid() ?: run { Log.e(TAG, "addTrip: no authenticated user"); return }
+        val insertedId = tripDao.insertTrip(newTrip.toEntity(existingId = 0L, userId = uid))
+        Log.i(TAG, "Trip inserted id=$insertedId destination=${newTrip.destination}")
     }
 
     override suspend fun updateTrip(updatedTrip: TripItem) {
         val uid = currentUid() ?: return
-        tripDao.updateTrip(updatedTrip.toEntity(userId = uid))
-        Log.i(TAG, "Trip updated: id=${updatedTrip.id}")
+        val id  = updatedTrip.id.toLongOrNull() ?: run { Log.e(TAG, "updateTrip: invalid id"); return }
+        tripDao.updateTrip(updatedTrip.toEntity(existingId = id, userId = uid))
+        Log.i(TAG, "Trip updated id=$id")
     }
 
     override suspend fun deleteTrip(tripId: String) {
         val uid = currentUid() ?: return
-        val id  = tripId.toLongOrNull() ?: run {
-            Log.e(TAG, "deleteTrip: invalid id '$tripId'")
-            return
-        }
+        val id  = tripId.toLongOrNull() ?: run { Log.e(TAG, "deleteTrip: invalid id '$tripId'"); return }
         tripDao.deleteTripById(tripId = id, userId = uid)
-        Log.i(TAG, "Trip deleted: id=$tripId")
+        Log.i(TAG, "Trip deleted id=$tripId")
     }
-
-    // ── Preferences (en memoria hasta T4.1 completo) ──────────────────────────
 
     private var favoriteRegion = "Europe & North America"
     private var travelGoal     = "Complete memorable trips with clear itineraries"
@@ -80,11 +71,7 @@ class TripRepositoryImpl(
     override fun updateTravelGoal(newValue: String) { travelGoal = newValue }
     override fun getNextDeparture(): String = ""
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
     private fun currentUid(): String? = authRepository.currentUserId()
-
-    // ── Mappers ───────────────────────────────────────────────────────────────
 
     private fun TripEntity.toTripItem(): TripItem {
         val fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy")
@@ -93,7 +80,7 @@ class TripRepositoryImpl(
             destination = destination,
             country     = country,
             dateRange   = "${startDateTime.format(fmt)} - ${endDateTime.format(fmt)}",
-            duration    = "$durationDays days",
+            duration    = if (durationDays == 1) "1 day" else "$durationDays days",
             budget      = "€$budgetAmount",
             statusLabel = statusLabel,
             state       = when (statusLabel.uppercase()) {
@@ -105,33 +92,34 @@ class TripRepositoryImpl(
         )
     }
 
-    private fun TripItem.toEntity(userId: String): TripEntity {
+    private fun TripItem.toEntity(existingId: Long, userId: String): TripEntity {
         val fmt    = DateTimeFormatter.ofPattern("dd/MM/yyyy")
         val parts  = dateRange.split(" - ").map { it.trim() }
-        val startDT = parseDate(parts.getOrNull(0), fmt)
-        val endDT   = parseDate(parts.getOrNull(1), fmt)
-        val days    = duration.substringBefore(" ").toIntOrNull() ?: 1
-        val budget  = budget.replace("€", "").replace(",", "").trim().toIntOrNull() ?: 0
+        val startDT = parseToLocalDateTime(parts.getOrNull(0), fmt)
+        val endDT   = parseToLocalDateTime(parts.getOrNull(1), fmt)
+        val days    = duration.substringBefore(" ").trim().toIntOrNull() ?: 1
+        val budgetVal = budget.replace("€", "").replace(",", "").trim().toIntOrNull() ?: 0
+
         return TripEntity(
-            id            = id.toLongOrNull() ?: 0L,
+            id            = existingId,
             userId        = userId,
             destination   = destination,
             country       = country,
             startDateTime = startDT,
             endDateTime   = endDT,
             durationDays  = days,
-            budgetAmount  = budget,
+            budgetAmount  = budgetVal,
             statusLabel   = statusLabel,
             imageRes      = image
         )
     }
 
-    private fun parseDate(value: String?, fmt: DateTimeFormatter): LocalDateTime {
-        if (value.isNullOrBlank()) return LocalDateTime.now()
+    private fun parseToLocalDateTime(value: String?, formatter: DateTimeFormatter): LocalDateTime {
+        if (value.isNullOrBlank()) return LocalDate.now().atStartOfDay()
         return try {
-            java.time.LocalDate.parse(value, fmt).atStartOfDay()
+            LocalDate.parse(value.trim(), formatter).atStartOfDay()
         } catch (_: DateTimeParseException) {
-            LocalDateTime.now()
+            LocalDate.now().atStartOfDay()
         }
     }
 
