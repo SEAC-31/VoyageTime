@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "604267761674",
+    "project_id": "voyagetime",
+    "storage_bucket": "voyagetime.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:604267761674:android:a6b0ee96cf737b85e84ff3",
+        "android_client_info": {
+          "package_name": "com.example.voyagetime"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDui51SW-kbwcaBUnomrlMmxhwKnbqD6OU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
