@@ -98,6 +98,13 @@
     <string name="gallery_type_photo">Photo</string>
     <string name="gallery_type_video">Video</string>
     <string name="gallery_btn_delete">Delete</string>
+    <string name="gallery_local_image_name">Uploaded image %1$d</string>
+    <string name="gallery_local_location">Local gallery</string>
+    <string name="gallery_user_uploaded">User image</string>
+    <string name="trips_cover_image">Trip cover image</string>
+    <string name="trips_cover_from_gallery">Image from gallery</string>
+    <string name="trips_no_gallery_images">No uploaded images yet. Add an image from the Gallery tab first.</string>
+    <string name="trips_clear_cover">Use default cover</string>
 
     <!-- Itinerary -->
     <string name="itinerary_morning">Morning Plan</string>
@@ -300,6 +307,46 @@
     <string name="terms_accept_s8_body">For questions about these Terms, contact us at:\nlegal@voyagetime.app</string>
     <string name="profile_username">Username</string>
     <string name="profile_dob">Date of birth</string>
+
+    <!-- Authentication -->
+    <string name="auth_logo_description">VoyageTime logo</string>
+    <string name="auth_username">Username</string>
+    <string name="auth_email">Email</string>
+    <string name="auth_password">Password</string>
+    <string name="auth_confirm_password">Confirm password</string>
+
+    <!-- Login -->
+    <string name="login_title">Welcome back</string>
+    <string name="login_subtitle">Sign in with your email and password to continue planning your trips.</string>
+    <string name="login_button">Log in</string>
+    <string name="login_no_account">Don’t have an account?</string>
+    <string name="login_create_account">Create one</string>
+    <string name="login_error_email_required">Email is required.</string>
+    <string name="login_error_email_invalid">Enter a valid email address.</string>
+    <string name="login_error_password_required">Password is required.</string>
+    <string name="login_error_password_short">Password must have at least 6 characters.</string>
+    <string name="login_error_invalid_credentials">Login failed. Check your email and password.</string>
+    <string name="login_remember_me">Remember me</string>
+
+    <!-- Register -->
+    <string name="register_title">Create account</string>
+    <string name="register_subtitle">Prepare your account details. The Firebase registration action is implemented in T3.2.</string>
+    <string name="register_button">Create account</string>
+    <string name="register_accept_terms">I accept the Terms &amp; Conditions</string>
+    <string name="register_already_account">Already have an account?</string>
+    <string name="register_back_to_login">Log in</string>
+    <string name="register_error_username_required">Username is required.</string>
+    <string name="register_error_username_short">Username must have at least 2 characters.</string>
+    <string name="register_error_email_required">Email is required.</string>
+    <string name="register_error_email_invalid">Enter a valid email address.</string>
+    <string name="register_error_password_required">Password is required.</string>
+    <string name="register_error_password_short">Password must have at least 6 characters.</string>
+    <string name="register_error_confirm_required">Confirm your password.</string>
+    <string name="register_error_passwords_not_match">Passwords do not match.</string>
+    <string name="register_error_terms_required">You must accept the terms to create an account.</string>
+    <string name="register_info_t3_2_pending">Register form is valid. Account creation will be implemented in T3.2.</string>
+    <string name="register_accept_terms_prefix">I accept the</string>
+    <string name="register_terms_link">Terms &amp; Conditions</string>
 
     <!-- Extras -->
     <string name="app_logo_content_description">VoyageTime logo</string>

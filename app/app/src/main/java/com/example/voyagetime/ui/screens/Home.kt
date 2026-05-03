@@ -65,6 +65,7 @@ data class HomeTripSummary(
     val duration: String,
     val budget: Int,
     val image: Int,
+    val coverImageUri: String? = null,
     val status: String
 )
 
@@ -366,8 +367,9 @@ fun NextTripCard(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Image(
-            painter = painterResource(id = trip.image),
+        TripCoverImage(
+            imageRes = trip.image,
+            imageUri = trip.coverImageUri,
             contentDescription = trip.destination,
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -448,8 +450,9 @@ fun HomeFeaturedTripCard(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            painter = painterResource(id = trip.image),
+        TripCoverImage(
+            imageRes = trip.image,
+            imageUri = trip.coverImageUri,
             contentDescription = trip.destination,
             contentScale = ContentScale.Crop,
             modifier = Modifier

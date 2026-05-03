@@ -34,6 +34,9 @@ data class TripEntity(
     @ColumnInfo(name = "image_res")
     val imageRes: Int,
 
+    @ColumnInfo(name = "cover_image_uri")
+    val coverImageUri: String? = null,
+
     @ColumnInfo(name = "created_at")
     val createdAt: LocalDateTime = LocalDateTime.now()
 )

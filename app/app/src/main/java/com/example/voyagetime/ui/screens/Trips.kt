@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,8 +21,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -35,7 +37,6 @@ import androidx.compose.material.icons.filled.FlightTakeoff
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.TravelExplore
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -60,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -68,6 +70,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.voyagetime.R
 import com.example.voyagetime.ui.viewmodels.TripsViewModel
 import java.time.DayOfWeek
@@ -100,7 +103,8 @@ data class TripItem(
     val budget: String,
     val statusLabel: String,
     val state: TripState,
-    val image: Int
+    val image: Int,
+    val coverImageUri: String? = null
 )
 
 data class HomeStat(
@@ -127,7 +131,11 @@ private fun localizedTripStateLabel(state: TripState): String = when (state) {
 }
 
 @Composable
-private fun localizedInsightValue(value: String, @StringRes defaultRes: Int, englishDefault: String): String {
+private fun localizedInsightValue(
+    value: String,
+    @StringRes defaultRes: Int,
+    englishDefault: String
+): String {
     return if (value == englishDefault) stringResource(defaultRes) else value
 }
 
@@ -225,7 +233,11 @@ fun Trips(
             EditableInsightRow(
                 icon = Icons.Default.Explore,
                 title = stringResource(R.string.trips_insight_region),
-                value = localizedInsightValue(uiState.favoriteRegion, R.string.trips_insight_region_default, "Europe & North America"),
+                value = localizedInsightValue(
+                    uiState.favoriteRegion,
+                    R.string.trips_insight_region_default,
+                    "Europe & North America"
+                ),
                 onSave = { viewModel.updateFavoriteRegion(it) }
             )
 
@@ -248,7 +260,11 @@ fun Trips(
             EditableInsightRow(
                 icon = Icons.AutoMirrored.Filled.TrendingUp,
                 title = stringResource(R.string.trips_insight_goal),
-                value = localizedInsightValue(uiState.travelGoal, R.string.trips_insight_goal_default, "Complete 4 memorable trips with clear itineraries"),
+                value = localizedInsightValue(
+                    uiState.travelGoal,
+                    R.string.trips_insight_goal_default,
+                    "Complete 4 memorable trips with clear itineraries"
+                ),
                 onSave = { viewModel.updateTravelGoal(it) }
             )
         }
@@ -409,17 +425,26 @@ fun EditableUpcomingTripCard(
     onSave: (TripItem) -> Unit
 ) {
     var isEditing by rememberSaveable(trip.id) { mutableStateOf(false) }
-    var draftDestination by rememberSaveable(trip.id, trip.destination) { mutableStateOf(trip.destination) }
-    var draftCountry by rememberSaveable(trip.id, trip.country) { mutableStateOf(trip.country) }
+    var draftDestination by rememberSaveable(trip.id, trip.destination) {
+        mutableStateOf(trip.destination)
+    }
+    var draftCountry by rememberSaveable(trip.id, trip.country) {
+        mutableStateOf(trip.country)
+    }
     var draftDateRange by rememberSaveable(trip.id, trip.dateRange) {
         mutableStateOf(normalizeDateRangeForEditing(trip.dateRange))
     }
     var draftBudget by rememberSaveable(trip.id, trip.budget) {
         mutableStateOf(extractBudgetDigits(trip.budget))
     }
+    var draftCoverImageUri by rememberSaveable(trip.id, trip.coverImageUri) {
+        mutableStateOf(trip.coverImageUri)
+    }
 
-    val destinationError = if (draftDestination.trim().isBlank()) stringResource(R.string.validation_destination_required) else null
-    val countryError = if (draftCountry.trim().isBlank()) stringResource(R.string.validation_country_required) else null
+    val destinationError =
+        if (draftDestination.trim().isBlank()) stringResource(R.string.validation_destination_required) else null
+    val countryError =
+        if (draftCountry.trim().isBlank()) stringResource(R.string.validation_country_required) else null
     val dateRangeError = validateDateRangeMessage(
         draftDateRange,
         requiredMessage = stringResource(R.string.validation_date_range_required),
@@ -582,6 +607,13 @@ fun EditableUpcomingTripCard(
                             }
                         )
 
+                        TripCoverPicker(
+                            selectedUri = draftCoverImageUri,
+                            onSelected = { selectedUri ->
+                                draftCoverImageUri = selectedUri
+                            }
+                        )
+
                         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                             val useSecondRowForButtons = maxWidth < 420.dp
 
@@ -590,6 +622,7 @@ fun EditableUpcomingTripCard(
                                 draftCountry = trip.country
                                 draftDateRange = normalizeDateRangeForEditing(trip.dateRange)
                                 draftBudget = extractBudgetDigits(trip.budget)
+                                draftCoverImageUri = trip.coverImageUri
                                 isEditing = false
                             }
 
@@ -601,7 +634,8 @@ fun EditableUpcomingTripCard(
                                             country = draftCountry.trim(),
                                             dateRange = normalizeDateRangeForStorage(draftDateRange),
                                             duration = safeDuration,
-                                            budget = "€${draftBudget.trim()}"
+                                            budget = "€${draftBudget.trim()}",
+                                            coverImageUri = draftCoverImageUri
                                         )
                                     )
                                     isEditing = false
@@ -669,10 +703,10 @@ private fun TripMainInfo(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            painter = painterResource(id = trip.image),
+        TripCoverImageForTrips(
+            imageRes = trip.image,
+            imageUri = trip.coverImageUri,
             contentDescription = trip.destination,
-            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .width(100.dp)
                 .height(100.dp)
@@ -739,10 +773,10 @@ fun PastTripCard(
                 .clickable { onViewClick() },
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = trip.image),
+            TripCoverImageForTrips(
+                imageRes = trip.image,
+                imageUri = trip.coverImageUri,
                 contentDescription = trip.destination,
-                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .width(100.dp)
                     .height(100.dp)
@@ -795,6 +829,106 @@ fun PastTripCard(
             modifier = Modifier.align(Alignment.TopEnd),
             onClick = onDeleteClick
         )
+    }
+}
+
+@Composable
+private fun TripCoverImageForTrips(
+    imageRes: Int,
+    imageUri: String?,
+    contentDescription: String?,
+    modifier: Modifier = Modifier
+) {
+    if (!imageUri.isNullOrBlank()) {
+        AsyncImage(
+            model = imageUri,
+            contentDescription = contentDescription,
+            contentScale = ContentScale.Crop,
+            modifier = modifier
+        )
+    } else {
+        Image(
+            painter = painterResource(id = imageRes),
+            contentDescription = contentDescription,
+            contentScale = ContentScale.Crop,
+            modifier = modifier
+        )
+    }
+}
+
+@Composable
+private fun TripCoverPicker(
+    selectedUri: String?,
+    onSelected: (String?) -> Unit
+) {
+    val context = LocalContext.current
+    var galleryUris by remember {
+        mutableStateOf(PreferencesManager.getGalleryImageUris(context))
+    }
+
+    LaunchedEffect(Unit) {
+        galleryUris = PreferencesManager.getGalleryImageUris(context)
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.trips_cover_image),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        if (galleryUris.isEmpty()) {
+            Text(
+                text = stringResource(R.string.trips_no_gallery_images),
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        } else {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(galleryUris) { uri ->
+                    val isSelected = uri == selectedUri
+
+                    Box(
+                        modifier = Modifier
+                            .size(88.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(
+                                width = if (isSelected) 3.dp else 1.dp,
+                                color = if (isSelected) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                                },
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                            .clickable {
+                                onSelected(uri)
+                            }
+                    ) {
+                        AsyncImage(
+                            model = uri,
+                            contentDescription = stringResource(R.string.trips_cover_from_gallery),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+            }
+
+            TextButton(
+                onClick = {
+                    onSelected(null)
+                }
+            ) {
+                Text(text = stringResource(R.string.trips_clear_cover))
+            }
+        }
     }
 }
 
@@ -1336,7 +1470,11 @@ private fun AutoDurationField(
             )
         ) {
             Text(
-                text = if (value.isBlank()) stringResource(R.string.field_duration_auto_placeholder) else localizedTripDuration(value),
+                text = if (value.isBlank()) {
+                    stringResource(R.string.field_duration_auto_placeholder)
+                } else {
+                    localizedTripDuration(value)
+                },
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
                 color = if (value.isBlank()) {
                     MaterialTheme.colorScheme.onSurfaceVariant
@@ -1652,8 +1790,10 @@ private fun CustomDateRangeDialog(
                     text = when {
                         selectedStartDate != null && selectedEndDate != null ->
                             "${selectedStartDate!!.format(EUROPEAN_DATE_FORMATTER)} - ${selectedEndDate!!.format(EUROPEAN_DATE_FORMATTER)}"
+
                         selectedStartDate != null ->
                             selectedStartDate!!.format(EUROPEAN_DATE_FORMATTER)
+
                         else ->
                             stringResource(R.string.date_picker_select_start_end)
                     },

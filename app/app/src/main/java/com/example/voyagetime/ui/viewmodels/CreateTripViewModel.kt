@@ -58,7 +58,8 @@ class CreateTripViewModel(application: Application) : AndroidViewModel(applicati
             budget = "€$normalizedBudget",
             statusLabel = "Planned",
             state = TripState.PLANNED,
-            image = imageRes
+            image = imageRes,
+            coverImageUri = null
         )
 
         viewModelScope.launch {

@@ -76,27 +76,21 @@ class TripRepositoryImpl(
     private var favoriteRegion: String = "Europe & North America"
     private var travelGoal: String = "Complete memorable trips with clear itineraries"
 
-    override fun getFavoriteRegion(): String {
-        return favoriteRegion
-    }
+    override fun getFavoriteRegion(): String = favoriteRegion
 
     override fun updateFavoriteRegion(newValue: String) {
         favoriteRegion = newValue
         Log.i(TAG, "Favorite region updated")
     }
 
-    override fun getTravelGoal(): String {
-        return travelGoal
-    }
+    override fun getTravelGoal(): String = travelGoal
 
     override fun updateTravelGoal(newValue: String) {
         travelGoal = newValue
         Log.i(TAG, "Travel goal updated")
     }
 
-    override fun getNextDeparture(): String {
-        return ""
-    }
+    override fun getNextDeparture(): String = ""
 
     private fun TripEntity.toTripItem(): TripItem {
         val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
@@ -116,7 +110,8 @@ class TripRepositoryImpl(
                 "PLANNED" -> TripState.PLANNED
                 else -> TripState.UPCOMING
             },
-            image = imageRes
+            image = imageRes,
+            coverImageUri = coverImageUri
         )
     }
 
@@ -142,7 +137,8 @@ class TripRepositoryImpl(
             durationDays = days,
             budgetAmount = budgetValue,
             statusLabel = statusLabel,
-            imageRes = image
+            imageRes = image,
+            coverImageUri = coverImageUri
         )
     }
 

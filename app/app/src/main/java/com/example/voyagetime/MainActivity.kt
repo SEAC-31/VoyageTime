@@ -2,6 +2,7 @@ package com.example.voyagetime
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -22,6 +23,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -34,6 +36,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.voyagetime.data.repository.FirebaseAuthRepositoryImpl
 import com.example.voyagetime.ui.screens.AboutUs
 import com.example.voyagetime.ui.screens.CreateTripScreen
 import com.example.voyagetime.ui.screens.DepartureCityScreen
@@ -41,8 +44,10 @@ import com.example.voyagetime.ui.screens.Gallery
 import com.example.voyagetime.ui.screens.Home
 import com.example.voyagetime.ui.screens.Itinerary
 import com.example.voyagetime.ui.screens.LanguageManager
+import com.example.voyagetime.ui.screens.LoginScreen
 import com.example.voyagetime.ui.screens.Preferences
 import com.example.voyagetime.ui.screens.PreferencesManager
+import com.example.voyagetime.ui.screens.RegisterScreen
 import com.example.voyagetime.ui.screens.SplashScreen
 import com.example.voyagetime.ui.screens.TermsAcceptanceScreen
 import com.example.voyagetime.ui.screens.TermsAndConditions
@@ -56,13 +61,17 @@ val LocalOnDarkModeChange = compositionLocalOf<(Boolean) -> Unit> { {} }
 enum class AppScreen {
     SPLASH,
     TERMS_ACCEPTANCE,
+    LOGIN,
+    REGISTER,
+    TERMS_FROM_REGISTER,
     MAIN
 }
 
 class MainActivity : ComponentActivity() {
 
     override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(LanguageManager.applyLanguage(newBase))
+        val localizedContext = LanguageManager.applyLanguage(newBase)
+        super.attachBaseContext(localizedContext)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,6 +80,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val context = this@MainActivity
+            val authRepository = remember { FirebaseAuthRepositoryImpl() }
 
             var darkMode by rememberSaveable {
                 mutableStateOf(PreferencesManager.getDarkMode(context))
@@ -92,10 +102,21 @@ class MainActivity : ComponentActivity() {
                         AppScreen.SPLASH -> {
                             SplashScreen(
                                 onFinished = {
-                                    currentScreen = if (PreferencesManager.hasAcceptedTerms(context)) {
-                                        AppScreen.MAIN
-                                    } else {
-                                        AppScreen.TERMS_ACCEPTANCE
+                                    currentScreen = when {
+                                        !PreferencesManager.hasAcceptedTerms(context) -> {
+                                            Log.i(TAG, "Navigation event: terms required")
+                                            AppScreen.TERMS_ACCEPTANCE
+                                        }
+
+                                        authRepository.isUserLoggedIn() -> {
+                                            Log.i(TAG, "Navigation event: user already logged in")
+                                            AppScreen.MAIN
+                                        }
+
+                                        else -> {
+                                            Log.i(TAG, "Navigation event: login required")
+                                            AppScreen.LOGIN
+                                        }
                                     }
                                 }
                             )
@@ -105,21 +126,73 @@ class MainActivity : ComponentActivity() {
                             TermsAcceptanceScreen(
                                 onAccept = {
                                     PreferencesManager.saveTermsAccepted(context, true)
-                                    currentScreen = AppScreen.MAIN
+
+                                    currentScreen = if (authRepository.isUserLoggedIn()) {
+                                        Log.i(TAG, "Navigation event: terms accepted, opening main")
+                                        AppScreen.MAIN
+                                    } else {
+                                        Log.i(TAG, "Navigation event: terms accepted, opening login")
+                                        AppScreen.LOGIN
+                                    }
                                 },
                                 onReject = {
+                                    Log.w(TAG, "Navigation event: terms rejected")
                                     currentScreen = AppScreen.TERMS_ACCEPTANCE
                                 }
                             )
                         }
 
+                        AppScreen.LOGIN -> {
+                            LoginScreen(
+                                onLoginSuccess = {
+                                    Log.i(TAG, "Navigation event: login success")
+                                    currentScreen = AppScreen.MAIN
+                                },
+                                onRegisterClick = {
+                                    Log.i(TAG, "Navigation event: open register")
+                                    currentScreen = AppScreen.REGISTER
+                                }
+                            )
+                        }
+
+                        AppScreen.REGISTER -> {
+                            RegisterScreen(
+                                onBackToLogin = {
+                                    Log.i(TAG, "Navigation event: back to login")
+                                    currentScreen = AppScreen.LOGIN
+                                },
+                                onTermsClick = {
+                                    Log.i(TAG, "Navigation event: open terms from register")
+                                    currentScreen = AppScreen.TERMS_FROM_REGISTER
+                                }
+                            )
+                        }
+
+                        AppScreen.TERMS_FROM_REGISTER -> {
+                            TermsAndConditions(
+                                onBack = {
+                                    Log.i(TAG, "Navigation event: back to register from terms")
+                                    currentScreen = AppScreen.REGISTER
+                                }
+                            )
+                        }
+
                         AppScreen.MAIN -> {
-                            VoyageTimeApp()
+                            VoyageTimeApp(
+                                onLogout = {
+                                    authRepository.logout()
+                                    currentScreen = AppScreen.LOGIN
+                                }
+                            )
                         }
                     }
                 }
             }
         }
+    }
+
+    companion object {
+        private const val TAG = "MainActivity"
     }
 }
 
@@ -130,14 +203,32 @@ data class NavItem(
 )
 
 @Composable
-fun VoyageTimeApp() {
+fun VoyageTimeApp(
+    onLogout: () -> Unit
+) {
     val navController = rememberNavController()
 
     val items = listOf(
-        NavItem(Routes.HOME, R.string.nav_home, Icons.Default.Home),
-        NavItem(Routes.TRIPS, R.string.nav_trips, Icons.Default.Place),
-        NavItem(Routes.GALLERY, R.string.nav_gallery, Icons.Default.PhotoLibrary),
-        NavItem(Routes.PREFERENCES, R.string.nav_preferences, Icons.Default.AccountBox)
+        NavItem(
+            route = Routes.HOME,
+            labelRes = R.string.nav_home,
+            icon = Icons.Default.Home
+        ),
+        NavItem(
+            route = Routes.TRIPS,
+            labelRes = R.string.nav_trips,
+            icon = Icons.Default.Place
+        ),
+        NavItem(
+            route = Routes.GALLERY,
+            labelRes = R.string.nav_gallery,
+            icon = Icons.Default.PhotoLibrary
+        ),
+        NavItem(
+            route = Routes.PREFERENCES,
+            labelRes = R.string.nav_preferences,
+            icon = Icons.Default.AccountBox
+        )
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -146,6 +237,7 @@ fun VoyageTimeApp() {
     NavigationSuiteScaffold(
         navigationSuiteItems = {
             items.forEach { item ->
+
                 val selected = currentDestination?.hierarchy?.any { destination ->
                     destination.route == item.route
                 } == true
@@ -251,7 +343,8 @@ fun VoyageTimeApp() {
                         },
                         onNavigateToTerms = {
                             navController.navigate(Routes.TERMS)
-                        }
+                        },
+                        onLogout = onLogout
                     )
                 }
 

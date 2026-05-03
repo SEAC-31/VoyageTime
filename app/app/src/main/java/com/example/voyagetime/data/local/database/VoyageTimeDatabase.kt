@@ -16,8 +16,8 @@ import com.example.voyagetime.utils.RoomTypeConverters
         TripEntity::class,
         ItineraryItemEntity::class
     ],
-    version = 1,
-    exportSchema = true
+    version = 2,
+    exportSchema = false
 )
 @TypeConverters(RoomTypeConverters::class)
 abstract class VoyageTimeDatabase : RoomDatabase() {
@@ -37,7 +37,9 @@ abstract class VoyageTimeDatabase : RoomDatabase() {
                     context.applicationContext,
                     VoyageTimeDatabase::class.java,
                     DATABASE_NAME
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
 
                 INSTANCE = instance
                 instance

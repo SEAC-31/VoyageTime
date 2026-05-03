@@ -74,7 +74,8 @@ private fun validateDateOfBirth(
 fun Preferences(
     modifier: Modifier = Modifier,
     onNavigateToAboutUs: () -> Unit = {},
-    onNavigateToTerms: () -> Unit = {}
+    onNavigateToTerms: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -105,7 +106,7 @@ fun Preferences(
                     currentLanguage = langCode
                     showLanguageDialog = false
 
-                    (context as? Activity)?.finish()
+                    (context as? Activity)?.recreate()
                 }
                 showLanguageDialog = false
             }
@@ -221,7 +222,12 @@ fun Preferences(
             HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
             PreferenceButtonItem(icon = Icons.AutoMirrored.Filled.Logout,
                 title = stringResource(R.string.pref_logout),
-                subtitle = "", onClick = {}, isDestructive = true)
+                subtitle = "",
+                onClick = {
+                    Log.i(TAG, "Logout clicked")
+                    onLogout()
+                },
+                isDestructive = true)
         }
 
         Spacer(modifier = Modifier.height(16.dp))

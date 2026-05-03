@@ -98,6 +98,14 @@
     <string name="gallery_type_photo">Foto</string>
     <string name="gallery_type_video">Vídeo</string>
     <string name="gallery_btn_delete">Eliminar</string>
+    <string name="gallery_local_image_name">Imatge pujada %1$d</string>
+    <string name="gallery_local_location">Galeria local</string>
+    <string name="gallery_user_uploaded">Imatge de l’usuari</string>
+
+    <string name="trips_cover_image">Imatge de portada del viatge</string>
+    <string name="trips_cover_from_gallery">Imatge de la galeria</string>
+    <string name="trips_no_gallery_images">Encara no hi ha imatges pujades. Afegeix primer una imatge des de la pestanya Galeria.</string>
+    <string name="trips_clear_cover">Usar portada per defecte</string>
 
     <!-- Itinerary -->
     <string name="itinerary_morning">Pla de matí</string>
@@ -300,6 +308,46 @@
     <string name="terms_accept_s8_body">Per preguntes sobre aquests Termes, contacta\'ns a:\nlegal@voyagetime.app</string>
     <string name="profile_username">Nom d\'usuari</string>
     <string name="profile_dob">Data de naixement</string>
+
+    <!-- Autenticació -->
+    <string name="auth_logo_description">Logotip de VoyageTime</string>
+    <string name="auth_username">Nom d\’usuari</string>
+    <string name="auth_email">Correu electrònic</string>
+    <string name="auth_password">Contrasenya</string>
+    <string name="auth_confirm_password">Confirmar contrasenya</string>
+
+    <!-- Login -->
+    <string name="login_title">Benvingut de nou</string>
+    <string name="login_subtitle">Inicia sessió amb el teu correu i contrasenya per continuar planificant els teus viatges.</string>
+    <string name="login_button">Iniciar sessió</string>
+    <string name="login_no_account">No tens cap compte?</string>
+    <string name="login_create_account">Crear-ne un</string>
+    <string name="login_error_email_required">El correu electrònic és obligatori.</string>
+    <string name="login_error_email_invalid">Introdueix un correu electrònic vàlid.</string>
+    <string name="login_error_password_required">La contrasenya és obligatòria.</string>
+    <string name="login_error_password_short">La contrasenya ha de tenir almenys 6 caràcters.</string>
+    <string name="login_error_invalid_credentials">No s\’ha pogut iniciar sessió. Revisa el correu i la contrasenya.</string>
+    <string name="login_remember_me">Recorda\’m</string>
+
+    <!-- Registre -->
+    <string name="register_title">Crear compte</string>
+    <string name="register_subtitle">Prepara les dades del teu compte. L’acció real de registre amb Firebase s’implementa a T3.2.</string>
+    <string name="register_button">Crear compte</string>
+    <string name="register_accept_terms">Accepto els Termes i Condicions</string>
+    <string name="register_already_account">Ja tens un compte?</string>
+    <string name="register_back_to_login">Iniciar sessió</string>
+    <string name="register_error_username_required">El nom d\’usuari és obligatori.</string>
+    <string name="register_error_username_short">El nom d\’usuari ha de tenir almenys 2 caràcters.</string>
+    <string name="register_error_email_required">El correu electrònic és obligatori.</string>
+    <string name="register_error_email_invalid">Introdueix un correu electrònic vàlid.</string>
+    <string name="register_error_password_required">La contrasenya és obligatòria.</string>
+    <string name="register_error_password_short">La contrasenya ha de tenir almenys 6 caràcters.</string>
+    <string name="register_error_confirm_required">Confirma la contrasenya.</string>
+    <string name="register_error_passwords_not_match">Les contrasenyes no coincideixen.</string>
+    <string name="register_error_terms_required">Has d’acceptar els termes per crear un compte.</string>
+    <string name="register_info_t3_2_pending">El formulari de registre és vàlid. La creació del compte s\’implementarà a T3.2.</string>
+    <string name="register_accept_terms_prefix">Accepto els</string>
+    <string name="register_terms_link">Termes i Condicions</string>
 
     <!-- Extras -->
     <string name="app_logo_content_description">Logotip de VoyageTime</string>

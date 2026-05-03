@@ -98,6 +98,14 @@
     <string name="gallery_type_photo">Foto</string>
     <string name="gallery_type_video">Vídeo</string>
     <string name="gallery_btn_delete">Eliminar</string>
+    <string name="gallery_local_image_name">Imagen subida %1$d</string>
+    <string name="gallery_local_location">Galería local</string>
+    <string name="gallery_user_uploaded">Imagen del usuario</string>
+
+    <string name="trips_cover_image">Imagen de portada del viaje</string>
+    <string name="trips_cover_from_gallery">Imagen de la galería</string>
+    <string name="trips_no_gallery_images">Todavía no hay imágenes subidas. Añade una imagen desde la pestaña Galería primero.</string>
+    <string name="trips_clear_cover">Usar portada por defecto</string>
 
     <!-- Itinerary -->
     <string name="itinerary_morning">Plan de mañana</string>
@@ -300,6 +308,46 @@
     <string name="terms_accept_s8_body">Para preguntas sobre estos Términos, contáctanos en:\nlegal@voyagetime.app</string>
     <string name="profile_username">Nombre de usuario</string>
     <string name="profile_dob">Fecha de nacimiento</string>
+
+    <!-- Autenticación -->
+    <string name="auth_logo_description">Logo de VoyageTime</string>
+    <string name="auth_username">Nombre de usuario</string>
+    <string name="auth_email">Correo electrónico</string>
+    <string name="auth_password">Contraseña</string>
+    <string name="auth_confirm_password">Confirmar contraseña</string>
+
+    <!-- Login -->
+    <string name="login_title">Bienvenido de nuevo</string>
+    <string name="login_subtitle">Inicia sesión con tu correo y contraseña para seguir planificando tus viajes.</string>
+    <string name="login_button">Iniciar sesión</string>
+    <string name="login_no_account">¿No tienes una cuenta?</string>
+    <string name="login_create_account">Crear una</string>
+    <string name="login_error_email_required">El correo electrónico es obligatorio.</string>
+    <string name="login_error_email_invalid">Introduce un correo electrónico válido.</string>
+    <string name="login_error_password_required">La contraseña es obligatoria.</string>
+    <string name="login_error_password_short">La contraseña debe tener al menos 6 caracteres.</string>
+    <string name="login_error_invalid_credentials">No se ha podido iniciar sesión. Revisa el correo y la contraseña.</string>
+    <string name="login_remember_me">Recuérdame</string>
+
+    <!-- Registro -->
+    <string name="register_title">Crear cuenta</string>
+    <string name="register_subtitle">Prepara los datos de tu cuenta. La acción real de registro con Firebase se implementa en T3.2.</string>
+    <string name="register_button">Crear cuenta</string>
+    <string name="register_accept_terms">Acepto los Términos y Condiciones</string>
+    <string name="register_already_account">¿Ya tienes una cuenta?</string>
+    <string name="register_back_to_login">Iniciar sesión</string>
+    <string name="register_error_username_required">El nombre de usuario es obligatorio.</string>
+    <string name="register_error_username_short">El nombre de usuario debe tener al menos 2 caracteres.</string>
+    <string name="register_error_email_required">El correo electrónico es obligatorio.</string>
+    <string name="register_error_email_invalid">Introduce un correo electrónico válido.</string>
+    <string name="register_error_password_required">La contraseña es obligatoria.</string>
+    <string name="register_error_password_short">La contraseña debe tener al menos 6 caracteres.</string>
+    <string name="register_error_confirm_required">Confirma tu contraseña.</string>
+    <string name="register_error_passwords_not_match">Las contraseñas no coinciden.</string>
+    <string name="register_error_terms_required">Debes aceptar los términos para crear una cuenta.</string>
+    <string name="register_info_t3_2_pending">El formulario de registro es válido. La creación de cuenta se implementará en T3.2.</string>
+    <string name="register_accept_terms_prefix">Acepto los</string>
+    <string name="register_terms_link">Términos y Condiciones</string>
 
     <!-- Extras -->
     <string name="app_logo_content_description">Logotipo de VoyageTime</string>

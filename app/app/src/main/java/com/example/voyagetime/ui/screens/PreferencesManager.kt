@@ -16,12 +16,19 @@ object PreferencesManager {
     const val KEY_SHOW_PRICES = "show_prices"
     const val KEY_TERMS_ACCEPTED = "terms_accepted"
 
+    const val KEY_REMEMBER_LOGIN = "remember_login"
+    const val KEY_REMEMBERED_EMAIL = "remembered_email"
+
+    const val KEY_GALLERY_IMAGE_URIS = "gallery_image_uris"
+
     const val DEFAULT_USERNAME = ""
     const val DEFAULT_DATE_OF_BIRTH = ""
     const val DEFAULT_CURRENCY = "EUR"
     const val DEFAULT_SHOW_PRICES = true
     const val DEFAULT_DARK_MODE = false
     const val DEFAULT_TERMS_ACCEPTED = false
+    const val DEFAULT_REMEMBER_LOGIN = false
+    const val DEFAULT_REMEMBERED_EMAIL = ""
 
     private fun prefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
@@ -34,6 +41,66 @@ object PreferencesManager {
     fun saveTermsAccepted(context: Context, accepted: Boolean) {
         Log.i(TAG, "Terms accepted set to: $accepted")
         prefs(context).edit().putBoolean(KEY_TERMS_ACCEPTED, accepted).commit()
+    }
+
+    fun getRememberLogin(context: Context): Boolean {
+        return prefs(context).getBoolean(KEY_REMEMBER_LOGIN, DEFAULT_REMEMBER_LOGIN)
+    }
+
+    fun getRememberedEmail(context: Context): String {
+        return prefs(context).getString(KEY_REMEMBERED_EMAIL, DEFAULT_REMEMBERED_EMAIL)
+            ?: DEFAULT_REMEMBERED_EMAIL
+    }
+
+    fun saveRememberedLogin(context: Context, email: String) {
+        val cleanEmail = email.trim()
+
+        Log.i(TAG, "Remember login enabled for email=$cleanEmail")
+
+        prefs(context).edit()
+            .putBoolean(KEY_REMEMBER_LOGIN, true)
+            .putString(KEY_REMEMBERED_EMAIL, cleanEmail)
+            .apply()
+    }
+
+    fun clearRememberedLogin(context: Context) {
+        Log.i(TAG, "Remember login disabled")
+
+        prefs(context).edit()
+            .putBoolean(KEY_REMEMBER_LOGIN, false)
+            .remove(KEY_REMEMBERED_EMAIL)
+            .apply()
+    }
+
+    fun getGalleryImageUris(context: Context): List<String> {
+        return prefs(context)
+            .getStringSet(KEY_GALLERY_IMAGE_URIS, emptySet())
+            ?.toList()
+            .orEmpty()
+    }
+
+    fun addGalleryImageUri(context: Context, uri: String) {
+        val current = getGalleryImageUris(context).toMutableSet()
+
+        if (current.add(uri)) {
+            Log.i(TAG, "Gallery image added: $uri")
+        }
+
+        prefs(context).edit()
+            .putStringSet(KEY_GALLERY_IMAGE_URIS, current)
+            .apply()
+    }
+
+    fun removeGalleryImageUri(context: Context, uri: String) {
+        val current = getGalleryImageUris(context).toMutableSet()
+
+        if (current.remove(uri)) {
+            Log.i(TAG, "Gallery image removed: $uri")
+        }
+
+        prefs(context).edit()
+            .putStringSet(KEY_GALLERY_IMAGE_URIS, current)
+            .apply()
     }
 
     fun getDarkMode(context: Context): Boolean {
