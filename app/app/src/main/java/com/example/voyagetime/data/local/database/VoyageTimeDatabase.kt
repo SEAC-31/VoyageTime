@@ -5,18 +5,24 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.example.voyagetime.data.local.dao.AccessLogDao
 import com.example.voyagetime.data.local.dao.ItineraryItemDao
 import com.example.voyagetime.data.local.dao.TripDao
+import com.example.voyagetime.data.local.dao.UserDao
+import com.example.voyagetime.data.local.entity.AccessLogEntity
 import com.example.voyagetime.data.local.entity.ItineraryItemEntity
 import com.example.voyagetime.data.local.entity.TripEntity
+import com.example.voyagetime.data.local.entity.UserEntity
 import com.example.voyagetime.utils.RoomTypeConverters
 
 @Database(
     entities = [
         TripEntity::class,
-        ItineraryItemEntity::class
+        ItineraryItemEntity::class,
+        UserEntity::class,
+        AccessLogEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(RoomTypeConverters::class)
@@ -24,6 +30,8 @@ abstract class VoyageTimeDatabase : RoomDatabase() {
 
     abstract fun tripDao(): TripDao
     abstract fun itineraryItemDao(): ItineraryItemDao
+    abstract fun userDao(): UserDao
+    abstract fun accessLogDao(): AccessLogDao
 
     companion object {
         const val DATABASE_NAME = "voyagetime.db"

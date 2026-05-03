@@ -2,13 +2,32 @@ package com.example.voyagetime.data.local.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
-@Entity(tableName = "trips")
+@Entity(
+    tableName = "trips",
+    foreignKeys = [
+        ForeignKey(
+            entity = UserEntity::class,
+            parentColumns = ["firebase_uid"],
+            childColumns = ["user_id"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [
+        Index(value = ["user_id"]),
+        Index(value = ["user_id", "destination"], unique = false)
+    ]
+)
 data class TripEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+
+    @ColumnInfo(name = "user_id")
+    val userId: String? = null,
 
     @ColumnInfo(name = "destination")
     val destination: String,

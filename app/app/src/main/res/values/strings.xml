@@ -402,4 +402,37 @@
     <string name="home_stat_trips">Trips</string>
     <string name="home_stat_days_planned">Days Planned</string>
     <string name="home_stat_budget">Budget</string>
+
+    <!-- Auth registration and password recovery -->
+    <string name="auth_birthdate">Birthdate</string>
+    <string name="auth_birthdate_placeholder">dd/MM/yyyy</string>
+    <string name="auth_address">Address</string>
+    <string name="auth_country">Country</string>
+    <string name="auth_phone">Phone</string>
+    <string name="login_forgot_password">Forgot password?</string>
+    <string name="register_accept_emails">I want to receive emails and travel updates</string>
+    <string name="register_verification_notice">After registering, we will send a verification email. Check your inbox before logging in.</string>
+    <string name="register_success_verify_email">Account created. We sent you a verification email. Please check your inbox before logging in.</string>
+    <string name="register_error_username_taken">This username is already in use.</string>
+    <string name="register_error_email_taken">This email is already registered.</string>
+    <string name="register_error_birthdate_required">Birthdate is required.</string>
+    <string name="register_error_birthdate_invalid">Enter a valid birthdate using dd/MM/yyyy.</string>
+    <string name="register_error_birthdate_future">Birthdate cannot be in the future.</string>
+    <string name="register_error_address_required">Address is required.</string>
+    <string name="register_error_country_required">Country is required.</string>
+    <string name="register_error_phone_required">Phone number is required.</string>
+    <string name="register_error_generic">Could not create the account. Please try again.</string>
+    <string name="forgot_password_title">Forgot password</string>
+    <string name="forgot_password_subtitle">Enter your email and we will send you a password reset link.</string>
+    <string name="forgot_password_send_button">Send reset email</string>
+    <string name="forgot_password_success">Password reset email sent.</string>
+    <string name="forgot_password_error_generic">Could not send the password reset email. Please try again.</string>
+    <string name="forgot_password_check_inbox_title">Check your inbox</string>
+    <string name="forgot_password_check_inbox_body">We sent a password reset link to %1$s. Check your spam folder if you do not see it.</string>
+
+    <!-- T5 validation / email verification -->
+    <string name="login_error_email_not_verified">You must verify your email before logging in. Check your inbox and try again.</string>
+    <string name="validation_trip_duplicate">You already have a trip with this destination.</string>
+    <string name="validation_database_error">Database operation failed. Please try again.</string>
+
 </resources>

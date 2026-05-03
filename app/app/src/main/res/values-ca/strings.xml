@@ -311,7 +311,7 @@
 
     <!-- Autenticació -->
     <string name="auth_logo_description">Logotip de VoyageTime</string>
-    <string name="auth_username">Nom d\’usuari</string>
+    <string name="auth_username">Nom d’usuari</string>
     <string name="auth_email">Correu electrònic</string>
     <string name="auth_password">Contrasenya</string>
     <string name="auth_confirm_password">Confirmar contrasenya</string>
@@ -326,8 +326,8 @@
     <string name="login_error_email_invalid">Introdueix un correu electrònic vàlid.</string>
     <string name="login_error_password_required">La contrasenya és obligatòria.</string>
     <string name="login_error_password_short">La contrasenya ha de tenir almenys 6 caràcters.</string>
-    <string name="login_error_invalid_credentials">No s\’ha pogut iniciar sessió. Revisa el correu i la contrasenya.</string>
-    <string name="login_remember_me">Recorda\’m</string>
+    <string name="login_error_invalid_credentials">No s’ha pogut iniciar sessió. Revisa el correu i la contrasenya.</string>
+    <string name="login_remember_me">Recorda’m</string>
 
     <!-- Registre -->
     <string name="register_title">Crear compte</string>
@@ -336,8 +336,8 @@
     <string name="register_accept_terms">Accepto els Termes i Condicions</string>
     <string name="register_already_account">Ja tens un compte?</string>
     <string name="register_back_to_login">Iniciar sessió</string>
-    <string name="register_error_username_required">El nom d\’usuari és obligatori.</string>
-    <string name="register_error_username_short">El nom d\’usuari ha de tenir almenys 2 caràcters.</string>
+    <string name="register_error_username_required">El nom d’usuari és obligatori.</string>
+    <string name="register_error_username_short">El nom d’usuari ha de tenir almenys 2 caràcters.</string>
     <string name="register_error_email_required">El correu electrònic és obligatori.</string>
     <string name="register_error_email_invalid">Introdueix un correu electrònic vàlid.</string>
     <string name="register_error_password_required">La contrasenya és obligatòria.</string>
@@ -345,7 +345,7 @@
     <string name="register_error_confirm_required">Confirma la contrasenya.</string>
     <string name="register_error_passwords_not_match">Les contrasenyes no coincideixen.</string>
     <string name="register_error_terms_required">Has d’acceptar els termes per crear un compte.</string>
-    <string name="register_info_t3_2_pending">El formulari de registre és vàlid. La creació del compte s\’implementarà a T3.2.</string>
+    <string name="register_info_t3_2_pending">El formulari de registre és vàlid. La creació del compte s’implementarà a T3.2.</string>
     <string name="register_accept_terms_prefix">Accepto els</string>
     <string name="register_terms_link">Termes i Condicions</string>
 
@@ -403,4 +403,37 @@
     <string name="home_stat_trips">Viatges</string>
     <string name="home_stat_days_planned">Dies planificats</string>
     <string name="home_stat_budget">Pressupost</string>
+
+    <!-- Auth registration and password recovery -->
+    <string name="auth_birthdate">Data de naixement</string>
+    <string name="auth_birthdate_placeholder">dd/MM/aaaa</string>
+    <string name="auth_address">Adreça</string>
+    <string name="auth_country">País</string>
+    <string name="auth_phone">Telèfon</string>
+    <string name="login_forgot_password">Has oblidat la contrasenya?</string>
+    <string name="register_accept_emails">Vull rebre correus i novetats de viatges</string>
+    <string name="register_verification_notice">Després del registre, enviarem un correu de verificació. Revisa la safata abans d’iniciar sessió.</string>
+    <string name="register_success_verify_email">Compte creat. T’hem enviat un correu de verificació. Revisa la safata abans d’iniciar sessió.</string>
+    <string name="register_error_username_taken">Aquest nom d’usuari ja està en ús.</string>
+    <string name="register_error_email_taken">Aquest correu electrònic ja està registrat.</string>
+    <string name="register_error_birthdate_required">La data de naixement és obligatòria.</string>
+    <string name="register_error_birthdate_invalid">Introdueix una data vàlida amb el format dd/MM/aaaa.</string>
+    <string name="register_error_birthdate_future">La data de naixement no pot ser en el futur.</string>
+    <string name="register_error_address_required">L’adreça és obligatòria.</string>
+    <string name="register_error_country_required">El país és obligatori.</string>
+    <string name="register_error_phone_required">El telèfon és obligatori.</string>
+    <string name="register_error_generic">No s’ha pogut crear el compte. Torna-ho a provar.</string>
+    <string name="forgot_password_title">Recuperar contrasenya</string>
+    <string name="forgot_password_subtitle">Introdueix el teu correu i t’enviarem un enllaç per restablir la contrasenya.</string>
+    <string name="forgot_password_send_button">Enviar correu de recuperació</string>
+    <string name="forgot_password_success">Correu de recuperació enviat.</string>
+    <string name="forgot_password_error_generic">No s’ha pogut enviar el correu de recuperació. Torna-ho a provar.</string>
+    <string name="forgot_password_check_inbox_title">Revisa la safata</string>
+    <string name="forgot_password_check_inbox_body">Hem enviat un enllaç de recuperació a %1$s. Revisa la carpeta de correu brossa si no el veus.</string>
+
+    <!-- T5 validation / email verification -->
+    <string name="login_error_email_not_verified">Has de verificar el correu abans d’iniciar sessió. Revisa la safata i torna-ho a provar.</string>
+    <string name="validation_trip_duplicate">Ja tens un viatge amb aquesta destinació.</string>
+    <string name="validation_database_error">Ha fallat l’operació de base de dades. Torna-ho a provar.</string>
+
 </resources>

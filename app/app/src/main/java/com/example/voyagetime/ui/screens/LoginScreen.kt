@@ -52,6 +52,7 @@ import com.example.voyagetime.ui.viewmodels.LoginViewModel
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onRegisterClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit,
     viewModel: LoginViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -182,6 +183,10 @@ fun LoginScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.weight(1f)
                         )
+
+                        TextButton(onClick = onForgotPasswordClick) {
+                            Text(text = stringResource(R.string.login_forgot_password))
+                        }
                     }
 
                     uiState.generalErrorRes?.let { error ->

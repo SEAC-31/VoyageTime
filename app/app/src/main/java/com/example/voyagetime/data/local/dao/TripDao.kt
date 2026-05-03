@@ -12,35 +12,49 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TripDao {
 
-    @Query("SELECT * FROM trips ORDER BY start_datetime ASC")
-    fun getAllTrips(): Flow<List<TripEntity>>
+    @Query("SELECT * FROM trips WHERE user_id = :userId ORDER BY start_datetime ASC")
+    fun getAllTrips(userId: String): Flow<List<TripEntity>>
 
     @Query(
         """
         SELECT * FROM trips
-        WHERE UPPER(status_label) IN ('UPCOMING', 'PLANNED')
+        WHERE user_id = :userId AND UPPER(status_label) IN ('UPCOMING', 'PLANNED')
         ORDER BY start_datetime ASC
         """
     )
-    fun getUpcomingTrips(): Flow<List<TripEntity>>
+    fun getUpcomingTrips(userId: String): Flow<List<TripEntity>>
 
     @Query(
         """
         SELECT * FROM trips
-        WHERE UPPER(status_label) = 'COMPLETED'
+        WHERE user_id = :userId AND UPPER(status_label) = 'COMPLETED'
         ORDER BY start_datetime DESC
         """
     )
-    fun getPastTrips(): Flow<List<TripEntity>>
+    fun getPastTrips(userId: String): Flow<List<TripEntity>>
 
-    @Query("SELECT * FROM trips WHERE id = :tripId LIMIT 1")
-    fun observeTripById(tripId: Long): Flow<TripEntity?>
+    @Query("SELECT * FROM trips WHERE id = :tripId AND user_id = :userId LIMIT 1")
+    fun observeTripById(tripId: Long, userId: String): Flow<TripEntity?>
 
-    @Query("SELECT * FROM trips WHERE id = :tripId LIMIT 1")
-    suspend fun getTripById(tripId: Long): TripEntity?
+    @Query("SELECT * FROM trips WHERE id = :tripId AND user_id = :userId LIMIT 1")
+    suspend fun getTripById(tripId: Long, userId: String): TripEntity?
 
-    @Query("SELECT * FROM trips ORDER BY start_datetime ASC")
-    suspend fun getAllTripsOnce(): List<TripEntity>
+    @Query("SELECT * FROM trips WHERE user_id = :userId ORDER BY start_datetime ASC")
+    suspend fun getAllTripsOnce(userId: String): List<TripEntity>
+
+    @Query(
+        """
+        SELECT COUNT(*) > 0 FROM trips
+        WHERE user_id = :userId
+        AND LOWER(TRIM(destination)) = LOWER(TRIM(:destination))
+        AND id != :excludeId
+        """
+    )
+    suspend fun isTripDestinationTakenForUser(
+        userId: String,
+        destination: String,
+        excludeId: Long = 0L
+    ): Boolean
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTrip(trip: TripEntity): Long
@@ -51,9 +65,9 @@ interface TripDao {
     @Delete
     suspend fun deleteTrip(trip: TripEntity)
 
-    @Query("DELETE FROM trips WHERE id = :tripId")
-    suspend fun deleteTripById(tripId: Long)
+    @Query("DELETE FROM trips WHERE id = :tripId AND user_id = :userId")
+    suspend fun deleteTripById(tripId: Long, userId: String)
 
-    @Query("DELETE FROM trips")
-    suspend fun deleteAllTrips()
+    @Query("DELETE FROM trips WHERE user_id = :userId")
+    suspend fun deleteAllTripsForUser(userId: String)
 }

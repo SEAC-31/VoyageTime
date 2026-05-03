@@ -403,4 +403,37 @@
     <string name="home_stat_trips">Viajes</string>
     <string name="home_stat_days_planned">Días planificados</string>
     <string name="home_stat_budget">Presupuesto</string>
+
+    <!-- Auth registration and password recovery -->
+    <string name="auth_birthdate">Fecha de nacimiento</string>
+    <string name="auth_birthdate_placeholder">dd/MM/aaaa</string>
+    <string name="auth_address">Dirección</string>
+    <string name="auth_country">País</string>
+    <string name="auth_phone">Teléfono</string>
+    <string name="login_forgot_password">¿Has olvidado la contraseña?</string>
+    <string name="register_accept_emails">Quiero recibir correos y novedades de viajes</string>
+    <string name="register_verification_notice">Después del registro, enviaremos un correo de verificación. Revisa tu bandeja antes de iniciar sesión.</string>
+    <string name="register_success_verify_email">Cuenta creada. Te hemos enviado un correo de verificación. Revisa tu bandeja antes de iniciar sesión.</string>
+    <string name="register_error_username_taken">Este nombre de usuario ya está en uso.</string>
+    <string name="register_error_email_taken">Este correo electrónico ya está registrado.</string>
+    <string name="register_error_birthdate_required">La fecha de nacimiento es obligatoria.</string>
+    <string name="register_error_birthdate_invalid">Introduce una fecha válida con el formato dd/MM/aaaa.</string>
+    <string name="register_error_birthdate_future">La fecha de nacimiento no puede estar en el futuro.</string>
+    <string name="register_error_address_required">La dirección es obligatoria.</string>
+    <string name="register_error_country_required">El país es obligatorio.</string>
+    <string name="register_error_phone_required">El teléfono es obligatorio.</string>
+    <string name="register_error_generic">No se ha podido crear la cuenta. Inténtalo de nuevo.</string>
+    <string name="forgot_password_title">Recuperar contraseña</string>
+    <string name="forgot_password_subtitle">Introduce tu correo y te enviaremos un enlace para restablecer la contraseña.</string>
+    <string name="forgot_password_send_button">Enviar correo de recuperación</string>
+    <string name="forgot_password_success">Correo de recuperación enviado.</string>
+    <string name="forgot_password_error_generic">No se ha podido enviar el correo de recuperación. Inténtalo de nuevo.</string>
+    <string name="forgot_password_check_inbox_title">Revisa tu bandeja</string>
+    <string name="forgot_password_check_inbox_body">Hemos enviado un enlace de recuperación a %1$s. Revisa la carpeta de spam si no lo ves.</string>
+
+    <!-- T5 validation / email verification -->
+    <string name="login_error_email_not_verified">Debes verificar tu correo antes de iniciar sesión. Revisa tu bandeja y vuelve a intentarlo.</string>
+    <string name="validation_trip_duplicate">Ya tienes un viaje con este destino.</string>
+    <string name="validation_database_error">Ha fallado la operación de base de datos. Inténtalo de nuevo.</string>
+
 </resources>

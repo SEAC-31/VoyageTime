@@ -24,6 +24,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -36,10 +37,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.voyagetime.data.local.database.VoyageTimeDatabase
 import com.example.voyagetime.data.repository.FirebaseAuthRepositoryImpl
+import com.example.voyagetime.data.repository.UserRepositoryImpl
 import com.example.voyagetime.ui.screens.AboutUs
 import com.example.voyagetime.ui.screens.CreateTripScreen
 import com.example.voyagetime.ui.screens.DepartureCityScreen
+import com.example.voyagetime.ui.screens.ForgotPasswordScreen
 import com.example.voyagetime.ui.screens.Gallery
 import com.example.voyagetime.ui.screens.Home
 import com.example.voyagetime.ui.screens.Itinerary
@@ -54,6 +58,7 @@ import com.example.voyagetime.ui.screens.TermsAndConditions
 import com.example.voyagetime.ui.screens.TravelStyleScreen
 import com.example.voyagetime.ui.screens.Trips
 import com.example.voyagetime.ui.theme.VoyageTimeTheme
+import kotlinx.coroutines.launch
 
 val LocalDarkMode = compositionLocalOf { false }
 val LocalOnDarkModeChange = compositionLocalOf<(Boolean) -> Unit> { {} }
@@ -64,6 +69,7 @@ enum class AppScreen {
     LOGIN,
     REGISTER,
     TERMS_FROM_REGISTER,
+    FORGOT_PASSWORD,
     MAIN
 }
 
@@ -81,6 +87,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             val context = this@MainActivity
             val authRepository = remember { FirebaseAuthRepositoryImpl() }
+            val database = remember { VoyageTimeDatabase.getDatabase(context) }
+            val userRepository = remember {
+                UserRepositoryImpl(database.userDao(), database.accessLogDao())
+            }
+            val coroutineScope = rememberCoroutineScope()
 
             var darkMode by rememberSaveable {
                 mutableStateOf(PreferencesManager.getDarkMode(context))
@@ -146,11 +157,20 @@ class MainActivity : ComponentActivity() {
                             LoginScreen(
                                 onLoginSuccess = {
                                     Log.i(TAG, "Navigation event: login success")
+                                    authRepository.currentUserId()?.let { uid ->
+                                        coroutineScope.launch {
+                                            userRepository.logAccess(uid, UserRepositoryImpl.EVENT_LOGIN)
+                                        }
+                                    }
                                     currentScreen = AppScreen.MAIN
                                 },
                                 onRegisterClick = {
                                     Log.i(TAG, "Navigation event: open register")
                                     currentScreen = AppScreen.REGISTER
+                                },
+                                onForgotPasswordClick = {
+                                    Log.i(TAG, "Navigation event: open forgot password")
+                                    currentScreen = AppScreen.FORGOT_PASSWORD
                                 }
                             )
                         }
@@ -177,11 +197,26 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
+                        AppScreen.FORGOT_PASSWORD -> {
+                            ForgotPasswordScreen(
+                                onBack = {
+                                    Log.i(TAG, "Navigation event: back to login from forgot password")
+                                    currentScreen = AppScreen.LOGIN
+                                }
+                            )
+                        }
+
                         AppScreen.MAIN -> {
                             VoyageTimeApp(
                                 onLogout = {
-                                    authRepository.logout()
-                                    currentScreen = AppScreen.LOGIN
+                                    val uidBeforeLogout = authRepository.currentUserId()
+                                    coroutineScope.launch {
+                                        uidBeforeLogout?.let { uid ->
+                                            userRepository.logAccess(uid, UserRepositoryImpl.EVENT_LOGOUT)
+                                        }
+                                        authRepository.logout()
+                                        currentScreen = AppScreen.LOGIN
+                                    }
                                 }
                             )
                         }
@@ -237,7 +272,6 @@ fun VoyageTimeApp(
     NavigationSuiteScaffold(
         navigationSuiteItems = {
             items.forEach { item ->
-
                 val selected = currentDestination?.hierarchy?.any { destination ->
                     destination.route == item.route
                 } == true

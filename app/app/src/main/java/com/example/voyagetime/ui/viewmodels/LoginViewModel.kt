@@ -142,10 +142,16 @@ class LoginViewModel(
             onError = { message ->
                 Log.e(LOGIN_VM_TAG, "Login failed: $message")
 
+                val errorRes = if (message == AuthRepository.ERROR_EMAIL_NOT_VERIFIED) {
+                    R.string.login_error_email_not_verified
+                } else {
+                    R.string.login_error_invalid_credentials
+                }
+
                 _uiState.update { oldState ->
                     oldState.copy(
                         isLoading = false,
-                        generalErrorRes = R.string.login_error_invalid_credentials
+                        generalErrorRes = errorRes
                     )
                 }
             }

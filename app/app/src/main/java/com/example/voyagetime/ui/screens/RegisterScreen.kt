@@ -17,12 +17,16 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -81,15 +85,6 @@ fun RegisterScreen(
                 textAlign = TextAlign.Center
             )
 
-            Text(
-                text = stringResource(R.string.register_subtitle),
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f),
-                textAlign = TextAlign.Center,
-                lineHeight = 20.sp,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-
             Spacer(modifier = Modifier.height(24.dp))
 
             Card(
@@ -109,108 +104,134 @@ fun RegisterScreen(
                     OutlinedTextField(
                         value = uiState.username,
                         onValueChange = viewModel::onUsernameChange,
-                        label = {
-                            Text(text = stringResource(R.string.auth_username))
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = null
-                            )
-                        },
+                        label = { Text(text = stringResource(R.string.auth_username)) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Person, contentDescription = null) },
                         singleLine = true,
                         isError = uiState.usernameErrorRes != null,
                         supportingText = {
-                            uiState.usernameErrorRes?.let { error ->
-                                Text(text = stringResource(error))
-                            }
+                            uiState.usernameErrorRes?.let { error -> Text(text = stringResource(error)) }
                         },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Next
-                        ),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     OutlinedTextField(
                         value = uiState.email,
                         onValueChange = viewModel::onEmailChange,
-                        label = {
-                            Text(text = stringResource(R.string.auth_email))
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Email,
-                                contentDescription = null
-                            )
-                        },
+                        label = { Text(text = stringResource(R.string.auth_email)) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Email, contentDescription = null) },
                         singleLine = true,
                         isError = uiState.emailErrorRes != null,
                         supportingText = {
-                            uiState.emailErrorRes?.let { error ->
-                                Text(text = stringResource(error))
-                            }
+                            uiState.emailErrorRes?.let { error -> Text(text = stringResource(error)) }
                         },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email,
-                            imeAction = ImeAction.Next
-                        ),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = uiState.birthdate,
+                        onValueChange = viewModel::onBirthdateChange,
+                        label = { Text(text = stringResource(R.string.auth_birthdate)) },
+                        placeholder = { Text(text = stringResource(R.string.auth_birthdate_placeholder)) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Person, contentDescription = null) },
+                        singleLine = true,
+                        isError = uiState.birthdateErrorRes != null,
+                        supportingText = {
+                            uiState.birthdateErrorRes?.let { error -> Text(text = stringResource(error)) }
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = uiState.address,
+                        onValueChange = viewModel::onAddressChange,
+                        label = { Text(text = stringResource(R.string.auth_address)) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Home, contentDescription = null) },
+                        singleLine = true,
+                        isError = uiState.addressErrorRes != null,
+                        supportingText = {
+                            uiState.addressErrorRes?.let { error -> Text(text = stringResource(error)) }
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = uiState.country,
+                        onValueChange = viewModel::onCountryChange,
+                        label = { Text(text = stringResource(R.string.auth_country)) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Public, contentDescription = null) },
+                        singleLine = true,
+                        isError = uiState.countryErrorRes != null,
+                        supportingText = {
+                            uiState.countryErrorRes?.let { error -> Text(text = stringResource(error)) }
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = uiState.phone,
+                        onValueChange = viewModel::onPhoneChange,
+                        label = { Text(text = stringResource(R.string.auth_phone)) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Phone, contentDescription = null) },
+                        singleLine = true,
+                        isError = uiState.phoneErrorRes != null,
+                        supportingText = {
+                            uiState.phoneErrorRes?.let { error -> Text(text = stringResource(error)) }
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     OutlinedTextField(
                         value = uiState.password,
                         onValueChange = viewModel::onPasswordChange,
-                        label = {
-                            Text(text = stringResource(R.string.auth_password))
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = null
-                            )
-                        },
+                        label = { Text(text = stringResource(R.string.auth_password)) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Lock, contentDescription = null) },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         isError = uiState.passwordErrorRes != null,
                         supportingText = {
-                            uiState.passwordErrorRes?.let { error ->
-                                Text(text = stringResource(error))
-                            }
+                            uiState.passwordErrorRes?.let { error -> Text(text = stringResource(error)) }
                         },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Next
-                        ),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     OutlinedTextField(
                         value = uiState.confirmPassword,
                         onValueChange = viewModel::onConfirmPasswordChange,
-                        label = {
-                            Text(text = stringResource(R.string.auth_confirm_password))
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = null
-                            )
-                        },
+                        label = { Text(text = stringResource(R.string.auth_confirm_password)) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Lock, contentDescription = null) },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         isError = uiState.confirmPasswordErrorRes != null,
                         supportingText = {
-                            uiState.confirmPasswordErrorRes?.let { error ->
-                                Text(text = stringResource(error))
-                            }
+                            uiState.confirmPasswordErrorRes?.let { error -> Text(text = stringResource(error)) }
                         },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done
-                        ),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = uiState.acceptEmails,
+                            onCheckedChange = viewModel::onAcceptEmailsChange
+                        )
+
+                        Text(
+                            text = stringResource(R.string.register_accept_emails),
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -240,11 +261,11 @@ fun RegisterScreen(
                     }
 
                     uiState.termsErrorRes?.let { error ->
-                        Text(
-                            text = stringResource(error),
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 13.sp
-                        )
+                        Text(text = stringResource(error), color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
+                    }
+
+                    uiState.generalErrorRes?.let { error ->
+                        Text(text = stringResource(error), color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
                     }
 
                     uiState.infoMessageRes?.let { message ->
@@ -257,15 +278,30 @@ fun RegisterScreen(
                     }
 
                     Button(
-                        onClick = viewModel::validateDesignForm,
+                        onClick = viewModel::register,
+                        enabled = !uiState.isLoading,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Text(
-                            text = stringResource(R.string.register_button),
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            Text(text = stringResource(R.string.register_button), fontWeight = FontWeight.SemiBold)
+                        }
                     }
+
+                    Text(
+                        text = stringResource(R.string.register_verification_notice),
+                        fontSize = 12.sp,
+                        lineHeight = 18.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
 

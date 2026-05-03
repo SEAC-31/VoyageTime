@@ -33,6 +33,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +46,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.voyagetime.ui.viewmodels.CreateTripViewModel
 import com.example.voyagetime.R
@@ -78,21 +80,31 @@ fun CreateTripScreen(
     viewModel: CreateTripViewModel = viewModel()
 ) {
     val scrollState = rememberScrollState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(uiState.isCreated) {
+        if (uiState.isCreated) {
+            viewModel.consumeCreatedEvent()
+            onTripCreated()
+        }
+    }
 
     var destination by rememberSaveable { mutableStateOf("") }
     var country by rememberSaveable { mutableStateOf("") }
     var dateRange by rememberSaveable { mutableStateOf("") }
     var budget by rememberSaveable { mutableStateOf("") }
 
-    val destinationError = validateCreateTripRequiredField(destination, stringResource(R.string.validation_destination_required))
+    val localDestinationError = validateCreateTripRequiredField(destination, stringResource(R.string.validation_destination_required))
+    val destinationError = localDestinationError ?: uiState.destinationErrorRes?.let { stringResource(it) }
     val countryError = validateCreateTripRequiredField(country, stringResource(R.string.validation_country_required))
-    val dateRangeError = validateCreateTripDateRange(
+    val localDateRangeError = validateCreateTripDateRange(
         dateRange,
         requiredMessage = stringResource(R.string.validation_date_range_required),
         exampleMessage = stringResource(R.string.validation_date_range_example),
         pastMessage = stringResource(R.string.validation_date_past),
         endBeforeStartMessage = stringResource(R.string.validation_end_before_start)
     )
+    val dateRangeError = localDateRangeError ?: uiState.dateErrorRes?.let { stringResource(it) }
     val computedDuration = calculateCreateTripDuration(dateRange)
     val budgetError = validateCreateTripBudgetField(
         budget,
@@ -136,7 +148,10 @@ fun CreateTripScreen(
             ) {
                 OutlinedTextField(
                     value = destination,
-                    onValueChange = { destination = it },
+                    onValueChange = {
+                        destination = it
+                        viewModel.clearMessages()
+                    },
                     label = { Text(stringResource(R.string.create_trip_field_destination)) },
                     modifier = Modifier.fillMaxWidth(),
                     isError = destinationError != null,
@@ -149,7 +164,10 @@ fun CreateTripScreen(
 
                 OutlinedTextField(
                     value = country,
-                    onValueChange = { country = it },
+                    onValueChange = {
+                        country = it
+                        viewModel.clearMessages()
+                    },
                     label = { Text(stringResource(R.string.create_trip_field_country)) },
                     modifier = Modifier.fillMaxWidth(),
                     isError = countryError != null,
@@ -163,7 +181,10 @@ fun CreateTripScreen(
                 CreateTripDateRangeField(
                     value = dateRange,
                     errorMessage = dateRangeError,
-                    onValueChange = { dateRange = it }
+                    onValueChange = {
+                        dateRange = it
+                        viewModel.clearMessages()
+                    }
                 )
 
                 CreateTripAutoDurationField(
@@ -179,6 +200,7 @@ fun CreateTripScreen(
                     value = budget,
                     onValueChange = { newValue ->
                         budget = newValue.filter { it.isDigit() }
+                        viewModel.clearMessages()
                     },
                     label = { Text(stringResource(R.string.create_trip_field_budget)) },
                     placeholder = { Text("820") },
@@ -190,6 +212,14 @@ fun CreateTripScreen(
                         }
                     }
                 )
+
+                uiState.generalErrorRes?.let { errorRes ->
+                    Text(
+                        text = stringResource(errorRes),
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 13.sp
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -204,11 +234,10 @@ fun CreateTripScreen(
                                 endDate = parsedRange.second.format(CREATE_TRIP_DATE_FORMATTER),
                                 budget = budget
                             )
-                            onTripCreated()
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = canCreate
+                    enabled = canCreate && !uiState.isSaving
                 ) {
                     Text(stringResource(R.string.create_trip_btn_create))
                 }
