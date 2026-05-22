@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -34,7 +35,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.compose.ui.res.stringResource
-import com.example.voyagetime.data.repository.FirebaseAuthRepositoryImpl
 import com.example.voyagetime.ui.screens.AboutUs
 import com.example.voyagetime.ui.screens.DepartureCityScreen
 import com.example.voyagetime.ui.screens.ForgotPasswordScreen
@@ -52,8 +52,7 @@ import com.example.voyagetime.ui.screens.TravelStyleScreen
 import com.example.voyagetime.ui.screens.Trips
 import com.example.voyagetime.ui.screens.CreateTripScreen
 import com.example.voyagetime.ui.theme.VoyageTimeTheme
-import com.example.voyagetime.ui.viewmodels.ForgotPasswordViewModel
-import com.example.voyagetime.ui.viewmodels.RegisterViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
 // Global dark mode state accessible anywhere in the composition tree
 val LocalDarkMode = compositionLocalOf { false }
@@ -63,10 +62,8 @@ const val EXTRA_START_AFTER_SPLASH = "start_after_splash"
 
 enum class AppScreen { SPLASH, TERMS_ACCEPTANCE, MAIN }
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    // Instancia temporal hasta que Sharon integre Hilt (T1.6 / T2.1)
-    private val authRepository by lazy { FirebaseAuthRepositoryImpl() }
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LanguageManager.applyLanguage(newBase))
@@ -113,10 +110,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         AppScreen.MAIN -> {
-                            VoyageTimeApp(
-                                registerViewModel     = RegisterViewModel(authRepository),
-                                forgotPasswordViewModel = ForgotPasswordViewModel(authRepository)
-                            )
+                            VoyageTimeApp()
                         }
                     }
                 }
@@ -128,10 +122,7 @@ class MainActivity : ComponentActivity() {
 data class NavItem(val route: String, @StringRes val labelRes: Int, val icon: ImageVector)
 
 @Composable
-fun VoyageTimeApp(
-    registerViewModel: RegisterViewModel,
-    forgotPasswordViewModel: ForgotPasswordViewModel
-) {
+fun VoyageTimeApp() {
     val navController = rememberNavController()
 
     val items = listOf(
@@ -169,18 +160,16 @@ fun VoyageTimeApp(
                 }
             }
         ) {
-            AppNavHost(navController, registerViewModel, forgotPasswordViewModel)
+            AppNavHost(navController)
         }
     } else {
-        AppNavHost(navController, registerViewModel, forgotPasswordViewModel)
+        AppNavHost(navController)
     }
 }
 
 @Composable
 private fun AppNavHost(
-    navController: androidx.navigation.NavHostController,
-    registerViewModel: RegisterViewModel,
-    forgotPasswordViewModel: ForgotPasswordViewModel
+    navController: androidx.navigation.NavHostController
 ) {
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         NavHost(
@@ -217,12 +206,11 @@ private fun AppNavHost(
             composable(Routes.PREFERENCES) {
                 Preferences(
                     onNavigateToAboutUs = { navController.navigate(Routes.ABOUT_US) },
-                    onNavigateToTerms = { navController.navigate(Routes.TERMS) },
-                    onNavigateToRegister = { navController.navigate(Routes.REGISTER) }
+                    onNavigateToTerms = { navController.navigate(Routes.TERMS) }
                 )
             }
             composable(Routes.ABOUT_US) {
-                AboutUs(onBack = { navController.popBackStack() })
+                com.example.voyagetime.ui.screens.AboutUs(onBack = { navController.popBackStack() })
             }
             composable(Routes.TERMS) {
                 TermsAndConditions(onBack = { navController.popBackStack() })
@@ -231,7 +219,7 @@ private fun AppNavHost(
             // ── Auth routes ───────────────────────────────────────────────────
             composable(Routes.REGISTER) {
                 RegisterScreen(
-                    viewModel = registerViewModel,
+                    viewModel = hiltViewModel(),
                     onRegisterSuccess = {
                         navController.navigate(Routes.HOME) {
                             popUpTo(Routes.REGISTER) { inclusive = true }
@@ -242,7 +230,7 @@ private fun AppNavHost(
             }
             composable(Routes.FORGOT_PASSWORD) {
                 ForgotPasswordScreen(
-                    viewModel = forgotPasswordViewModel,
+                    viewModel = hiltViewModel(),
                     onBack = { navController.popBackStack() }
                 )
             }

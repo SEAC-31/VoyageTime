@@ -1,16 +1,13 @@
 package com.example.voyagetime.ui.viewmodels
 
-import android.app.Application
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.voyagetime.R
-import com.example.voyagetime.data.local.database.VoyageTimeDatabase
-import com.example.voyagetime.data.repository.FirebaseAuthRepositoryImpl
-import com.example.voyagetime.data.repository.TripRepositoryImpl
 import com.example.voyagetime.domain.repository.TripRepository
 import com.example.voyagetime.ui.screens.TripItem
 import com.example.voyagetime.ui.screens.TripState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +17,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
 import java.util.Locale
+import javax.inject.Inject
 
 data class CreateTripUiState(
     val isLoading: Boolean = false,
@@ -27,19 +25,13 @@ data class CreateTripUiState(
     val error: String? = null
 )
 
-class CreateTripViewModel(application: Application) : AndroidViewModel(application) {
-
+@HiltViewModel
+class CreateTripViewModel @Inject constructor(
     private val repository: TripRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateTripUiState())
     val uiState: StateFlow<CreateTripUiState> = _uiState.asStateFlow()
-
-    init {
-        Log.d(TAG, "Initializing CreateTripViewModel")
-        val database       = VoyageTimeDatabase.getDatabase(application)
-        val authRepository = FirebaseAuthRepositoryImpl()
-        repository = TripRepositoryImpl(database.tripDao(), authRepository)
-    }
 
     fun createTrip(
         destination: String,

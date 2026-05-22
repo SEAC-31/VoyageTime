@@ -1,19 +1,15 @@
 package com.example.voyagetime.ui.viewmodels
 
-import android.app.Application
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.voyagetime.data.local.database.VoyageTimeDatabase
-import com.example.voyagetime.data.repository.FirebaseAuthRepositoryImpl
-import com.example.voyagetime.data.repository.ItineraryRepositoryImpl
-import com.example.voyagetime.data.repository.TripRepositoryImpl
 import com.example.voyagetime.domain.repository.ItineraryRepository
 import com.example.voyagetime.domain.repository.TripRepository
 import com.example.voyagetime.ui.screens.ItineraryDayData
 import com.example.voyagetime.ui.screens.ItineraryEvent
 import com.example.voyagetime.ui.screens.ItinerarySummary
 import com.example.voyagetime.ui.screens.TripItem
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,29 +21,24 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import javax.inject.Inject
 
 data class ItineraryUiState(
     val summary: ItinerarySummary? = null,
     val days: List<ItineraryDayData> = emptyList()
 )
 
-class ItineraryViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val itineraryRepository: ItineraryRepository
+@HiltViewModel
+class ItineraryViewModel @Inject constructor(
+    private val itineraryRepository: ItineraryRepository,
     private val tripRepository: TripRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ItineraryUiState())
     val uiState: StateFlow<ItineraryUiState> = _uiState.asStateFlow()
 
     private var currentTripId: String? = null
     private var observerJob: Job? = null
-
-    init {
-        val database       = VoyageTimeDatabase.getDatabase(application)
-        val authRepository = FirebaseAuthRepositoryImpl()
-        itineraryRepository = ItineraryRepositoryImpl(database.itineraryItemDao())
-        tripRepository      = TripRepositoryImpl(database.tripDao(), authRepository)
-    }
 
     fun loadTrip(tripId: String) {
         if (tripId == currentTripId && observerJob != null) return

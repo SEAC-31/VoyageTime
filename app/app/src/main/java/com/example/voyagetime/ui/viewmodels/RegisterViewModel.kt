@@ -4,10 +4,12 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.voyagetime.domain.repository.AuthRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class RegisterUiState(
     val isLoading: Boolean = false,
@@ -18,7 +20,8 @@ data class RegisterUiState(
     val genericError: String? = null
 )
 
-class RegisterViewModel(
+@HiltViewModel
+class RegisterViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
@@ -26,7 +29,6 @@ class RegisterViewModel(
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
 
     fun register(email: String, password: String, confirmPassword: String) {
-        // Validación local primero
         val emailErr    = validateEmail(email)
         val passErr     = validatePassword(password)
         val confirmErr  = if (password != confirmPassword) "Passwords do not match" else null
@@ -48,8 +50,6 @@ class RegisterViewModel(
             registerResult.fold(
                 onSuccess = { userId ->
                     Log.i(TAG, "User registered: $userId")
-
-                    // Enviamos email de verificación inmediatamente tras el registro
                     val verificationResult = authRepository.sendEmailVerification()
                     verificationResult.fold(
                         onSuccess = {
@@ -57,8 +57,6 @@ class RegisterViewModel(
                             _uiState.value = RegisterUiState(isSuccess = true)
                         },
                         onFailure = { error ->
-                            // El usuario se creó pero el email de verificación falló.
-                            // Lo marcamos como éxito igualmente; puede reenviar después.
                             Log.w(TAG, "Verification email failed: ${error.message}")
                             _uiState.value = RegisterUiState(isSuccess = true)
                         }
@@ -79,8 +77,6 @@ class RegisterViewModel(
     fun resetState() {
         _uiState.value = RegisterUiState()
     }
-
-    // ── Validadores ───────────────────────────────────────────────────────────
 
     private fun validateEmail(email: String): String? {
         if (email.isBlank()) return "Email is required"

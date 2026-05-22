@@ -1,27 +1,25 @@
 package com.example.voyagetime.ui.viewmodels
 
-import android.app.Application
 import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.TravelExplore
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.voyagetime.R
-import com.example.voyagetime.data.local.database.VoyageTimeDatabase
-import com.example.voyagetime.data.repository.FirebaseAuthRepositoryImpl
-import com.example.voyagetime.data.repository.TripRepositoryImpl
 import com.example.voyagetime.domain.repository.TripRepository
 import com.example.voyagetime.ui.screens.HomeStat
 import com.example.voyagetime.ui.screens.HomeTripSummary
 import com.example.voyagetime.ui.screens.TripItem
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class HomeUiState(
     val allTrips: List<HomeTripSummary> = emptyList(),
@@ -32,19 +30,16 @@ data class HomeUiState(
     val stats: List<HomeStat> = emptyList()
 )
 
-class HomeViewModel(application: Application) : AndroidViewModel(application) {
-
+@HiltViewModel
+class HomeViewModel @Inject constructor(
     private val repository: TripRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
         Log.d(TAG, "Initializing HomeViewModel")
-        val database = VoyageTimeDatabase.getDatabase(application)
-        val authRepository = FirebaseAuthRepositoryImpl()
-        repository = TripRepositoryImpl(database.tripDao(), authRepository)
-
         viewModelScope.launch {
             Log.d(TAG, "Starting trips observation")
             repository.getAllTrips()

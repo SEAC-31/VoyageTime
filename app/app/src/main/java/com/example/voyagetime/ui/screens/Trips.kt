@@ -67,7 +67,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.voyagetime.R
 import com.example.voyagetime.ui.viewmodels.TripsViewModel
 import java.time.DayOfWeek
@@ -135,7 +135,7 @@ private fun localizedInsightValue(value: String, @StringRes defaultRes: Int, eng
 fun Trips(
     modifier: Modifier = Modifier,
     onTripClick: (String) -> Unit,
-    viewModel: TripsViewModel = viewModel()
+    viewModel: TripsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 

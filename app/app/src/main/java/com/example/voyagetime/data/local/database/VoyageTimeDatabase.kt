@@ -1,8 +1,6 @@
 package com.example.voyagetime.data.local.database
 
-import android.content.Context
 import androidx.room.Database
-import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
@@ -25,7 +23,7 @@ import com.example.voyagetime.utils.RoomTypeConverters
         AccessLogEntity::class
     ],
     version = 2,
-    exportSchema = true
+    exportSchema = false
 )
 @TypeConverters(RoomTypeConverters::class)
 abstract class VoyageTimeDatabase : RoomDatabase() {
@@ -71,23 +69,6 @@ abstract class VoyageTimeDatabase : RoomDatabase() {
                 """.trimIndent())
 
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_access_log_user_id ON access_log(user_id)")
-            }
-        }
-
-        @Volatile
-        private var INSTANCE: VoyageTimeDatabase? = null
-
-        fun getDatabase(context: Context): VoyageTimeDatabase {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    VoyageTimeDatabase::class.java,
-                    DATABASE_NAME
-                )
-                    .addMigrations(MIGRATION_1_2)
-                    .build()
-                INSTANCE = instance
-                instance
             }
         }
     }
