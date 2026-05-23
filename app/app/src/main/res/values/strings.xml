@@ -99,13 +99,6 @@
     <string name="gallery_type_photo">Photo</string>
     <string name="gallery_type_video">Video</string>
     <string name="gallery_btn_delete">Delete</string>
-    <string name="gallery_local_image_name">Uploaded image %1$d</string>
-    <string name="gallery_local_location">Local gallery</string>
-    <string name="gallery_user_uploaded">User image</string>
-    <string name="trips_cover_image">Trip cover image</string>
-    <string name="trips_cover_from_gallery">Image from gallery</string>
-    <string name="trips_no_gallery_images">No uploaded images yet. Add an image from the Gallery tab first.</string>
-    <string name="trips_clear_cover">Use default cover</string>
 
     <!-- Itinerary -->
     <string name="itinerary_morning">Morning Plan</string>
@@ -309,46 +302,6 @@
     <string name="profile_username">Username</string>
     <string name="profile_dob">Date of birth</string>
 
-    <!-- Authentication -->
-    <string name="auth_logo_description">VoyageTime logo</string>
-    <string name="auth_username">Username</string>
-    <string name="auth_email">Email</string>
-    <string name="auth_password">Password</string>
-    <string name="auth_confirm_password">Confirm password</string>
-
-    <!-- Login -->
-    <string name="login_title">Welcome back</string>
-    <string name="login_subtitle">Sign in with your email and password to continue planning your trips.</string>
-    <string name="login_button">Log in</string>
-    <string name="login_no_account">Don’t have an account?</string>
-    <string name="login_create_account">Create one</string>
-    <string name="login_error_email_required">Email is required.</string>
-    <string name="login_error_email_invalid">Enter a valid email address.</string>
-    <string name="login_error_password_required">Password is required.</string>
-    <string name="login_error_password_short">Password must have at least 6 characters.</string>
-    <string name="login_error_invalid_credentials">Login failed. Check your email and password.</string>
-    <string name="login_remember_me">Remember me</string>
-
-    <!-- Register -->
-    <string name="register_title">Create account</string>
-    <string name="register_subtitle">Prepare your account details. The Firebase registration action is implemented in T3.2.</string>
-    <string name="register_button">Create account</string>
-    <string name="register_accept_terms">I accept the Terms &amp; Conditions</string>
-    <string name="register_already_account">Already have an account?</string>
-    <string name="register_back_to_login">Log in</string>
-    <string name="register_error_username_required">Username is required.</string>
-    <string name="register_error_username_short">Username must have at least 2 characters.</string>
-    <string name="register_error_email_required">Email is required.</string>
-    <string name="register_error_email_invalid">Enter a valid email address.</string>
-    <string name="register_error_password_required">Password is required.</string>
-    <string name="register_error_password_short">Password must have at least 6 characters.</string>
-    <string name="register_error_confirm_required">Confirm your password.</string>
-    <string name="register_error_passwords_not_match">Passwords do not match.</string>
-    <string name="register_error_terms_required">You must accept the terms to create an account.</string>
-    <string name="register_info_t3_2_pending">Register form is valid. Account creation will be implemented in T3.2.</string>
-    <string name="register_accept_terms_prefix">I accept the</string>
-    <string name="register_terms_link">Terms &amp; Conditions</string>
-
     <!-- Extras -->
     <string name="app_logo_content_description">VoyageTime logo</string>
     <string name="trips_total_count">Total trips: %1$d</string>
@@ -404,36 +357,30 @@
     <string name="home_stat_days_planned">Days Planned</string>
     <string name="home_stat_budget">Budget</string>
 
-    <!-- Auth registration and password recovery -->
-    <string name="auth_birthdate">Birthdate</string>
-    <string name="auth_birthdate_placeholder">dd/MM/yyyy</string>
-    <string name="auth_address">Address</string>
-    <string name="auth_country">Country</string>
-    <string name="auth_phone">Phone</string>
+    <!-- Login -->
+    <string name="auth_logo_description">VoyageTime logo</string>
+    <string name="login_title">Welcome back</string>
+    <string name="login_subtitle">Sign in to continue planning your trips</string>
+    <string name="auth_email">Email</string>
+    <string name="auth_password">Password</string>
+    <string name="login_remember_me">Remember me</string>
     <string name="login_forgot_password">Forgot password?</string>
-    <string name="register_accept_emails">I want to receive emails and travel updates</string>
-    <string name="register_verification_notice">After registering, we will send a verification email. Check your inbox before logging in.</string>
-    <string name="register_success_verify_email">Account created. We sent you a verification email. Please check your inbox before logging in.</string>
-    <string name="register_error_username_taken">This username is already in use.</string>
-    <string name="register_error_email_taken">This email is already registered.</string>
-    <string name="register_error_birthdate_required">Birthdate is required.</string>
-    <string name="register_error_birthdate_invalid">Enter a valid birthdate using dd/MM/yyyy.</string>
-    <string name="register_error_birthdate_future">Birthdate cannot be in the future.</string>
-    <string name="register_error_address_required">Address is required.</string>
-    <string name="register_error_country_required">Country is required.</string>
-    <string name="register_error_phone_required">Phone number is required.</string>
-    <string name="register_error_generic">Could not create the account. Please try again.</string>
-    <string name="forgot_password_title">Forgot password</string>
-    <string name="forgot_password_subtitle">Enter your email and we will send you a password reset link.</string>
-    <string name="forgot_password_send_button">Send reset email</string>
-    <string name="forgot_password_success">Password reset email sent.</string>
-    <string name="forgot_password_error_generic">Could not send the password reset email. Please try again.</string>
-    <string name="forgot_password_check_inbox_title">Check your inbox</string>
-    <string name="forgot_password_check_inbox_body">We sent a password reset link to %1$s. Check your spam folder if you do not see it.</string>
+    <string name="login_button">Sign In</string>
+    <string name="login_no_account">Don\'t have an account?</string>
+    <string name="login_create_account">Create account</string>
+    <string name="login_error_email_not_verified">Please verify your email before logging in</string>
+    <string name="login_error_invalid_credentials">Incorrect email or password</string>
+    <string name="login_error_email_required">Email is required</string>
+    <string name="login_error_email_invalid">Enter a valid email address</string>
+    <string name="login_error_password_required">Password is required</string>
+    <string name="login_error_password_short">Password must be at least 6 characters</string>
 
-    <!-- T5 validation / email verification -->
-    <string name="login_error_email_not_verified">You must verify your email before logging in. Check your inbox and try again.</string>
-    <string name="validation_trip_duplicate">You already have a trip with this destination.</string>
-    <string name="validation_database_error">Database operation failed. Please try again.</string>
-
+    <!-- Gallery user uploads -->
+    <string name="gallery_local_image_name">My photo %1$d</string>
+    <string name="gallery_local_location">My device</string>
+    <string name="gallery_user_uploaded">User upload</string>
+    <string name="trip_gallery_title">%s — Gallery</string>
+    <string name="trip_gallery_btn">Gallery</string>
+    <string name="trip_gallery_empty_title">No photos yet</string>
+    <string name="trip_gallery_empty_subtitle">Tap + to add your first photo to this trip</string>
 </resources>

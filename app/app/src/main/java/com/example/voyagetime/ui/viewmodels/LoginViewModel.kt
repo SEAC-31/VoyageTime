@@ -5,14 +5,17 @@ import android.util.Log
 import android.util.Patterns
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.voyagetime.R
-import com.example.voyagetime.data.repository.FirebaseAuthRepositoryImpl
 import com.example.voyagetime.domain.repository.AuthRepository
 import com.example.voyagetime.ui.screens.PreferencesManager
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 private const val LOGIN_VM_TAG = "LoginViewModel"
 
@@ -23,11 +26,13 @@ data class LoginUiState(
     @StringRes val emailErrorRes: Int? = null,
     @StringRes val passwordErrorRes: Int? = null,
     @StringRes val generalErrorRes: Int? = null,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val isSuccess: Boolean = false
 )
 
-class LoginViewModel(
-    private val authRepository: AuthRepository = FirebaseAuthRepositoryImpl()
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -35,144 +40,76 @@ class LoginViewModel(
 
     fun prepareLoginForm(context: Context) {
         val rememberLogin = PreferencesManager.getRememberLogin(context)
-        val rememberedEmail = if (rememberLogin) {
-            PreferencesManager.getRememberedEmail(context)
-        } else {
-            ""
-        }
-
-        Log.i(
-            LOGIN_VM_TAG,
-            "Login form prepared. rememberLogin=$rememberLogin rememberedEmail=$rememberedEmail"
-        )
-
-        _uiState.value = LoginUiState(
-            email = rememberedEmail,
-            password = "",
-            rememberMe = rememberLogin
-        )
+        val rememberedEmail = if (rememberLogin) PreferencesManager.getRememberedEmail(context) else ""
+        Log.i(LOGIN_VM_TAG, "Login form prepared. rememberLogin=$rememberLogin")
+        _uiState.value = LoginUiState(email = rememberedEmail, rememberMe = rememberLogin)
     }
 
     fun onEmailChange(value: String) {
-        _uiState.update { current ->
-            current.copy(
-                email = value,
-                emailErrorRes = null,
-                generalErrorRes = null
-            )
-        }
+        _uiState.update { it.copy(email = value, emailErrorRes = null, generalErrorRes = null) }
     }
 
     fun onPasswordChange(value: String) {
-        _uiState.update { current ->
-            current.copy(
-                password = value,
-                passwordErrorRes = null,
-                generalErrorRes = null
-            )
-        }
+        _uiState.update { it.copy(password = value, passwordErrorRes = null, generalErrorRes = null) }
     }
 
     fun onRememberMeChange(value: Boolean) {
-        Log.i(LOGIN_VM_TAG, "Remember me changed: $value")
-
-        _uiState.update { current ->
-            current.copy(
-                rememberMe = value,
-                generalErrorRes = null
-            )
-        }
+        _uiState.update { it.copy(rememberMe = value, generalErrorRes = null) }
     }
 
-    fun login(
-        context: Context,
-        onSuccess: () -> Unit
-    ) {
+    fun login(context: Context) {
         val current = _uiState.value
+        val emailError = validateEmail(current.email)
+        val passwordError = validatePassword(current.password)
 
-        val emailValidation = validateEmail(current.email)
-        val passwordValidation = validatePassword(current.password)
-
-        if (emailValidation != null || passwordValidation != null) {
-            Log.w(
-                LOGIN_VM_TAG,
-                "Login validation failed. emailError=$emailValidation passwordError=$passwordValidation"
-            )
-
-            _uiState.update { oldState ->
-                oldState.copy(
-                    emailErrorRes = emailValidation,
-                    passwordErrorRes = passwordValidation,
-                    generalErrorRes = null
-                )
-            }
+        if (emailError != null || passwordError != null) {
+            _uiState.update { it.copy(emailErrorRes = emailError, passwordErrorRes = passwordError) }
             return
         }
 
-        _uiState.update { oldState ->
-            oldState.copy(
-                isLoading = true,
-                emailErrorRes = null,
-                passwordErrorRes = null,
-                generalErrorRes = null
+        _uiState.update { it.copy(isLoading = true, emailErrorRes = null, passwordErrorRes = null, generalErrorRes = null) }
+
+        viewModelScope.launch {
+            authRepository.login(current.email.trim(), current.password).fold(
+                onSuccess = { userId ->
+                    Log.i(LOGIN_VM_TAG, "Login success: $userId")
+
+                    if (!authRepository.isEmailVerified()) {
+                        Log.w(LOGIN_VM_TAG, "Email not verified")
+                        _uiState.update { it.copy(isLoading = false, generalErrorRes = R.string.login_error_email_not_verified) }
+                        authRepository.logout()
+                        return@launch
+                    }
+
+                    if (current.rememberMe) {
+                        PreferencesManager.saveRememberedLogin(context, current.email.trim())
+                    } else {
+                        PreferencesManager.clearRememberedLogin(context)
+                    }
+
+                    _uiState.update { it.copy(isLoading = false, password = "", isSuccess = true) }
+                },
+                onFailure = { error ->
+                    Log.e(LOGIN_VM_TAG, "Login failed: ${error.message}")
+                    _uiState.update { it.copy(isLoading = false, generalErrorRes = R.string.login_error_invalid_credentials) }
+                }
             )
         }
-
-        authRepository.login(
-            email = current.email,
-            password = current.password,
-            onSuccess = {
-                Log.i(LOGIN_VM_TAG, "Login success callback received")
-
-                if (current.rememberMe) {
-                    PreferencesManager.saveRememberedLogin(context, current.email)
-                } else {
-                    PreferencesManager.clearRememberedLogin(context)
-                }
-
-                _uiState.update { oldState ->
-                    oldState.copy(
-                        isLoading = false,
-                        password = ""
-                    )
-                }
-
-                onSuccess()
-            },
-            onError = { message ->
-                Log.e(LOGIN_VM_TAG, "Login failed: $message")
-
-                val errorRes = if (message == AuthRepository.ERROR_EMAIL_NOT_VERIFIED) {
-                    R.string.login_error_email_not_verified
-                } else {
-                    R.string.login_error_invalid_credentials
-                }
-
-                _uiState.update { oldState ->
-                    oldState.copy(
-                        isLoading = false,
-                        generalErrorRes = errorRes
-                    )
-                }
-            }
-        )
     }
 
-    private fun validateEmail(value: String): Int? {
-        val cleanValue = value.trim()
-
-        return when {
-            cleanValue.isBlank() -> R.string.login_error_email_required
-            !Patterns.EMAIL_ADDRESS.matcher(cleanValue).matches() -> R.string.login_error_email_invalid
-            else -> null
-        }
+    fun resetState() {
+        _uiState.update { it.copy(isSuccess = false, generalErrorRes = null) }
     }
 
-    private fun validatePassword(value: String): Int? {
-        return when {
-            value.isBlank() -> R.string.login_error_password_required
-            value.length < 6 -> R.string.login_error_password_short
-            else -> null
-        }
+    private fun validateEmail(value: String): Int? = when {
+        value.trim().isBlank() -> R.string.login_error_email_required
+        !Patterns.EMAIL_ADDRESS.matcher(value.trim()).matches() -> R.string.login_error_email_invalid
+        else -> null
+    }
+
+    private fun validatePassword(value: String): Int? = when {
+        value.isBlank() -> R.string.login_error_password_required
+        value.length < 6 -> R.string.login_error_password_short
+        else -> null
     }
 }

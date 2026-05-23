@@ -46,6 +46,7 @@ import com.example.voyagetime.ui.screens.Home
 import com.example.voyagetime.ui.screens.HotelDetailScreen
 import com.example.voyagetime.ui.screens.Itinerary
 import com.example.voyagetime.ui.screens.LanguageManager
+import com.example.voyagetime.ui.screens.LoginScreen
 import com.example.voyagetime.ui.screens.Preferences
 import com.example.voyagetime.ui.screens.PreferencesManager
 import com.example.voyagetime.ui.screens.RegisterScreen
@@ -57,14 +58,16 @@ import com.example.voyagetime.ui.screens.TravelStyleScreen
 import com.example.voyagetime.ui.screens.Trips
 import com.example.voyagetime.ui.screens.CreateTripScreen
 import com.example.voyagetime.ui.theme.VoyageTimeTheme
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
+import com.example.voyagetime.ui.screens.TripGallery
 
 val LocalDarkMode = compositionLocalOf { false }
 val LocalOnDarkModeChange = compositionLocalOf<(Boolean) -> Unit> { {} }
 
 const val EXTRA_START_AFTER_SPLASH = "start_after_splash"
 
-enum class AppScreen { SPLASH, TERMS_ACCEPTANCE, MAIN }
+enum class AppScreen { SPLASH, TERMS_ACCEPTANCE, MAIN, AUTH }
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -103,10 +106,22 @@ class MainActivity : ComponentActivity() {
                             SplashScreen(onFinished = { currentScreen = startAfterSplash })
                         AppScreen.TERMS_ACCEPTANCE ->
                             TermsAcceptanceScreen(
-                                onAccept = { currentScreen = AppScreen.MAIN },
-                                onReject = { currentScreen = AppScreen.MAIN }
+                                onAccept = { currentScreen = AppScreen.AUTH },
+                                onReject = { currentScreen = AppScreen.AUTH }
                             )
-                        AppScreen.MAIN -> VoyageTimeApp()
+                        AppScreen.AUTH ->
+                            LoginScreen(
+                                onLoginSuccess = { currentScreen = AppScreen.MAIN },
+                                onRegisterClick = { currentScreen = AppScreen.MAIN },
+                                onForgotPasswordClick = { currentScreen = AppScreen.MAIN }
+                            )
+                        AppScreen.MAIN ->
+                            VoyageTimeApp(
+                                onLogout = {
+                                    FirebaseAuth.getInstance().signOut()
+                                    currentScreen = AppScreen.AUTH
+                                }
+                            )
                     }
                 }
             }
@@ -117,7 +132,7 @@ class MainActivity : ComponentActivity() {
 data class NavItem(val route: String, @StringRes val labelRes: Int, val icon: ImageVector)
 
 @Composable
-fun VoyageTimeApp() {
+fun VoyageTimeApp(onLogout: () -> Unit = {}) {
     val navController = rememberNavController()
 
     val items = listOf(
@@ -154,14 +169,17 @@ fun VoyageTimeApp() {
                     )
                 }
             }
-        ) { AppNavHost(navController) }
+        ) { AppNavHost(navController, onLogout) }
     } else {
-        AppNavHost(navController)
+        AppNavHost(navController, onLogout)
     }
 }
 
 @Composable
-private fun AppNavHost(navController: androidx.navigation.NavHostController) {
+private fun AppNavHost(
+    navController: androidx.navigation.NavHostController,
+    onLogout: () -> Unit = {}
+) {
     var pendingHotel by remember { mutableStateOf<HotelDto?>(null) }
     var pendingTripId by remember { mutableStateOf(0L) }
     var pendingStartDate by remember { mutableStateOf("") }
@@ -188,7 +206,13 @@ private fun AppNavHost(navController: androidx.navigation.NavHostController) {
                 )
             }
             composable(Routes.TRIPS) {
-                Trips(onTripClick = { navController.navigate("${Routes.ITINERARY}/$it") })
+                Trips(
+                    onTripClick = { navController.navigate("${Routes.ITINERARY}/$it") },
+                    onGalleryClick = { tripId ->
+                        // Aquí necesitamos el nombre del viaje — pasamos el ID y dejamos que TripGallery lo muestre
+                        navController.navigate("${Routes.TRIP_GALLERY}/$tripId/$tripId")
+                    }
+                )
             }
             composable(
                 route = "${Routes.ITINERARY}/{tripId}",
@@ -199,10 +223,25 @@ private fun AppNavHost(navController: androidx.navigation.NavHostController) {
             composable(Routes.DEPARTURE_CITY) { DepartureCityScreen() }
             composable(Routes.TRAVEL_STYLE) { TravelStyleScreen() }
             composable(Routes.GALLERY) { Gallery() }
+            composable(
+                route = "${Routes.TRIP_GALLERY}/{tripId}/{tripName}",
+                arguments = listOf(
+                    navArgument("tripId") { type = NavType.StringType },
+                    navArgument("tripName") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                TripGallery(
+                    tripId = backStackEntry.arguments?.getString("tripId") ?: "",
+                    tripName = backStackEntry.arguments?.getString("tripName") ?: "",
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Routes.RESERVATIONS) { ReservationsScreen() }
             composable(Routes.PREFERENCES) {
                 Preferences(
                     onNavigateToAboutUs = { navController.navigate(Routes.ABOUT_US) },
-                    onNavigateToTerms = { navController.navigate(Routes.TERMS) }
+                    onNavigateToTerms = { navController.navigate(Routes.TERMS) },
+                    onLogout = onLogout
                 )
             }
             composable(Routes.ABOUT_US) {
@@ -211,8 +250,6 @@ private fun AppNavHost(navController: androidx.navigation.NavHostController) {
             composable(Routes.TERMS) {
                 TermsAndConditions(onBack = { navController.popBackStack() })
             }
-
-            // ── Auth ──────────────────────────────────────────────────────
             composable(Routes.REGISTER) {
                 RegisterScreen(
                     viewModel = hiltViewModel(),
@@ -230,13 +267,6 @@ private fun AppNavHost(navController: androidx.navigation.NavHostController) {
                     onBack = { navController.popBackStack() }
                 )
             }
-
-            // ── T4.1 — Listado de reservas ────────────────────────────────
-            composable(Routes.RESERVATIONS) {
-                ReservationsScreen()
-            }
-
-            // ── T2.4 — Detalle hotel + booking ────────────────────────────
             composable(Routes.HOTEL_DETAIL) {
                 val hotel = pendingHotel
                 if (hotel != null) {
@@ -262,11 +292,13 @@ object Routes {
     const val DEPARTURE_CITY   = "departure_city"
     const val TRAVEL_STYLE     = "travel_style"
     const val GALLERY          = "gallery"
+    const val RESERVATIONS     = "reservations"
     const val PREFERENCES      = "preferences"
     const val ABOUT_US         = "about_us"
     const val TERMS            = "terms"
     const val REGISTER         = "register"
     const val FORGOT_PASSWORD  = "forgot_password"
-    const val HOTEL_DETAIL     = "hotel_detail"    // T2.4
-    const val RESERVATIONS     = "reservations"    // T4.1
+    const val HOTEL_DETAIL     = "hotel_detail"
+
+    const val TRIP_GALLERY = "trip_gallery"
 }

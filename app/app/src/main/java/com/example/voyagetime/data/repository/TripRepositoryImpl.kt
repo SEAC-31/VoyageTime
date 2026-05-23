@@ -62,6 +62,12 @@ class TripRepositoryImpl(
         Log.i(TAG, "Trip deleted id=$tripId")
     }
 
+    override suspend fun isTripDestinationTaken(destination: String, excludeTripId: String?): Boolean {
+        val uid = currentUid() ?: return false
+        val excludeId = excludeTripId?.toLongOrNull()
+        return tripDao.countByDestination(destination.trim(), uid, excludeId) > 0
+    }
+
     private var favoriteRegion = "Europe & North America"
     private var travelGoal     = "Complete memorable trips with clear itineraries"
 
