@@ -40,6 +40,18 @@ interface TripDao {
     @Query("SELECT * FROM trips WHERE user_id = :userId ORDER BY start_datetime ASC")
     suspend fun getAllTripsOnce(userId: String): List<TripEntity>
 
+    @Query("""
+        SELECT COUNT(*) FROM trips
+        WHERE user_id = :userId
+          AND LOWER(TRIM(destination)) = LOWER(TRIM(:destination))
+          AND (:excludeTripId IS NULL OR id != :excludeTripId)
+    """)
+    suspend fun countTripsByDestination(
+        destination: String,
+        userId: String,
+        excludeTripId: Long? = null
+    ): Int
+
     // ── Mutations ─────────────────────────────────────────────────────────────
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

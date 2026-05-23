@@ -9,8 +9,10 @@ import com.example.voyagetime.data.remote.HotelApiService
 import com.example.voyagetime.data.remote.HotelDto
 import com.example.voyagetime.data.remote.ReserveRequest
 import com.example.voyagetime.di.NetworkModule
-import com.google.gson.Gson
+import com.example.voyagetime.domain.repository.HotelRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.gson.Gson
+import com.google.gson.JsonElement
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,6 +35,7 @@ sealed class HotelBookingState {
 @HiltViewModel
 class HotelBookingViewModel @Inject constructor(
     private val apiService: HotelApiService,
+    private val hotelRepository: HotelRepository,
     private val reservationDao: ReservationDao
 ) : ViewModel() {
 
@@ -48,22 +51,22 @@ class HotelBookingViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val response = apiService.checkAvailability(
-                    groupId   = NetworkModule.GROUP_ID,
-                    startDate = startDate,   // formato "yyyy-MM-dd"
-                    endDate   = endDate,
-                    city      = city
+                val result = hotelRepository.searchAvailableHotels(
+                    city = city,
+                    startDate = startDate,
+                    endDate = endDate
                 )
-                if (response.isSuccessful) {
-                    // La API devuelve Any — lo casteamos a lista de HotelDto via Gson
-                    val hotelsJson = gson.toJson(response.body())
-                    val hotels = gson.fromJson(hotelsJson, Array<HotelDto>::class.java).toList()
-                    Log.i(TAG, "searchHotels: ${hotels.size} hotels found")
-                    _state.value = HotelBookingState.HotelsLoaded(hotels)
-                } else {
-                    Log.e(TAG, "searchHotels: API error ${response.code()}")
-                    _state.value = HotelBookingState.Error("Error ${response.code()}: ${response.message()}")
-                }
+
+                result.fold(
+                    onSuccess = { hotels ->
+                        Log.i(TAG, "searchHotels: ${hotels.size} hotels found")
+                        _state.value = HotelBookingState.HotelsLoaded(hotels)
+                    },
+                    onFailure = { error ->
+                        Log.e(TAG, "searchHotels: repository error", error)
+                        _state.value = HotelBookingState.Error(error.message ?: "Unknown error")
+                    }
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "searchHotels: exception", e)
                 _state.value = HotelBookingState.Error(e.message ?: "Unknown error")
@@ -96,13 +99,12 @@ class HotelBookingViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                // 1. Llamar a la API para hacer la reserva
                 val request = ReserveRequest(
-                    hotelId    = hotel.id,
-                    roomId     = room.id,
-                    startDate  = startDate,
-                    endDate    = endDate,
-                    guestName  = currentUser.displayName ?: currentUser.email ?: "Guest",
+                    hotelId = hotel.id,
+                    roomId = room.id,
+                    startDate = startDate,
+                    endDate = endDate,
+                    guestName = currentUser.displayName ?: currentUser.email ?: "Guest",
                     guestEmail = currentUser.email ?: ""
                 )
                 val response = apiService.reserveRoom(NetworkModule.GROUP_ID, request)
@@ -113,33 +115,29 @@ class HotelBookingViewModel @Inject constructor(
                     return@launch
                 }
 
-                // 2. Extraer el ID de reserva de la respuesta
-                val responseJson = gson.toJson(response.body())
-                val apiResId = extractReservationId(responseJson)
+                val apiResId = extractReservationId(response.body())
                 Log.i(TAG, "bookRoom: reservation created with id=$apiResId")
 
-                // 3. Guardar localmente en Room
                 val entity = ReservationEntity(
                     apiReservationId = apiResId,
-                    tripId           = tripId,
-                    userId           = currentUser.uid,
-                    hotelId          = hotel.id,
-                    hotelName        = hotel.name,
-                    hotelImageUrl    = hotel.imageUrl,
-                    roomId           = room.id,
-                    roomType         = room.roomType,
-                    roomPrice        = room.price,
-                    roomImagesJson   = gson.toJson(room.images),
-                    startDate        = startDate,
-                    endDate          = endDate,
-                    guestName        = request.guestName,
-                    guestEmail       = request.guestEmail
+                    tripId = tripId,
+                    userId = currentUser.uid,
+                    hotelId = hotel.id,
+                    hotelName = hotel.name,
+                    hotelImageUrl = hotel.imageUrl,
+                    roomId = room.id,
+                    roomType = room.roomType,
+                    roomPrice = room.price,
+                    roomImagesJson = gson.toJson(room.allImages),
+                    startDate = startDate,
+                    endDate = endDate,
+                    guestName = request.guestName,
+                    guestEmail = request.guestEmail
                 )
                 reservationDao.insertReservation(entity)
                 Log.i(TAG, "bookRoom: reservation saved locally")
 
                 _state.value = HotelBookingState.BookingSuccess(apiResId)
-
             } catch (e: Exception) {
                 Log.e(TAG, "bookRoom: exception", e)
                 _state.value = HotelBookingState.Error(e.message ?: "Unknown error")
@@ -151,15 +149,16 @@ class HotelBookingViewModel @Inject constructor(
         _state.value = HotelBookingState.Idle
     }
 
-    // Intenta extraer el ID de reserva del JSON de respuesta de la API
-    private fun extractReservationId(json: String): String {
+
+    private fun extractReservationId(body: JsonElement?): String {
         return try {
-            val map = gson.fromJson(json, Map::class.java)
-            map["reservation_id"]?.toString()
-                ?: map["id"]?.toString()
+            val obj = body?.asJsonObject ?: return "UNKNOWN"
+            obj.get("reservation_id")?.asString
+                ?: obj.get("reservationId")?.asString
+                ?: obj.get("id")?.asString
                 ?: "UNKNOWN"
         } catch (e: Exception) {
-            Log.w(TAG, "extractReservationId: could not parse id from $json")
+            Log.w(TAG, "extractReservationId: could not parse id from $body")
             "UNKNOWN"
         }
     }

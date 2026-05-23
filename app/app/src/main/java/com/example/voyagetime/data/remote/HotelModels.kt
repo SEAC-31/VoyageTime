@@ -5,20 +5,47 @@ import com.google.gson.annotations.SerializedName
 // ── Respuestas de la API ───────────────────────────────────────────────────
 
 data class HotelDto(
-    @SerializedName("id")         val id: String,
-    @SerializedName("name")       val name: String,
-    @SerializedName("address")    val address: String,
-    @SerializedName("rating")     val rating: Int,
-    @SerializedName("rooms")      val rooms: List<RoomDto>,
-    @SerializedName("image_url")  val imageUrl: String
+    @SerializedName(value = "id", alternate = ["hotel_id"])
+    val id: String = "",
+
+    @SerializedName(value = "name", alternate = ["hotel_name"])
+    val name: String = "",
+
+    @SerializedName(value = "address", alternate = ["location"])
+    val address: String = "",
+
+    @SerializedName(value = "city")
+    val city: String = "",
+
+    @SerializedName(value = "rating", alternate = ["stars"])
+    val rating: Double = 0.0,
+
+    @SerializedName(value = "rooms")
+    val rooms: List<RoomDto> = emptyList(),
+
+    @SerializedName(value = "image_url", alternate = ["imageUrl", "image"])
+    val imageUrl: String = ""
 )
 
 data class RoomDto(
-    @SerializedName("id")         val id: String,
-    @SerializedName("room_type")  val roomType: String,
-    @SerializedName("price")      val price: Double,
-    @SerializedName("images")     val images: List<String>
-)
+    @SerializedName(value = "id", alternate = ["room_id"])
+    val id: String = "",
+
+    @SerializedName(value = "room_type", alternate = ["roomType", "type", "name"])
+    val roomType: String = "",
+
+    @SerializedName(value = "price", alternate = ["price_per_night"])
+    val price: Double = 0.0,
+
+    @SerializedName(value = "images")
+    val images: List<String> = emptyList(),
+
+    @SerializedName(value = "image_url", alternate = ["imageUrl", "image"])
+    val imageUrl: String = ""
+) {
+    val allImages: List<String>
+        get() = (images + imageUrl).filter { it.isNotBlank() }
+}
 
 // ── Request body para reservar y cancelar ─────────────────────────────────
 

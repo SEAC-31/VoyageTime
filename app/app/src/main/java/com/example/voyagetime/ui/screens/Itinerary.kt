@@ -1,5 +1,9 @@
 package com.example.voyagetime.ui.screens
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +19,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,6 +36,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Tour
@@ -62,15 +69,19 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.voyagetime.R
 import com.example.voyagetime.ui.viewmodels.ItineraryViewModel
+import com.example.voyagetime.ui.viewmodels.TripGalleryViewModel
+import com.example.voyagetime.data.local.entity.TripImageEntity
 
 data class ItineraryEvent(
     val time: String,
@@ -144,13 +155,33 @@ private fun localizedCostLabel(rawCost: String): String {
 fun Itinerary(
     tripId: String,
     modifier: Modifier = Modifier,
-    viewModel: ItineraryViewModel = hiltViewModel()
+    viewModel: ItineraryViewModel = hiltViewModel(),
+    galleryViewModel: TripGalleryViewModel = hiltViewModel()
 ) {
     val scrollState = rememberScrollState()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val tripImages by galleryViewModel.tripImages.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris: List<Uri> ->
+        uris.forEach { uri ->
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: SecurityException) {
+                // Some providers already grant read access for the returned URI.
+            }
+        }
+        galleryViewModel.attachImages(tripId, uris.map { it.toString() })
+    }
 
     LaunchedEffect(tripId) {
         viewModel.loadTrip(tripId)
+        galleryViewModel.loadTrip(tripId)
     }
 
     val summary = uiState.summary ?: return
@@ -256,6 +287,13 @@ fun Itinerary(
                         closeForm()
                     }
                 }
+            )
+
+            TripGallerySection(
+                images = tripImages,
+                canAddImages = !isCompletedTrip,
+                onAddImagesClick = { imagePickerLauncher.launch(arrayOf("image/*")) },
+                onDeleteImage = galleryViewModel::deleteImage
             )
 
             PlannerSection(
@@ -611,6 +649,136 @@ private fun DayNavigator(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = stringResource(R.string.itinerary_next_day),
                     tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun TripGallerySection(
+    images: List<TripImageEntity>,
+    canAddImages: Boolean,
+    onAddImagesClick: () -> Unit,
+    onDeleteImage: (TripImageEntity) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PhotoLibrary,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Trip gallery",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "${images.size} local image(s) attached to this trip",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f)
+                    )
+                }
+
+                if (canAddImages) {
+                    OutlinedButton(onClick = onAddImagesClick) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Add images")
+                    }
+                }
+            }
+
+            if (images.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(96.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No local images attached yet.",
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f)
+                    )
+                }
+            } else {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(images, key = { it.id }) { image ->
+                        TripGalleryImageCard(
+                            image = image,
+                            canDelete = canAddImages,
+                            onDelete = { onDeleteImage(image) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TripGalleryImageCard(
+    image: TripImageEntity,
+    canDelete: Boolean,
+    onDelete: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .width(132.dp)
+            .height(112.dp)
+            .clip(RoundedCornerShape(18.dp))
+    ) {
+        AsyncImage(
+            model = image.imageUri,
+            contentDescription = "Trip image",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        if (canDelete) {
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(4.dp)
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.45f))
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete image",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }

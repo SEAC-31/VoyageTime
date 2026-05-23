@@ -6,6 +6,7 @@ import com.example.voyagetime.data.local.dao.AccessLogDao
 import com.example.voyagetime.data.local.dao.ItineraryItemDao
 import com.example.voyagetime.data.local.dao.ReservationDao
 import com.example.voyagetime.data.local.dao.TripDao
+import com.example.voyagetime.data.local.dao.TripImageDao
 import com.example.voyagetime.data.local.dao.UserDao
 import com.example.voyagetime.data.local.database.VoyageTimeDatabase
 import dagger.Module
@@ -29,7 +30,8 @@ object DatabaseModule {
         )
             .addMigrations(
                 VoyageTimeDatabase.MIGRATION_1_2,
-                VoyageTimeDatabase.MIGRATION_2_3   // T2.3
+                VoyageTimeDatabase.MIGRATION_2_3,  // T2.3
+                VoyageTimeDatabase.MIGRATION_3_4   // T3.1/T3.2
             )
             .build()
 
@@ -38,4 +40,5 @@ object DatabaseModule {
     @Provides fun provideUserDao(db: VoyageTimeDatabase): UserDao = db.userDao()
     @Provides fun provideAccessLogDao(db: VoyageTimeDatabase): AccessLogDao = db.accessLogDao()
     @Provides fun provideReservationDao(db: VoyageTimeDatabase): ReservationDao = db.reservationDao()  // T2.3
+    @Provides fun provideTripImageDao(db: VoyageTimeDatabase): TripImageDao = db.tripImageDao()  // T3.1/T3.2
 }

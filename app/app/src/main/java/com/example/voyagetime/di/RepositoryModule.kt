@@ -3,13 +3,16 @@ package com.example.voyagetime.di
 import com.example.voyagetime.data.local.dao.ItineraryItemDao
 import com.example.voyagetime.data.local.dao.TripDao
 import com.example.voyagetime.data.local.dao.UserDao
+import com.example.voyagetime.data.remote.HotelApiService
 import com.example.voyagetime.data.local.dao.AccessLogDao
 import com.example.voyagetime.data.repository.FirebaseAuthRepositoryImpl
 import com.example.voyagetime.data.repository.ItineraryRepositoryImpl
+import com.example.voyagetime.data.repository.HotelRepositoryImpl
 import com.example.voyagetime.data.repository.TripRepositoryImpl
 import com.example.voyagetime.data.repository.UserRepositoryImpl
 import com.example.voyagetime.domain.repository.AuthRepository
 import com.example.voyagetime.domain.repository.ItineraryRepository
+import com.example.voyagetime.domain.repository.HotelRepository
 import com.example.voyagetime.domain.repository.TripRepository
 import com.example.voyagetime.domain.repository.UserRepository
 import dagger.Module
@@ -38,6 +41,13 @@ object RepositoryModule {
     fun provideItineraryRepository(
         itineraryItemDao: ItineraryItemDao
     ): ItineraryRepository = ItineraryRepositoryImpl(itineraryItemDao)
+
+
+    @Provides
+    @Singleton
+    fun provideHotelRepository(
+        apiService: HotelApiService
+    ): HotelRepository = HotelRepositoryImpl(apiService)
 
     @Provides
     @Singleton
