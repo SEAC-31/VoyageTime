@@ -11,22 +11,18 @@ class RoomTypeConverters {
     private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 
     @TypeConverter
-    fun fromLocalDateTime(value: LocalDateTime?): String? {
-        return value?.format(dateTimeFormatter)
-    }
+    fun fromLocalDateTime(value: LocalDateTime?): String? =
+        value?.format(dateTimeFormatter)
 
     @TypeConverter
-    fun toLocalDateTime(value: String?): LocalDateTime? {
-        return value?.let { LocalDateTime.parse(it, dateTimeFormatter) }
-    }
+    fun toLocalDateTime(value: String?): LocalDateTime? =
+        value?.let { LocalDateTime.parse(it, dateTimeFormatter) }
 
     @TypeConverter
-    fun fromLocalDate(value: LocalDate?): String? {
-        return value?.format(dateFormatter)
-    }
+    fun fromLocalDate(value: LocalDate?): String? =
+        value?.format(dateFormatter)
 
     @TypeConverter
-    fun toLocalDate(value: String?): LocalDate? {
-        return value?.let { LocalDate.parse(it, dateFormatter) }
-    }
+    fun toLocalDate(value: String?): LocalDate? =
+        value?.let { LocalDate.parse(it, dateFormatter) }
 }

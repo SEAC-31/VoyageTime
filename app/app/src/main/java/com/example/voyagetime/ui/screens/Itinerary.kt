@@ -68,7 +68,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.voyagetime.R
 import com.example.voyagetime.ui.viewmodels.ItineraryViewModel
 
@@ -144,7 +144,7 @@ private fun localizedCostLabel(rawCost: String): String {
 fun Itinerary(
     tripId: String,
     modifier: Modifier = Modifier,
-    viewModel: ItineraryViewModel = viewModel()
+    viewModel: ItineraryViewModel = hiltViewModel()
 ) {
     val scrollState = rememberScrollState()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

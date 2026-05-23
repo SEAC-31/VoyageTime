@@ -1,25 +1,25 @@
 package com.example.voyagetime.ui.viewmodels
 
-import android.app.Application
 import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.TravelExplore
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.voyagetime.R
-import com.example.voyagetime.data.local.database.VoyageTimeDatabase
-import com.example.voyagetime.data.repository.TripRepositoryImpl
 import com.example.voyagetime.domain.repository.TripRepository
 import com.example.voyagetime.ui.screens.HomeStat
 import com.example.voyagetime.ui.screens.HomeTripSummary
+import com.example.voyagetime.ui.screens.TripItem
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class HomeUiState(
     val allTrips: List<HomeTripSummary> = emptyList(),
@@ -30,73 +30,71 @@ data class HomeUiState(
     val stats: List<HomeStat> = emptyList()
 )
 
-class HomeViewModel(application: Application) : AndroidViewModel(application) {
-
+@HiltViewModel
+class HomeViewModel @Inject constructor(
     private val repository: TripRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        val database = VoyageTimeDatabase.getDatabase(application)
-        repository = TripRepositoryImpl(database.tripDao())
-
+        Log.d(TAG, "Initializing HomeViewModel")
         viewModelScope.launch {
+            Log.d(TAG, "Starting trips observation")
             repository.getAllTrips()
-                .catch { error ->
-                    Log.e(TAG, "Error observing home trips", error)
-                }
+                .catch { error -> Log.e(TAG, "Error observing home trips", error) }
                 .collect { trips ->
-                    val allTrips = trips.map { trip ->
-                        val parsedRange = parseTripDateRange(trip.dateRange)
-
+                    Log.i(TAG, "Trips updated: ${trips.size} trips loaded")
+                    val summaries = trips.map { trip ->
+                        val (start, end) = parseTripDateRange(trip.dateRange)
                         HomeTripSummary(
-                            id = trip.id,
+                            id          = trip.id,
                             destination = trip.destination,
-                            country = trip.country,
-                            startDate = parsedRange.first,
-                            endDate = parsedRange.second,
-                            duration = trip.duration,
-                            budget = trip.budgetValue(),
-                            image = trip.image,
-                            coverImageUri = trip.coverImageUri,
-                            status = trip.statusLabel
+                            country     = trip.country,
+                            startDate   = start,
+                            endDate     = end,
+                            duration    = trip.duration,
+                            budget      = trip.budgetValue(),
+                            image       = trip.image,
+                            status      = trip.statusLabel
                         )
                     }
 
-                    val nextTrip = allTrips.firstOrNull {
+                    val nextTrip = summaries.firstOrNull {
                         it.status.equals("Upcoming", ignoreCase = true) ||
-                                it.status.equals("Planned", ignoreCase = true)
-                    } ?: allTrips.firstOrNull()
+                                it.status.equals("Planned",  ignoreCase = true)
+                    } ?: summaries.firstOrNull()
 
-                    val featuredTrips = allTrips
-                        .filter { it.id != nextTrip?.id }
-                        .take(2)
+                    val featured    = summaries.filter { it.id != nextTrip?.id }.take(2)
+                    val totalBudget = summaries.sumOf { it.budget }
+                    val totalDays   = summaries.sumOf { extractDays(it.duration) }
 
-                    val totalBudget = allTrips.sumOf { it.budget }
-                    val totalDays = allTrips.sumOf { extractDays(it.duration) }
+                    Log.d(TAG, "Next trip: ${nextTrip?.destination ?: "none"}, totalBudget=€$totalBudget, totalDays=$totalDays")
 
                     val stats = listOf(
-                        HomeStat(allTrips.size.toString(), R.string.home_stat_trips, Icons.Default.TravelExplore),
+                        HomeStat(summaries.size.toString(), R.string.home_stat_trips, Icons.Default.TravelExplore),
                         HomeStat(totalDays.toString(), R.string.home_stat_days_planned, Icons.Default.CalendarMonth),
                         HomeStat("€$totalBudget", R.string.home_stat_budget, Icons.Default.AttachMoney)
                     )
 
                     _uiState.update {
                         it.copy(
-                            allTrips = allTrips,
-                            featuredTrips = featuredTrips,
-                            nextTrip = nextTrip,
-                            totalBudget = totalBudget,
-                            totalDays = totalDays,
-                            stats = stats
+                            allTrips      = summaries,
+                            featuredTrips = featured,
+                            nextTrip      = nextTrip,
+                            totalBudget   = totalBudget,
+                            totalDays     = totalDays,
+                            stats         = stats
                         )
                     }
                 }
         }
     }
 
-    fun reload() = Unit
+    fun reload() {
+        Log.d(TAG, "reload() called")
+    }
 
     companion object {
         private const val TAG = "HomeViewModel"
@@ -105,18 +103,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
 private fun parseTripDateRange(dateRange: String): Pair<String, String> {
     val parts = dateRange.split(" - ").map { it.trim() }
-
-    return if (parts.size == 2) {
-        parts[0] to parts[1]
-    } else {
-        "" to ""
-    }
+    return if (parts.size == 2) parts[0] to parts[1] else "" to ""
 }
 
-private fun extractDays(duration: String): Int {
-    return duration.substringBefore(" ").toIntOrNull() ?: 0
-}
+private fun extractDays(duration: String): Int =
+    duration.substringBefore(" ").toIntOrNull() ?: 0
 
-private fun com.example.voyagetime.ui.screens.TripItem.budgetValue(): Int {
-    return budget.replace("€", "").replace(",", "").trim().toIntOrNull() ?: 0
-}
+private fun TripItem.budgetValue(): Int =
+    budget.replace("€", "").replace(",", "").trim().toIntOrNull() ?: 0
