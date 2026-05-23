@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Hotel
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -21,6 +22,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -35,16 +37,19 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.compose.ui.res.stringResource
+import com.example.voyagetime.data.remote.HotelDto
 import com.example.voyagetime.ui.screens.AboutUs
 import com.example.voyagetime.ui.screens.DepartureCityScreen
 import com.example.voyagetime.ui.screens.ForgotPasswordScreen
 import com.example.voyagetime.ui.screens.Gallery
 import com.example.voyagetime.ui.screens.Home
+import com.example.voyagetime.ui.screens.HotelDetailScreen
 import com.example.voyagetime.ui.screens.Itinerary
 import com.example.voyagetime.ui.screens.LanguageManager
 import com.example.voyagetime.ui.screens.Preferences
 import com.example.voyagetime.ui.screens.PreferencesManager
 import com.example.voyagetime.ui.screens.RegisterScreen
+import com.example.voyagetime.ui.screens.ReservationsScreen
 import com.example.voyagetime.ui.screens.SplashScreen
 import com.example.voyagetime.ui.screens.TermsAcceptanceScreen
 import com.example.voyagetime.ui.screens.TermsAndConditions
@@ -54,7 +59,6 @@ import com.example.voyagetime.ui.screens.CreateTripScreen
 import com.example.voyagetime.ui.theme.VoyageTimeTheme
 import dagger.hilt.android.AndroidEntryPoint
 
-// Global dark mode state accessible anywhere in the composition tree
 val LocalDarkMode = compositionLocalOf { false }
 val LocalOnDarkModeChange = compositionLocalOf<(Boolean) -> Unit> { {} }
 
@@ -80,7 +84,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val context = this
-
             var darkMode by rememberSaveable {
                 mutableStateOf(PreferencesManager.getDarkMode(context))
             }
@@ -93,25 +96,17 @@ class MainActivity : ComponentActivity() {
                 }
             ) {
                 VoyageTimeTheme(darkTheme = darkMode) {
-                    var currentScreen by rememberSaveable {
-                        mutableStateOf(AppScreen.SPLASH)
-                    }
+                    var currentScreen by rememberSaveable { mutableStateOf(AppScreen.SPLASH) }
 
                     when (currentScreen) {
-                        AppScreen.SPLASH -> {
-                            SplashScreen(onFinished = {
-                                currentScreen = startAfterSplash
-                            })
-                        }
-                        AppScreen.TERMS_ACCEPTANCE -> {
+                        AppScreen.SPLASH ->
+                            SplashScreen(onFinished = { currentScreen = startAfterSplash })
+                        AppScreen.TERMS_ACCEPTANCE ->
                             TermsAcceptanceScreen(
                                 onAccept = { currentScreen = AppScreen.MAIN },
                                 onReject = { currentScreen = AppScreen.MAIN }
                             )
-                        }
-                        AppScreen.MAIN -> {
-                            VoyageTimeApp()
-                        }
+                        AppScreen.MAIN -> VoyageTimeApp()
                     }
                 }
             }
@@ -126,17 +121,17 @@ fun VoyageTimeApp() {
     val navController = rememberNavController()
 
     val items = listOf(
-        NavItem(Routes.HOME, R.string.nav_home, Icons.Default.Home),
-        NavItem(Routes.TRIPS, R.string.nav_trips, Icons.Default.Place),
-        NavItem(Routes.GALLERY, R.string.nav_gallery, Icons.Default.PhotoLibrary),
-        NavItem(Routes.PREFERENCES, R.string.nav_preferences, Icons.Default.AccountBox),
+        NavItem(Routes.HOME,         R.string.nav_home,         Icons.Default.Home),
+        NavItem(Routes.TRIPS,        R.string.nav_trips,        Icons.Default.Place),
+        NavItem(Routes.RESERVATIONS, R.string.nav_reservations, Icons.Default.Hotel),
+        NavItem(Routes.GALLERY,      R.string.nav_gallery,      Icons.Default.PhotoLibrary),
+        NavItem(Routes.PREFERENCES,  R.string.nav_preferences,  Icons.Default.AccountBox),
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    // Rutas donde NO queremos mostrar la barra de navegación inferior
-    val routesWithoutNavBar = setOf(Routes.REGISTER, Routes.FORGOT_PASSWORD)
+    val routesWithoutNavBar = setOf(Routes.REGISTER, Routes.FORGOT_PASSWORD, Routes.HOTEL_DETAIL)
     val showNavBar = currentDestination?.route !in routesWithoutNavBar
 
     if (showNavBar) {
@@ -159,18 +154,19 @@ fun VoyageTimeApp() {
                     )
                 }
             }
-        ) {
-            AppNavHost(navController)
-        }
+        ) { AppNavHost(navController) }
     } else {
         AppNavHost(navController)
     }
 }
 
 @Composable
-private fun AppNavHost(
-    navController: androidx.navigation.NavHostController
-) {
+private fun AppNavHost(navController: androidx.navigation.NavHostController) {
+    var pendingHotel by remember { mutableStateOf<HotelDto?>(null) }
+    var pendingTripId by remember { mutableStateOf(0L) }
+    var pendingStartDate by remember { mutableStateOf("") }
+    var pendingEndDate by remember { mutableStateOf("") }
+
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         NavHost(
             navController = navController,
@@ -210,13 +206,13 @@ private fun AppNavHost(
                 )
             }
             composable(Routes.ABOUT_US) {
-                com.example.voyagetime.ui.screens.AboutUs(onBack = { navController.popBackStack() })
+                AboutUs(onBack = { navController.popBackStack() })
             }
             composable(Routes.TERMS) {
                 TermsAndConditions(onBack = { navController.popBackStack() })
             }
 
-            // ── Auth routes ───────────────────────────────────────────────────
+            // ── Auth ──────────────────────────────────────────────────────
             composable(Routes.REGISTER) {
                 RegisterScreen(
                     viewModel = hiltViewModel(),
@@ -233,6 +229,26 @@ private fun AppNavHost(
                     viewModel = hiltViewModel(),
                     onBack = { navController.popBackStack() }
                 )
+            }
+
+            // ── T4.1 — Listado de reservas ────────────────────────────────
+            composable(Routes.RESERVATIONS) {
+                ReservationsScreen()
+            }
+
+            // ── T2.4 — Detalle hotel + booking ────────────────────────────
+            composable(Routes.HOTEL_DETAIL) {
+                val hotel = pendingHotel
+                if (hotel != null) {
+                    HotelDetailScreen(
+                        hotel     = hotel,
+                        tripId    = pendingTripId,
+                        startDate = pendingStartDate,
+                        endDate   = pendingEndDate,
+                        onBack    = { navController.popBackStack() },
+                        onBookingSuccess = { navController.popBackStack() }
+                    )
+                }
             }
         }
     }
@@ -251,4 +267,6 @@ object Routes {
     const val TERMS            = "terms"
     const val REGISTER         = "register"
     const val FORGOT_PASSWORD  = "forgot_password"
+    const val HOTEL_DETAIL     = "hotel_detail"    // T2.4
+    const val RESERVATIONS     = "reservations"    // T4.1
 }
