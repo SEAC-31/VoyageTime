@@ -68,4 +68,7 @@ interface TripDao {
 
     @Query("DELETE FROM trips WHERE user_id = :userId")
     suspend fun deleteAllTripsForUser(userId: String)
+
+    @Query("SELECT COUNT(*) FROM trips WHERE LOWER(destination) = LOWER(:destination) AND user_id = :userId AND (:excludeId IS NULL OR id != :excludeId)")
+    suspend fun countByDestination(destination: String, userId: String, excludeId: Long?): Int
 }

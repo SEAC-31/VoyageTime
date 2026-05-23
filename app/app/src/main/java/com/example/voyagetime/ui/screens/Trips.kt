@@ -78,7 +78,7 @@ import java.time.format.DateTimeParseException
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 import java.util.Locale
-
+import androidx.compose.material.icons.filled.PhotoLibrary
 enum class TripState {
     UPCOMING,
     PLANNED,
@@ -135,6 +135,7 @@ private fun localizedInsightValue(value: String, @StringRes defaultRes: Int, eng
 fun Trips(
     modifier: Modifier = Modifier,
     onTripClick: (String) -> Unit,
+    onGalleryClick: (String) -> Unit = {},
     viewModel: TripsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -191,6 +192,7 @@ fun Trips(
                 EditableUpcomingTripCard(
                     trip = trip,
                     onViewClick = { onTripClick(trip.id) },
+                    onGalleryClick = { onGalleryClick(trip.id) },
                     onDeleteClick = { viewModel.deleteTrip(trip.id) },
                     onSave = { updatedTrip -> viewModel.updateTrip(updatedTrip) }
                 )
@@ -209,6 +211,7 @@ fun Trips(
                 PastTripCard(
                     trip = trip,
                     onViewClick = { onTripClick(trip.id) },
+                    onGalleryClick = { onGalleryClick(trip.id) },
                     onDeleteClick = { viewModel.deleteTrip(trip.id) }
                 )
 
@@ -405,6 +408,7 @@ fun TripCategory(
 fun EditableUpcomingTripCard(
     trip: TripItem,
     onViewClick: () -> Unit,
+    onGalleryClick: () -> Unit = {},
     onDeleteClick: () -> Unit,
     onSave: (TripItem) -> Unit
 ) {
@@ -480,6 +484,15 @@ fun EditableUpcomingTripCard(
 
                                 Button(onClick = onViewClick) {
                                     Text(stringResource(R.string.trips_btn_view))
+                                }
+                                OutlinedButton(onClick = onGalleryClick) {
+                                    Icon(
+                                        imageVector = Icons.Default.PhotoLibrary,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(stringResource(R.string.trip_gallery_btn))
                                 }
                             }
                         }
@@ -726,6 +739,7 @@ private fun TripMainInfo(
 fun PastTripCard(
     trip: TripItem,
     onViewClick: () -> Unit,
+    onGalleryClick: () -> Unit = {},
     onDeleteClick: () -> Unit
 ) {
     Box(
@@ -795,6 +809,16 @@ fun PastTripCard(
             modifier = Modifier.align(Alignment.TopEnd),
             onClick = onDeleteClick
         )
+        IconButton(
+            onClick = onGalleryClick,
+            modifier = Modifier.align(Alignment.BottomEnd)
+        ) {
+            Icon(
+                imageVector = Icons.Default.PhotoLibrary,
+                contentDescription = stringResource(R.string.trip_gallery_btn),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }
 
