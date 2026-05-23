@@ -12,6 +12,7 @@ interface TripRepository {
     suspend fun addTrip(newTrip: TripItem)
     suspend fun updateTrip(updatedTrip: TripItem)
     suspend fun deleteTrip(tripId: String)
+    suspend fun isTripDestinationTaken(destination: String, excludeTripId: String? = null): Boolean
 
     fun getFavoriteRegion(): String
     fun updateFavoriteRegion(newValue: String)
