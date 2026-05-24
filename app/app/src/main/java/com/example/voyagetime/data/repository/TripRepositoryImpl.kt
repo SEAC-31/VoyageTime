@@ -114,7 +114,8 @@ class TripRepositoryImpl(
                 "PLANNED"   -> TripState.PLANNED
                 else        -> TripState.UPCOMING
             },
-            image = imageRes
+            image = imageRes,
+            coverImageUri = coverImageUri
         )
     }
 
@@ -136,7 +137,8 @@ class TripRepositoryImpl(
             durationDays  = days,
             budgetAmount  = budgetVal,
             statusLabel   = statusLabel,
-            imageRes      = image
+            imageRes      = image,
+            coverImageUri = coverImageUri
         )
     }
 

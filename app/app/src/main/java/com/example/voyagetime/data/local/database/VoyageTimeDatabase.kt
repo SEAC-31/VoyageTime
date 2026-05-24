@@ -3,6 +3,8 @@ package com.example.voyagetime.data.local.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.voyagetime.data.local.dao.AccessLogDao
 import com.example.voyagetime.data.local.dao.ItineraryItemDao
 import com.example.voyagetime.data.local.dao.ReservationDao
@@ -26,7 +28,7 @@ import com.example.voyagetime.utils.RoomTypeConverters
         ReservationEntity::class,
         TripImageEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 @TypeConverters(RoomTypeConverters::class)
@@ -41,5 +43,11 @@ abstract class VoyageTimeDatabase : RoomDatabase() {
 
     companion object {
         const val DATABASE_NAME = "voyagetime.db"
+
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE trips ADD COLUMN cover_image_uri TEXT")
+            }
+        }
     }
 }

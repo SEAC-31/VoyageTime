@@ -34,6 +34,7 @@ object DatabaseModule {
             // For this academic sprint we prefer a clean local database instead of
             // crashing when opening Trips/Reservations. Room will recreate the DB
             // from the current entities if it detects an incompatible old version.
+            .addMigrations(VoyageTimeDatabase.MIGRATION_7_8)
             .fallbackToDestructiveMigration(true)
             .build()
 

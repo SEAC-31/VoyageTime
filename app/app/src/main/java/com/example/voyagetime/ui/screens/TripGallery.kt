@@ -1,6 +1,5 @@
 package com.example.voyagetime.ui.screens
 
-import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -35,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,7 +49,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voyagetime.R
 import com.example.voyagetime.ui.viewmodels.TripGalleryViewModel
+import com.example.voyagetime.utils.TripImageStorage
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 /**
  * T3.1/T3.2/T3.3 — Galería específica de cada viaje.
@@ -66,6 +68,7 @@ fun TripGallery(
     viewModel: TripGalleryViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val savedImages by viewModel.tripImages.collectAsStateWithLifecycle()
 
     LaunchedEffect(tripId) {
@@ -76,18 +79,18 @@ fun TripGallery(
         contract = ActivityResultContracts.OpenMultipleDocuments()
     ) { uris: List<Uri> ->
         if (uris.isNotEmpty()) {
-            val uriStrings = uris.map { uri ->
-                try {
-                    context.contentResolver.takePersistableUriPermission(
-                        uri,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+            coroutineScope.launch {
+                val copiedUris = uris.mapIndexedNotNull { index, uri ->
+                    TripImageStorage.copyImageToTripFolder(
+                        context = context,
+                        sourceUri = uri,
+                        tripId = tripId,
+                        tripName = tripName,
+                        prefix = "gallery_${index + 1}"
                     )
-                } catch (_: Exception) {
-                    // Some providers do not grant persistable permissions; the URI is still stored.
                 }
-                uri.toString()
+                viewModel.attachImages(tripId, copiedUris)
             }
-            viewModel.attachImages(tripId, uriStrings)
         }
     }
 
@@ -114,6 +117,7 @@ fun TripGallery(
             onDelete = { item ->
                 val entity = savedImages.firstOrNull { it.imageUri == item.imageUri }
                 if (entity != null) {
+                    runCatching { context.contentResolver.delete(Uri.parse(entity.imageUri), null, null) }
                     viewModel.deleteImage(entity)
                 }
                 selectedItem = null

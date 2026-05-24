@@ -1,5 +1,7 @@
 package com.example.voyagetime.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -54,6 +56,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -61,6 +64,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -72,6 +76,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.voyagetime.R
 import com.example.voyagetime.ui.viewmodels.TripReservationSummary
 import com.example.voyagetime.ui.viewmodels.TripsViewModel
+import com.example.voyagetime.utils.TripImageStorage
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -80,6 +85,7 @@ import java.time.format.DateTimeParseException
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 import java.util.Locale
+import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.PhotoLibrary
 enum class TripState {
     UPCOMING,
@@ -102,7 +108,8 @@ data class TripItem(
     val budget: String,
     val statusLabel: String,
     val state: TripState,
-    val image: Int
+    val image: Int,
+    val coverImageUri: String? = null
 )
 
 data class HomeStat(
@@ -137,7 +144,7 @@ private fun localizedInsightValue(value: String, @StringRes defaultRes: Int, eng
 fun Trips(
     modifier: Modifier = Modifier,
     onTripClick: (String) -> Unit,
-    onGalleryClick: (String) -> Unit = {},
+    onGalleryClick: (String, String) -> Unit = { _, _ -> },
     viewModel: TripsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -195,7 +202,7 @@ fun Trips(
                     trip = trip,
                     reservationSummary = uiState.reservationsByTrip[trip.id],
                     onViewClick = { onTripClick(trip.id) },
-                    onGalleryClick = { onGalleryClick(trip.id) },
+                    onGalleryClick = { onGalleryClick(trip.id, trip.destination) },
                     onDeleteClick = { viewModel.deleteTrip(trip.id) },
                     onSave = { updatedTrip -> viewModel.updateTrip(updatedTrip) }
                 )
@@ -215,7 +222,7 @@ fun Trips(
                     trip = trip,
                     reservationSummary = uiState.reservationsByTrip[trip.id],
                     onViewClick = { onTripClick(trip.id) },
-                    onGalleryClick = { onGalleryClick(trip.id) },
+                    onGalleryClick = { onGalleryClick(trip.id, trip.destination) },
                     onDeleteClick = { viewModel.deleteTrip(trip.id) }
                 )
 
@@ -426,6 +433,30 @@ fun EditableUpcomingTripCard(
     var draftBudget by rememberSaveable(trip.id, trip.budget) {
         mutableStateOf(extractBudgetDigits(trip.budget))
     }
+    var draftCoverImageUri by rememberSaveable(trip.id, trip.coverImageUri) {
+        mutableStateOf(trip.coverImageUri)
+    }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val coverPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            coroutineScope.launch {
+                val storedUri = TripImageStorage.copyImageToTripFolder(
+                    context = context,
+                    sourceUri = uri,
+                    tripId = trip.id,
+                    tripName = draftDestination.ifBlank { trip.destination },
+                    prefix = "cover"
+                )
+                if (!storedUri.isNullOrBlank()) {
+                    draftCoverImageUri = storedUri
+                }
+            }
+        }
+    }
 
     val destinationError = if (draftDestination.trim().isBlank()) stringResource(R.string.validation_destination_required) else null
     val countryError = if (draftCountry.trim().isBlank()) stringResource(R.string.validation_country_required) else null
@@ -547,6 +578,30 @@ fun EditableUpcomingTripCard(
                             .padding(14.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        TripCoverImage(
+                            imageRes = trip.image,
+                            imageUri = draftCoverImageUri,
+                            contentDescription = trip.destination,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(170.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                        )
+
+                        OutlinedButton(
+                            onClick = { coverPickerLauncher.launch(arrayOf("image/*")) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PhotoLibrary,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Change trip image")
+                        }
+
                         OutlinedTextField(
                             value = draftDestination,
                             onValueChange = { draftDestination = it },
@@ -612,6 +667,7 @@ fun EditableUpcomingTripCard(
                                 draftCountry = trip.country
                                 draftDateRange = normalizeDateRangeForEditing(trip.dateRange)
                                 draftBudget = extractBudgetDigits(trip.budget)
+                                draftCoverImageUri = trip.coverImageUri
                                 isEditing = false
                             }
 
@@ -623,7 +679,8 @@ fun EditableUpcomingTripCard(
                                             country = draftCountry.trim(),
                                             dateRange = normalizeDateRangeForStorage(draftDateRange),
                                             duration = safeDuration,
-                                            budget = "€${draftBudget.trim()}"
+                                            budget = "€${draftBudget.trim()}",
+                                            coverImageUri = draftCoverImageUri
                                         )
                                     )
                                     isEditing = false
@@ -692,8 +749,9 @@ private fun TripMainInfo(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            painter = painterResource(id = trip.image),
+        TripCoverImage(
+            imageRes = trip.image,
+            imageUri = trip.coverImageUri,
             contentDescription = trip.destination,
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -768,8 +826,9 @@ fun PastTripCard(
                 .clickable { onViewClick() },
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = trip.image),
+            TripCoverImage(
+                imageRes = trip.image,
+                imageUri = trip.coverImageUri,
                 contentDescription = trip.destination,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

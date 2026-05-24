@@ -57,6 +57,7 @@ class HomeViewModel @Inject constructor(
                             duration    = trip.duration,
                             budget      = trip.budgetValue(),
                             image       = trip.image,
+                            coverImageUri = trip.coverImageUri,
                             status      = trip.statusLabel
                         )
                     }

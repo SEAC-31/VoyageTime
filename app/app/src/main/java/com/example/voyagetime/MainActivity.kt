@@ -1,11 +1,15 @@
 package com.example.voyagetime
 
 import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
@@ -14,6 +18,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Hotel
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -26,6 +31,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -38,6 +44,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.example.voyagetime.data.remote.HotelDto
 import com.example.voyagetime.ui.screens.AboutUs
 import com.example.voyagetime.ui.screens.DepartureCityScreen
@@ -61,6 +68,7 @@ import com.example.voyagetime.ui.screens.Trips
 import com.example.voyagetime.ui.screens.CreateTripScreen
 import com.example.voyagetime.ui.theme.VoyageTimeTheme
 import com.google.firebase.auth.FirebaseAuth
+import com.google.gson.Gson
 import dagger.hilt.android.AndroidEntryPoint
 import com.example.voyagetime.ui.screens.TripGallery
 
@@ -180,7 +188,7 @@ fun VoyageTimeApp(onLogout: () -> Unit = {}) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val routesWithoutNavBar = setOf(Routes.REGISTER, Routes.FORGOT_PASSWORD, Routes.HOTEL_DETAIL)
+    val routesWithoutNavBar = setOf(Routes.REGISTER, Routes.FORGOT_PASSWORD)
     val showNavBar = currentDestination?.route !in routesWithoutNavBar
 
     if (showNavBar) {
@@ -214,10 +222,7 @@ private fun AppNavHost(
     navController: androidx.navigation.NavHostController,
     onLogout: () -> Unit = {}
 ) {
-    var pendingHotel by remember { mutableStateOf<HotelDto?>(null) }
-    var pendingTripId by remember { mutableStateOf(0L) }
-    var pendingStartDate by remember { mutableStateOf("") }
-    var pendingEndDate by remember { mutableStateOf("") }
+    val gson = remember { Gson() }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         NavHost(
@@ -242,9 +247,8 @@ private fun AppNavHost(
             composable(Routes.TRIPS) {
                 Trips(
                     onTripClick = { navController.navigate("${Routes.ITINERARY}/$it") },
-                    onGalleryClick = { tripId ->
-                        // Aquí necesitamos el nombre del viaje — pasamos el ID y dejamos que TripGallery lo muestre
-                        navController.navigate("${Routes.TRIP_GALLERY}/$tripId/$tripId")
+                    onGalleryClick = { tripId, tripName ->
+                        navController.navigate("${Routes.TRIP_GALLERY}/$tripId/${Uri.encode(tripName)}")
                     }
                 )
             }
@@ -259,11 +263,10 @@ private fun AppNavHost(
             composable(Routes.HOTEL_SEARCH) {
                 HotelSearchScreen(
                     onHotelSelected = { hotel, startDate, endDate ->
-                        pendingHotel = hotel
-                        pendingTripId = 0L
-                        pendingStartDate = startDate
-                        pendingEndDate = endDate
-                        navController.navigate(Routes.HOTEL_DETAIL)
+                        val encodedHotel = Uri.encode(gson.toJson(hotel))
+                        val encodedStart = Uri.encode(startDate)
+                        val encodedEnd = Uri.encode(endDate)
+                        navController.navigate("${Routes.HOTEL_DETAIL}/$encodedHotel/$encodedStart/$encodedEnd")
                     }
                 )
             }
@@ -277,7 +280,7 @@ private fun AppNavHost(
             ) { backStackEntry ->
                 TripGallery(
                     tripId = backStackEntry.arguments?.getString("tripId") ?: "",
-                    tripName = backStackEntry.arguments?.getString("tripName") ?: "",
+                    tripName = Uri.decode(backStackEntry.arguments?.getString("tripName") ?: ""),
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -312,19 +315,56 @@ private fun AppNavHost(
                     onBack = { navController.popBackStack() }
                 )
             }
-            composable(Routes.HOTEL_DETAIL) {
-                val hotel = pendingHotel
+            composable(
+                route = "${Routes.HOTEL_DETAIL}/{hotelJson}/{startDate}/{endDate}",
+                arguments = listOf(
+                    navArgument("hotelJson") { type = NavType.StringType },
+                    navArgument("startDate") { type = NavType.StringType },
+                    navArgument("endDate") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val hotel = runCatching {
+                    gson.fromJson(
+                        Uri.decode(backStackEntry.arguments?.getString("hotelJson").orEmpty()),
+                        HotelDto::class.java
+                    )
+                }.getOrNull()
+
+                val startDate = Uri.decode(backStackEntry.arguments?.getString("startDate").orEmpty())
+                val endDate = Uri.decode(backStackEntry.arguments?.getString("endDate").orEmpty())
+
                 if (hotel != null) {
                     HotelDetailScreen(
                         hotel     = hotel,
-                        tripId    = pendingTripId,
-                        startDate = pendingStartDate,
-                        endDate   = pendingEndDate,
+                        tripId    = 0L,
+                        startDate = startDate,
+                        endDate   = endDate,
                         onBack    = { navController.popBackStack() },
                         onBookingSuccess = { navController.popBackStack() }
                     )
+                } else {
+                    HotelDetailFallback(
+                        onBack = { navController.popBackStack() }
+                    )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun HotelDetailFallback(onBack: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Could not open the hotel details. Please go back and select the hotel again.")
+        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onBack) {
+            Text("Back")
         }
     }
 }

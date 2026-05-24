@@ -204,7 +204,8 @@ class HotelBookingViewModel @Inject constructor(
             durationDays = nights,
             budgetAmount = budget,
             statusLabel = "PLANNED",
-            imageRes = imageForCity(city)
+            imageRes = imageForCity(city),
+            coverImageUri = hotel.allImages.firstOrNull()
         )
         return tripDao.insertTrip(trip)
     }
