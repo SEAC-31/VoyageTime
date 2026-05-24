@@ -1,325 +1,209 @@
 package com.example.voyagetime.ui.screens
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.voyagetime.R
 import com.example.voyagetime.ui.viewmodels.RegisterViewModel
 
 @Composable
 fun RegisterScreen(
-    onBackToLogin: () -> Unit,
-    onTermsClick: () -> Unit,
-    viewModel: RegisterViewModel = viewModel()
+    viewModel: RegisterViewModel,
+    onRegisterSuccess: () -> Unit,
+    onNavigateToLogin: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val scrollState = rememberScrollState()
+    val uiState by viewModel.uiState.collectAsState()
+
+    var email           by remember { mutableStateOf("") }
+    var password        by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmVisible  by remember { mutableStateOf(false) }
+
+    // Navegar a login cuando el registro sea exitoso
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            onRegisterSuccess()
+            viewModel.resetState()
+        }
+    }
 
     Scaffold { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(scrollState)
+                .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
-                .padding(horizontal = 24.dp, vertical = 28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 24.dp, vertical = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Image(
-                painter = painterResource(R.drawable.logo_no_background),
-                contentDescription = stringResource(R.string.auth_logo_description),
-                modifier = Modifier.size(96.dp)
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = stringResource(R.string.register_title),
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Card(
+            // ── Header ────────────────────────────────────────────────────────
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    OutlinedTextField(
-                        value = uiState.username,
-                        onValueChange = viewModel::onUsernameChange,
-                        label = { Text(text = stringResource(R.string.auth_username)) },
-                        leadingIcon = { Icon(imageVector = Icons.Default.Person, contentDescription = null) },
-                        singleLine = true,
-                        isError = uiState.usernameErrorRes != null,
-                        supportingText = {
-                            uiState.usernameErrorRes?.let { error -> Text(text = stringResource(error)) }
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                Text(
+                    text = "Create Account",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "Join VoyageTime and start planning your trips",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    textAlign = TextAlign.Center,
+                    lineHeight = 20.sp
+                )
+            }
 
-                    OutlinedTextField(
-                        value = uiState.email,
-                        onValueChange = viewModel::onEmailChange,
-                        label = { Text(text = stringResource(R.string.auth_email)) },
-                        leadingIcon = { Icon(imageVector = Icons.Default.Email, contentDescription = null) },
-                        singleLine = true,
-                        isError = uiState.emailErrorRes != null,
-                        supportingText = {
-                            uiState.emailErrorRes?.let { error -> Text(text = stringResource(error)) }
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+            Spacer(modifier = Modifier.height(8.dp))
 
-                    OutlinedTextField(
-                        value = uiState.birthdate,
-                        onValueChange = viewModel::onBirthdateChange,
-                        label = { Text(text = stringResource(R.string.auth_birthdate)) },
-                        placeholder = { Text(text = stringResource(R.string.auth_birthdate_placeholder)) },
-                        leadingIcon = { Icon(imageVector = Icons.Default.Person, contentDescription = null) },
-                        singleLine = true,
-                        isError = uiState.birthdateErrorRes != null,
-                        supportingText = {
-                            uiState.birthdateErrorRes?.let { error -> Text(text = stringResource(error)) }
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+            // ── Email ─────────────────────────────────────────────────────────
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email") },
+                leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                isError = uiState.emailError != null,
+                supportingText = uiState.emailError?.let { { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
 
-                    OutlinedTextField(
-                        value = uiState.address,
-                        onValueChange = viewModel::onAddressChange,
-                        label = { Text(text = stringResource(R.string.auth_address)) },
-                        leadingIcon = { Icon(imageVector = Icons.Default.Home, contentDescription = null) },
-                        singleLine = true,
-                        isError = uiState.addressErrorRes != null,
-                        supportingText = {
-                            uiState.addressErrorRes?.let { error -> Text(text = stringResource(error)) }
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    OutlinedTextField(
-                        value = uiState.country,
-                        onValueChange = viewModel::onCountryChange,
-                        label = { Text(text = stringResource(R.string.auth_country)) },
-                        leadingIcon = { Icon(imageVector = Icons.Default.Public, contentDescription = null) },
-                        singleLine = true,
-                        isError = uiState.countryErrorRes != null,
-                        supportingText = {
-                            uiState.countryErrorRes?.let { error -> Text(text = stringResource(error)) }
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    OutlinedTextField(
-                        value = uiState.phone,
-                        onValueChange = viewModel::onPhoneChange,
-                        label = { Text(text = stringResource(R.string.auth_phone)) },
-                        leadingIcon = { Icon(imageVector = Icons.Default.Phone, contentDescription = null) },
-                        singleLine = true,
-                        isError = uiState.phoneErrorRes != null,
-                        supportingText = {
-                            uiState.phoneErrorRes?.let { error -> Text(text = stringResource(error)) }
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    OutlinedTextField(
-                        value = uiState.password,
-                        onValueChange = viewModel::onPasswordChange,
-                        label = { Text(text = stringResource(R.string.auth_password)) },
-                        leadingIcon = { Icon(imageVector = Icons.Default.Lock, contentDescription = null) },
-                        singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
-                        isError = uiState.passwordErrorRes != null,
-                        supportingText = {
-                            uiState.passwordErrorRes?.let { error -> Text(text = stringResource(error)) }
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    OutlinedTextField(
-                        value = uiState.confirmPassword,
-                        onValueChange = viewModel::onConfirmPasswordChange,
-                        label = { Text(text = stringResource(R.string.auth_confirm_password)) },
-                        leadingIcon = { Icon(imageVector = Icons.Default.Lock, contentDescription = null) },
-                        singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
-                        isError = uiState.confirmPasswordErrorRes != null,
-                        supportingText = {
-                            uiState.confirmPasswordErrorRes?.let { error -> Text(text = stringResource(error)) }
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = uiState.acceptEmails,
-                            onCheckedChange = viewModel::onAcceptEmailsChange
-                        )
-
-                        Text(
-                            text = stringResource(R.string.register_accept_emails),
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.weight(1f)
+            // ── Password ──────────────────────────────────────────────────────
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password") },
+                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = if (passwordVisible) "Hide password" else "Show password"
                         )
                     }
+                },
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                isError = uiState.passwordError != null,
+                supportingText = uiState.passwordError?.let { { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = uiState.acceptTerms,
-                            onCheckedChange = viewModel::onAcceptTermsChange
-                        )
-
-                        Text(
-                            text = stringResource(R.string.register_accept_terms_prefix),
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        TextButton(
-                            onClick = onTermsClick,
-                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.register_terms_link),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
-
-                    uiState.termsErrorRes?.let { error ->
-                        Text(text = stringResource(error), color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
-                    }
-
-                    uiState.generalErrorRes?.let { error ->
-                        Text(text = stringResource(error), color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
-                    }
-
-                    uiState.infoMessageRes?.let { message ->
-                        Text(
-                            text = stringResource(message),
-                            color = MaterialTheme.colorScheme.primary,
-                            fontSize = 13.sp,
-                            lineHeight = 18.sp
+            // ── Confirm Password ──────────────────────────────────────────────
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                label = { Text("Confirm Password") },
+                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                trailingIcon = {
+                    IconButton(onClick = { confirmVisible = !confirmVisible }) {
+                        Icon(
+                            imageVector = if (confirmVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = if (confirmVisible) "Hide password" else "Show password"
                         )
                     }
+                },
+                visualTransformation = if (confirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                isError = uiState.confirmPasswordError != null,
+                supportingText = uiState.confirmPasswordError?.let { { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
 
-                    Button(
-                        onClick = viewModel::register,
-                        enabled = !uiState.isLoading,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        if (uiState.isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                        } else {
-                            Text(text = stringResource(R.string.register_button), fontWeight = FontWeight.SemiBold)
-                        }
-                    }
+            // ── Error genérico ────────────────────────────────────────────────
+            if (uiState.genericError != null) {
+                Text(
+                    text = uiState.genericError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 13.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            }
 
-                    Text(
-                        text = stringResource(R.string.register_verification_notice),
-                        fontSize = 12.sp,
-                        lineHeight = 18.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+            // ── Botón registro ────────────────────────────────────────────────
+            Button(
+                onClick = { viewModel.register(email, password, confirmPassword) },
+                enabled = !uiState.isLoading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
+                } else {
+                    Text("Create Account", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
+            // ── Verificación info ─────────────────────────────────────────────
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.register_already_account),
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f)
+                    text = "After registering, we'll send a verification email. Please check your inbox to activate your account.",
+                    fontSize = 12.sp,
+                    lineHeight = 18.sp,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.padding(12.dp),
+                    textAlign = TextAlign.Center
                 )
+            }
 
-                TextButton(onClick = onBackToLogin) {
-                    Text(text = stringResource(R.string.register_back_to_login))
+            // ── Link a login ──────────────────────────────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Already have an account? ",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+                TextButton(onClick = onNavigateToLogin) {
+                    Text(
+                        text = "Sign In",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         }

@@ -12,25 +12,23 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TripDao {
 
+    // ── Queries filtradas por usuario (T4.2) ──────────────────────────────────
+
     @Query("SELECT * FROM trips WHERE user_id = :userId ORDER BY start_datetime ASC")
     fun getAllTrips(userId: String): Flow<List<TripEntity>>
 
-    @Query(
-        """
+    @Query("""
         SELECT * FROM trips
         WHERE user_id = :userId AND UPPER(status_label) IN ('UPCOMING', 'PLANNED')
         ORDER BY start_datetime ASC
-        """
-    )
+    """)
     fun getUpcomingTrips(userId: String): Flow<List<TripEntity>>
 
-    @Query(
-        """
+    @Query("""
         SELECT * FROM trips
         WHERE user_id = :userId AND UPPER(status_label) = 'COMPLETED'
         ORDER BY start_datetime DESC
-        """
-    )
+    """)
     fun getPastTrips(userId: String): Flow<List<TripEntity>>
 
     @Query("SELECT * FROM trips WHERE id = :tripId AND user_id = :userId LIMIT 1")
@@ -42,19 +40,19 @@ interface TripDao {
     @Query("SELECT * FROM trips WHERE user_id = :userId ORDER BY start_datetime ASC")
     suspend fun getAllTripsOnce(userId: String): List<TripEntity>
 
-    @Query(
-        """
-        SELECT COUNT(*) > 0 FROM trips
+    @Query("""
+        SELECT COUNT(*) FROM trips
         WHERE user_id = :userId
-        AND LOWER(TRIM(destination)) = LOWER(TRIM(:destination))
-        AND id != :excludeId
-        """
-    )
-    suspend fun isTripDestinationTakenForUser(
-        userId: String,
+          AND LOWER(TRIM(destination)) = LOWER(TRIM(:destination))
+          AND (:excludeTripId IS NULL OR id != :excludeTripId)
+    """)
+    suspend fun countTripsByDestination(
         destination: String,
-        excludeId: Long = 0L
-    ): Boolean
+        userId: String,
+        excludeTripId: Long? = null
+    ): Int
+
+    // ── Mutations ─────────────────────────────────────────────────────────────
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTrip(trip: TripEntity): Long
@@ -70,4 +68,7 @@ interface TripDao {
 
     @Query("DELETE FROM trips WHERE user_id = :userId")
     suspend fun deleteAllTripsForUser(userId: String)
+
+    @Query("SELECT COUNT(*) FROM trips WHERE LOWER(destination) = LOWER(:destination) AND user_id = :userId AND (:excludeId IS NULL OR id != :excludeId)")
+    suspend fun countByDestination(destination: String, userId: String, excludeId: Long?): Int
 }

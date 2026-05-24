@@ -44,7 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.voyagetime.R
 import com.example.voyagetime.ui.viewmodels.LoginViewModel
 
@@ -53,7 +53,7 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onRegisterClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
-    viewModel: LoginViewModel = viewModel()
+    viewModel: LoginViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
 
@@ -62,6 +62,13 @@ fun LoginScreen(
     }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            viewModel.resetState()
+            onLoginSuccess()
+        }
+    }
     val scrollState = rememberScrollState()
 
     Scaffold { innerPadding ->
@@ -200,10 +207,7 @@ fun LoginScreen(
 
                     Button(
                         onClick = {
-                            viewModel.login(
-                                context = context,
-                                onSuccess = onLoginSuccess
-                            )
+                            viewModel.login(context = context)
                         },
                         enabled = !uiState.isLoading,
                         modifier = Modifier.fillMaxWidth(),

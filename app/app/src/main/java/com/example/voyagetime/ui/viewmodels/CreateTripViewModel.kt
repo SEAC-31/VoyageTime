@@ -1,61 +1,37 @@
 package com.example.voyagetime.ui.viewmodels
 
-import android.app.Application
 import android.util.Log
-import androidx.annotation.StringRes
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.voyagetime.R
-import com.example.voyagetime.data.local.database.VoyageTimeDatabase
-import com.example.voyagetime.data.repository.TripRepositoryImpl
 import com.example.voyagetime.domain.repository.TripRepository
 import com.example.voyagetime.ui.screens.TripItem
 import com.example.voyagetime.ui.screens.TripState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
 import java.util.Locale
+import javax.inject.Inject
 
 data class CreateTripUiState(
-    @StringRes val destinationErrorRes: Int? = null,
-    @StringRes val dateErrorRes: Int? = null,
-    @StringRes val generalErrorRes: Int? = null,
-    val isSaving: Boolean = false,
-    val isCreated: Boolean = false
+    val isLoading: Boolean = false,
+    val isSaved: Boolean = false,
+    val error: String? = null
 )
 
-class CreateTripViewModel(application: Application) : AndroidViewModel(application) {
-
+@HiltViewModel
+class CreateTripViewModel @Inject constructor(
     private val repository: TripRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateTripUiState())
     val uiState: StateFlow<CreateTripUiState> = _uiState.asStateFlow()
-
-    init {
-        val database = VoyageTimeDatabase.getDatabase(application)
-        repository = TripRepositoryImpl(database.tripDao())
-    }
-
-    fun clearMessages() {
-        _uiState.update {
-            it.copy(
-                destinationErrorRes = null,
-                dateErrorRes = null,
-                generalErrorRes = null,
-                isCreated = false
-            )
-        }
-    }
-
-    fun consumeCreatedEvent() {
-        _uiState.update { it.copy(isCreated = false) }
-    }
 
     fun createTrip(
         destination: String,
@@ -64,123 +40,81 @@ class CreateTripViewModel(application: Application) : AndroidViewModel(applicati
         endDate: String,
         budget: String
     ) {
-        val normalizedDestination = destination.trim()
-        val normalizedCountry = country.trim()
-        val normalizedBudget = budget.trim()
+        Log.d(TAG, "createTrip called: destination=$destination, country=$country, start=$startDate, end=$endDate")
 
-        val start = parseDate(startDate)
-        val end = parseDate(endDate)
+        val start = parseDate(startDate) ?: run {
+            Log.e(TAG, "createTrip: invalid startDate format — $startDate")
+            return
+        }
+        val end = parseDate(endDate) ?: run {
+            Log.e(TAG, "createTrip: invalid endDate format — $endDate")
+            return
+        }
         val today = LocalDate.now()
 
-        if (start == null || end == null) {
-            Log.e(TAG, "createTrip: invalid date format start=$startDate end=$endDate")
-            _uiState.update { it.copy(dateErrorRes = R.string.validation_date_range_example) }
+        if (start.isBefore(today) || end.isBefore(today) || end.isBefore(start)) {
+            Log.e(TAG, "createTrip: invalid date range — start=$start, end=$end, today=$today")
             return
         }
 
-        if (start.isBefore(today) || end.isBefore(today)) {
-            Log.e(TAG, "createTrip: past date rejected start=$start end=$end today=$today")
-            _uiState.update { it.copy(dateErrorRes = R.string.validation_date_past) }
-            return
-        }
+        val normalizedDestination = destination.trim()
+        val normalizedCountry     = country.trim()
+        val normalizedBudget      = budget.trim()
+        val durationDays          = ChronoUnit.DAYS.between(start, end).toInt() + 1
+        val imageRes              = resolveTripImage(normalizedDestination, normalizedCountry)
 
-        if (end.isBefore(start)) {
-            Log.e(TAG, "createTrip: end before start rejected start=$start end=$end")
-            _uiState.update { it.copy(dateErrorRes = R.string.validation_end_before_start) }
-            return
-        }
+        Log.d(TAG, "createTrip: durationDays=$durationDays, imageRes=$imageRes")
+        _uiState.value = CreateTripUiState(isLoading = true)
 
         viewModelScope.launch {
+            val newTrip = TripItem(
+                id          = "0",
+                destination = normalizedDestination,
+                country     = normalizedCountry,
+                dateRange   = formatDateRange(start, end),
+                duration    = formatDuration(durationDays),
+                budget      = "€$normalizedBudget",
+                statusLabel = "Planned",
+                state       = TripState.PLANNED,
+                image       = imageRes
+            )
             try {
-                _uiState.update {
-                    it.copy(
-                        isSaving = true,
-                        destinationErrorRes = null,
-                        dateErrorRes = null,
-                        generalErrorRes = null,
-                        isCreated = false
-                    )
-                }
-
-                if (repository.isTripDestinationTaken(normalizedDestination)) {
-                    Log.w(TAG, "createTrip: duplicate destination rejected destination=$normalizedDestination")
-                    _uiState.update {
-                        it.copy(
-                            isSaving = false,
-                            destinationErrorRes = R.string.validation_trip_duplicate
-                        )
-                    }
-                    return@launch
-                }
-
-                val durationDays = calculateTripDays(start, end)
-                val imageRes = resolveTripImage(normalizedDestination, normalizedCountry)
-
-                val newTrip = TripItem(
-                    id = "0",
-                    destination = normalizedDestination,
-                    country = normalizedCountry,
-                    dateRange = formatDateRange(start, end),
-                    duration = formatDuration(durationDays),
-                    budget = "€$normalizedBudget",
-                    statusLabel = "Planned",
-                    state = TripState.PLANNED,
-                    image = imageRes,
-                    coverImageUri = null
-                )
-
                 repository.addTrip(newTrip)
-                Log.i(TAG, "createTrip: trip creation completed destination=$normalizedDestination")
-
-                _uiState.update {
-                    it.copy(
-                        isSaving = false,
-                        isCreated = true
-                    )
-                }
-            } catch (error: Exception) {
-                Log.e(TAG, "createTrip: database operation failed", error)
-                _uiState.update {
-                    it.copy(
-                        isSaving = false,
-                        generalErrorRes = R.string.validation_database_error
-                    )
-                }
+                Log.i(TAG, "createTrip: trip saved successfully — destination=$normalizedDestination")
+                _uiState.value = CreateTripUiState(isSaved = true)
+            } catch (e: Exception) {
+                Log.e(TAG, "createTrip: failed saving trip", e)
+                _uiState.value = CreateTripUiState(error = e.message ?: "Could not create trip")
             }
         }
     }
 
-    private fun parseDate(value: String): LocalDate? {
-        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    fun resetState() {
+        Log.d(TAG, "resetState called")
+        _uiState.value = CreateTripUiState()
+    }
 
+    private fun parseDate(value: String): LocalDate? {
         return try {
-            LocalDate.parse(value.trim(), formatter)
-        } catch (_: DateTimeParseException) {
-            null
-        }
+            LocalDate.parse(value.trim(), DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+        } catch (_: DateTimeParseException) { null }
     }
 
     private fun formatDateRange(start: LocalDate, end: LocalDate): String {
-        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-        return "${start.format(formatter)} - ${end.format(formatter)}"
+        val fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+        return "${start.format(fmt)} - ${end.format(fmt)}"
     }
 
-    private fun calculateTripDays(start: LocalDate, end: LocalDate): Int {
-        return ChronoUnit.DAYS.between(start, end).toInt() + 1
-    }
-
-    private fun formatDuration(days: Int): String {
-        return if (days == 1) "1 day" else "$days days"
-    }
+    private fun formatDuration(days: Int): String =
+        if (days == 1) "1 day" else "$days days"
 
     private fun resolveTripImage(destination: String, country: String): Int {
-        val key = "${destination.trim().lowercase(Locale.ENGLISH)} ${country.trim().lowercase(Locale.ENGLISH)}"
-
+        val key = "${destination.lowercase(Locale.ENGLISH)} ${country.lowercase(Locale.ENGLISH)}"
         return when {
-            "paris" in key || "france" in key -> R.drawable.paris
-            "tokyo" in key || "japan" in key -> R.drawable.tokyo
-            "barcelona" in key || "spain" in key -> R.drawable.barcelona
-            "new york" in key || "united states" in key || "usa" in key -> R.drawable.newyork
+            "paris"     in key || "france"        in key -> R.drawable.paris
+            "tokyo"     in key || "japan"         in key -> R.drawable.tokyo
+            "barcelona" in key || "spain"         in key -> R.drawable.barcelona
+            "new york"  in key || "united states" in key || "usa" in key -> R.drawable.newyork
             else -> R.drawable.logo_no_background
         }
     }

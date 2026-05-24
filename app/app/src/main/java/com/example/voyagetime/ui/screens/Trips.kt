@@ -1,10 +1,11 @@
 package com.example.voyagetime.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,9 +22,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -34,9 +34,11 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.FlightTakeoff
+import androidx.compose.material.icons.filled.Hotel
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.TravelExplore
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -54,6 +56,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -69,10 +72,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.voyagetime.R
+import com.example.voyagetime.ui.viewmodels.TripReservationSummary
 import com.example.voyagetime.ui.viewmodels.TripsViewModel
+import com.example.voyagetime.utils.TripImageStorage
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -81,7 +85,8 @@ import java.time.format.DateTimeParseException
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 import java.util.Locale
-
+import kotlinx.coroutines.launch
+import androidx.compose.material.icons.filled.PhotoLibrary
 enum class TripState {
     UPCOMING,
     PLANNED,
@@ -131,11 +136,7 @@ private fun localizedTripStateLabel(state: TripState): String = when (state) {
 }
 
 @Composable
-private fun localizedInsightValue(
-    value: String,
-    @StringRes defaultRes: Int,
-    englishDefault: String
-): String {
+private fun localizedInsightValue(value: String, @StringRes defaultRes: Int, englishDefault: String): String {
     return if (value == englishDefault) stringResource(defaultRes) else value
 }
 
@@ -143,7 +144,8 @@ private fun localizedInsightValue(
 fun Trips(
     modifier: Modifier = Modifier,
     onTripClick: (String) -> Unit,
-    viewModel: TripsViewModel = viewModel()
+    onGalleryClick: (String, String) -> Unit = { _, _ -> },
+    viewModel: TripsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -198,7 +200,9 @@ fun Trips(
             uiState.upcomingTrips.forEachIndexed { index, trip ->
                 EditableUpcomingTripCard(
                     trip = trip,
+                    reservationSummary = uiState.reservationsByTrip[trip.id],
                     onViewClick = { onTripClick(trip.id) },
+                    onGalleryClick = { onGalleryClick(trip.id, trip.destination) },
                     onDeleteClick = { viewModel.deleteTrip(trip.id) },
                     onSave = { updatedTrip -> viewModel.updateTrip(updatedTrip) }
                 )
@@ -216,7 +220,9 @@ fun Trips(
             uiState.pastTrips.forEachIndexed { index, trip ->
                 PastTripCard(
                     trip = trip,
+                    reservationSummary = uiState.reservationsByTrip[trip.id],
                     onViewClick = { onTripClick(trip.id) },
+                    onGalleryClick = { onGalleryClick(trip.id, trip.destination) },
                     onDeleteClick = { viewModel.deleteTrip(trip.id) }
                 )
 
@@ -233,11 +239,7 @@ fun Trips(
             EditableInsightRow(
                 icon = Icons.Default.Explore,
                 title = stringResource(R.string.trips_insight_region),
-                value = localizedInsightValue(
-                    uiState.favoriteRegion,
-                    R.string.trips_insight_region_default,
-                    "Europe & North America"
-                ),
+                value = localizedInsightValue(uiState.favoriteRegion, R.string.trips_insight_region_default, "Europe & North America"),
                 onSave = { viewModel.updateFavoriteRegion(it) }
             )
 
@@ -260,11 +262,7 @@ fun Trips(
             EditableInsightRow(
                 icon = Icons.AutoMirrored.Filled.TrendingUp,
                 title = stringResource(R.string.trips_insight_goal),
-                value = localizedInsightValue(
-                    uiState.travelGoal,
-                    R.string.trips_insight_goal_default,
-                    "Complete 4 memorable trips with clear itineraries"
-                ),
+                value = localizedInsightValue(uiState.travelGoal, R.string.trips_insight_goal_default, "Complete 4 memorable trips with clear itineraries"),
                 onSave = { viewModel.updateTravelGoal(it) }
             )
         }
@@ -420,17 +418,15 @@ fun TripCategory(
 @Composable
 fun EditableUpcomingTripCard(
     trip: TripItem,
+    reservationSummary: TripReservationSummary? = null,
     onViewClick: () -> Unit,
+    onGalleryClick: () -> Unit = {},
     onDeleteClick: () -> Unit,
     onSave: (TripItem) -> Unit
 ) {
     var isEditing by rememberSaveable(trip.id) { mutableStateOf(false) }
-    var draftDestination by rememberSaveable(trip.id, trip.destination) {
-        mutableStateOf(trip.destination)
-    }
-    var draftCountry by rememberSaveable(trip.id, trip.country) {
-        mutableStateOf(trip.country)
-    }
+    var draftDestination by rememberSaveable(trip.id, trip.destination) { mutableStateOf(trip.destination) }
+    var draftCountry by rememberSaveable(trip.id, trip.country) { mutableStateOf(trip.country) }
     var draftDateRange by rememberSaveable(trip.id, trip.dateRange) {
         mutableStateOf(normalizeDateRangeForEditing(trip.dateRange))
     }
@@ -441,10 +437,29 @@ fun EditableUpcomingTripCard(
         mutableStateOf(trip.coverImageUri)
     }
 
-    val destinationError =
-        if (draftDestination.trim().isBlank()) stringResource(R.string.validation_destination_required) else null
-    val countryError =
-        if (draftCountry.trim().isBlank()) stringResource(R.string.validation_country_required) else null
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val coverPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            coroutineScope.launch {
+                val storedUri = TripImageStorage.copyImageToTripFolder(
+                    context = context,
+                    sourceUri = uri,
+                    tripId = trip.id,
+                    tripName = draftDestination.ifBlank { trip.destination },
+                    prefix = "cover"
+                )
+                if (!storedUri.isNullOrBlank()) {
+                    draftCoverImageUri = storedUri
+                }
+            }
+        }
+    }
+
+    val destinationError = if (draftDestination.trim().isBlank()) stringResource(R.string.validation_destination_required) else null
+    val countryError = if (draftCountry.trim().isBlank()) stringResource(R.string.validation_country_required) else null
     val dateRangeError = validateDateRangeMessage(
         draftDateRange,
         requiredMessage = stringResource(R.string.validation_date_range_required),
@@ -485,6 +500,7 @@ fun EditableUpcomingTripCard(
                         ) {
                             TripMainInfo(
                                 trip = trip,
+                                reservationSummary = reservationSummary,
                                 modifier = Modifier.weight(1f)
                             )
 
@@ -506,6 +522,15 @@ fun EditableUpcomingTripCard(
                                 Button(onClick = onViewClick) {
                                     Text(stringResource(R.string.trips_btn_view))
                                 }
+                                OutlinedButton(onClick = onGalleryClick) {
+                                    Icon(
+                                        imageVector = Icons.Default.PhotoLibrary,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(stringResource(R.string.trip_gallery_btn))
+                                }
                             }
                         }
                     } else {
@@ -513,7 +538,10 @@ fun EditableUpcomingTripCard(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            TripMainInfo(trip = trip)
+                            TripMainInfo(
+                                trip = trip,
+                                reservationSummary = reservationSummary
+                            )
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -550,6 +578,30 @@ fun EditableUpcomingTripCard(
                             .padding(14.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        TripCoverImage(
+                            imageRes = trip.image,
+                            imageUri = draftCoverImageUri,
+                            contentDescription = trip.destination,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(170.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                        )
+
+                        OutlinedButton(
+                            onClick = { coverPickerLauncher.launch(arrayOf("image/*")) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PhotoLibrary,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Change trip image")
+                        }
+
                         OutlinedTextField(
                             value = draftDestination,
                             onValueChange = { draftDestination = it },
@@ -604,13 +656,6 @@ fun EditableUpcomingTripCard(
                                 if (budgetError != null) {
                                     Text(budgetError)
                                 }
-                            }
-                        )
-
-                        TripCoverPicker(
-                            selectedUri = draftCoverImageUri,
-                            onSelected = { selectedUri ->
-                                draftCoverImageUri = selectedUri
                             }
                         )
 
@@ -697,16 +742,18 @@ fun EditableUpcomingTripCard(
 @Composable
 private fun TripMainInfo(
     trip: TripItem,
+    reservationSummary: TripReservationSummary? = null,
     modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        TripCoverImageForTrips(
+        TripCoverImage(
             imageRes = trip.image,
             imageUri = trip.coverImageUri,
             contentDescription = trip.destination,
+            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .width(100.dp)
                 .height(100.dp)
@@ -752,6 +799,10 @@ private fun TripMainInfo(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+
+            if (reservationSummary != null) {
+                TripReservationInfo(summary = reservationSummary)
+            }
         }
     }
 }
@@ -759,7 +810,9 @@ private fun TripMainInfo(
 @Composable
 fun PastTripCard(
     trip: TripItem,
+    reservationSummary: TripReservationSummary? = null,
     onViewClick: () -> Unit,
+    onGalleryClick: () -> Unit = {},
     onDeleteClick: () -> Unit
 ) {
     Box(
@@ -773,10 +826,11 @@ fun PastTripCard(
                 .clickable { onViewClick() },
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TripCoverImageForTrips(
+            TripCoverImage(
                 imageRes = trip.image,
                 imageUri = trip.coverImageUri,
                 contentDescription = trip.destination,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .width(100.dp)
                     .height(100.dp)
@@ -822,6 +876,10 @@ fun PastTripCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+
+                if (reservationSummary != null) {
+                    TripReservationInfo(summary = reservationSummary)
+                }
             }
         }
 
@@ -829,105 +887,53 @@ fun PastTripCard(
             modifier = Modifier.align(Alignment.TopEnd),
             onClick = onDeleteClick
         )
-    }
-}
-
-@Composable
-private fun TripCoverImageForTrips(
-    imageRes: Int,
-    imageUri: String?,
-    contentDescription: String?,
-    modifier: Modifier = Modifier
-) {
-    if (!imageUri.isNullOrBlank()) {
-        AsyncImage(
-            model = imageUri,
-            contentDescription = contentDescription,
-            contentScale = ContentScale.Crop,
-            modifier = modifier
-        )
-    } else {
-        Image(
-            painter = painterResource(id = imageRes),
-            contentDescription = contentDescription,
-            contentScale = ContentScale.Crop,
-            modifier = modifier
-        )
-    }
-}
-
-@Composable
-private fun TripCoverPicker(
-    selectedUri: String?,
-    onSelected: (String?) -> Unit
-) {
-    val context = LocalContext.current
-    var galleryUris by remember {
-        mutableStateOf(PreferencesManager.getGalleryImageUris(context))
-    }
-
-    LaunchedEffect(Unit) {
-        galleryUris = PreferencesManager.getGalleryImageUris(context)
-    }
-
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.trips_cover_image),
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        if (galleryUris.isEmpty()) {
-            Text(
-                text = stringResource(R.string.trips_no_gallery_images),
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        IconButton(
+            onClick = onGalleryClick,
+            modifier = Modifier.align(Alignment.BottomEnd)
+        ) {
+            Icon(
+                imageVector = Icons.Default.PhotoLibrary,
+                contentDescription = stringResource(R.string.trip_gallery_btn),
+                tint = MaterialTheme.colorScheme.primary
             )
-        } else {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(galleryUris) { uri ->
-                    val isSelected = uri == selectedUri
+        }
+    }
+}
 
-                    Box(
-                        modifier = Modifier
-                            .size(88.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .border(
-                                width = if (isSelected) 3.dp else 1.dp,
-                                color = if (isSelected) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-                                },
-                                shape = RoundedCornerShape(16.dp)
-                            )
-                            .clickable {
-                                onSelected(uri)
-                            }
-                    ) {
-                        AsyncImage(
-                            model = uri,
-                            contentDescription = stringResource(R.string.trips_cover_from_gallery),
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                }
-            }
 
-            TextButton(
-                onClick = {
-                    onSelected(null)
-                }
-            ) {
-                Text(text = stringResource(R.string.trips_clear_cover))
-            }
+@Composable
+private fun TripReservationInfo(summary: TripReservationSummary) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Hotel,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(16.dp)
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = "Hotel reservation: ${summary.hotelName}",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = "${summary.roomType} · ID ${summary.apiReservationId} · €${"%.2f".format(summary.price)}",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -1470,11 +1476,7 @@ private fun AutoDurationField(
             )
         ) {
             Text(
-                text = if (value.isBlank()) {
-                    stringResource(R.string.field_duration_auto_placeholder)
-                } else {
-                    localizedTripDuration(value)
-                },
+                text = if (value.isBlank()) stringResource(R.string.field_duration_auto_placeholder) else localizedTripDuration(value),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
                 color = if (value.isBlank()) {
                     MaterialTheme.colorScheme.onSurfaceVariant
@@ -1790,10 +1792,8 @@ private fun CustomDateRangeDialog(
                     text = when {
                         selectedStartDate != null && selectedEndDate != null ->
                             "${selectedStartDate!!.format(EUROPEAN_DATE_FORMATTER)} - ${selectedEndDate!!.format(EUROPEAN_DATE_FORMATTER)}"
-
                         selectedStartDate != null ->
                             selectedStartDate!!.format(EUROPEAN_DATE_FORMATTER)
-
                         else ->
                             stringResource(R.string.date_picker_select_start_end)
                     },
