@@ -28,11 +28,13 @@ object DatabaseModule {
             VoyageTimeDatabase::class.java,
             VoyageTimeDatabase.DATABASE_NAME
         )
-            .addMigrations(
-                VoyageTimeDatabase.MIGRATION_1_2,
-                VoyageTimeDatabase.MIGRATION_2_3,  // T2.3
-                VoyageTimeDatabase.MIGRATION_3_4   // T3.1/T3.2
-            )
+            // During Sprint 04 development the Room schema changed several times.
+            // Some devices/emulators can still contain an old, partially migrated
+            // voyagetime.db whose tables do not exactly match the current entities.
+            // For this academic sprint we prefer a clean local database instead of
+            // crashing when opening Trips/Reservations. Room will recreate the DB
+            // from the current entities if it detects an incompatible old version.
+            .fallbackToDestructiveMigration(true)
             .build()
 
     @Provides fun provideTripDao(db: VoyageTimeDatabase): TripDao = db.tripDao()

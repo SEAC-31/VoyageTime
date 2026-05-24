@@ -23,9 +23,15 @@ data class HotelDto(
     @SerializedName(value = "rooms")
     val rooms: List<RoomDto> = emptyList(),
 
+    @SerializedName(value = "images")
+    val images: List<String> = emptyList(),
+
     @SerializedName(value = "image_url", alternate = ["imageUrl", "image"])
     val imageUrl: String = ""
-)
+) {
+    val allImages: List<String>
+        get() = (images + imageUrl).filter { it.isNotBlank() }.distinct()
+}
 
 data class RoomDto(
     @SerializedName(value = "id", alternate = ["room_id"])

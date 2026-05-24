@@ -26,6 +26,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +34,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,6 +81,14 @@ fun CreateTripScreen(
     viewModel: CreateTripViewModel = hiltViewModel()
 ) {
     val scrollState = rememberScrollState()
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState.isSaved) {
+        if (uiState.isSaved) {
+            viewModel.resetState()
+            onTripCreated()
+        }
+    }
 
     var destination by rememberSaveable { mutableStateOf("") }
     var country by rememberSaveable { mutableStateOf("") }
@@ -204,13 +215,28 @@ fun CreateTripScreen(
                                 endDate = parsedRange.second.format(CREATE_TRIP_DATE_FORMATTER),
                                 budget = budget
                             )
-                            onTripCreated()
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = canCreate
+                    enabled = canCreate && !uiState.isLoading
                 ) {
-                    Text(stringResource(R.string.create_trip_btn_create))
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Text(stringResource(R.string.create_trip_btn_create))
+                    }
+                }
+
+                uiState.error?.let { error ->
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 13.sp
+                    )
                 }
 
                 TextButton(

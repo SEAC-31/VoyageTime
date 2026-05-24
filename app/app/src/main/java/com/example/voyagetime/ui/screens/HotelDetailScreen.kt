@@ -74,15 +74,54 @@ fun HotelDetailScreen(
                 .verticalScroll(rememberScrollState())
         ) {
 
-            // ── Imagen principal del hotel ────────────────────────────────
-            AsyncImage(
-                model = hotel.imageUrl,
-                contentDescription = hotel.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp)
-            )
+            // ── Imágenes del hotel ──────────────────────────────────────
+            val hotelImages = hotel.allImages
+            if (hotelImages.isNotEmpty()) {
+                AsyncImage(
+                    model = hotelImages.first(),
+                    contentDescription = hotel.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp)
+                )
+
+                if (hotelImages.size > 1) {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    ) {
+                        items(hotelImages.drop(1)) { imageUrl ->
+                            AsyncImage(
+                                model = imageUrl,
+                                contentDescription = hotel.name,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(120.dp, 80.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surface)
+                            )
+                        }
+                    }
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Hotel,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(56.dp)
+                    )
+                }
+            }
 
             Column(modifier = Modifier.padding(16.dp)) {
 
@@ -105,7 +144,7 @@ fun HotelDetailScreen(
                 }
                 Spacer(Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    repeat(hotel.rating) {
+                    repeat(hotel.rating.toInt()) {
                         Icon(
                             Icons.Default.Star,
                             contentDescription = null,
@@ -245,12 +284,13 @@ private fun RoomCard(
         Column(modifier = Modifier.padding(12.dp)) {
 
             // Galería de imágenes de la habitación (T2.4)
-            if (room.images.isNotEmpty()) {
+            val roomImages = room.allImages
+            if (roomImages.isNotEmpty()) {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(room.images) { imageUrl ->
+                    items(roomImages) { imageUrl ->
                         AsyncImage(
                             model = imageUrl,
                             contentDescription = room.roomType,

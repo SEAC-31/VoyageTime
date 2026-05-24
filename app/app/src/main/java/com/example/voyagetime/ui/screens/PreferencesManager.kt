@@ -153,7 +153,7 @@ object PreferencesManager {
         prefs(context).edit()
             .putBoolean(KEY_REMEMBER_LOGIN, true)
             .putString(KEY_REMEMBERED_EMAIL, email)
-            .apply()
+            .commit()
     }
 
     fun clearRememberedLogin(context: Context) {
@@ -161,6 +161,6 @@ object PreferencesManager {
         prefs(context).edit()
             .putBoolean(KEY_REMEMBER_LOGIN, false)
             .remove(KEY_REMEMBERED_EMAIL)
-            .apply()
+            .commit()
     }
 }

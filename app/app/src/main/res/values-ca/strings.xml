@@ -5,6 +5,7 @@
 
     <!-- Navigation -->
     <string name="nav_home">Inici</string>
+    <string name="nav_hotels">Hotels</string>
     <string name="nav_trips">Viatges</string>
     <string name="nav_reservations">Reserves</string>
     <string name="nav_gallery">Galeria</string>

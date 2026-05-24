@@ -1,5 +1,6 @@
 package com.example.voyagetime.ui.screens
 
+import android.app.TimePickerDialog
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -82,6 +83,7 @@ import com.example.voyagetime.R
 import com.example.voyagetime.ui.viewmodels.ItineraryViewModel
 import com.example.voyagetime.ui.viewmodels.TripGalleryViewModel
 import com.example.voyagetime.data.local.entity.TripImageEntity
+import java.util.Locale
 
 data class ItineraryEvent(
     val time: String,
@@ -1230,18 +1232,10 @@ private fun EventEditForm(
                 }
             )
 
-            OutlinedTextField(
+            TimePickerField(
                 value = timeValue,
-                onValueChange = onTimeChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.itinerary_field_time)) },
-                placeholder = { Text(stringResource(R.string.itinerary_time_placeholder)) },
-                isError = timeError != null,
-                supportingText = {
-                    if (timeError != null) {
-                        Text(timeError)
-                    }
-                }
+                errorMessage = timeError,
+                onValueChange = onTimeChange
             )
 
             OutlinedTextField(
@@ -1264,6 +1258,75 @@ private fun EventEditForm(
                 onPrimaryClick = onSave,
                 onSecondaryClick = onCancel,
                 primaryEnabled = canSave
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun TimePickerField(
+    value: String,
+    errorMessage: String?,
+    onValueChange: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val initialTime = remember(value) { parseTimeForPicker(value) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        OutlinedButton(
+            onClick = {
+                TimePickerDialog(
+                    context,
+                    { _, hourOfDay, minute ->
+                        onValueChange(String.format(Locale.US, "%02d:%02d", hourOfDay, minute))
+                    },
+                    initialTime.first,
+                    initialTime.second,
+                    true
+                ).show()
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(horizontalAlignment = Alignment.Start) {
+                    Text(
+                        text = stringResource(R.string.itinerary_field_time),
+                        fontSize = 12.sp,
+                        color = if (errorMessage != null) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                    Text(
+                        text = value.ifBlank { stringResource(R.string.itinerary_time_placeholder) },
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (value.isBlank()) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        }
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Default.Schedule,
+                    contentDescription = stringResource(R.string.itinerary_field_time),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.error
             )
         }
     }
@@ -1419,6 +1482,14 @@ private fun NotesCard(
             }
         }
     }
+}
+
+
+private fun parseTimeForPicker(value: String): Pair<Int, Int> {
+    val parts = value.trim().split(":")
+    val hour = parts.getOrNull(0)?.toIntOrNull()?.coerceIn(0, 23) ?: 9
+    val minute = parts.getOrNull(1)?.toIntOrNull()?.coerceIn(0, 59) ?: 0
+    return hour to minute
 }
 
 private fun sanitizeTimeInput(value: String): String {

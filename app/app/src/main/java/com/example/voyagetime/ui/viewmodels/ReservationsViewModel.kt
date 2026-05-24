@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.voyagetime.data.local.dao.ReservationDao
 import com.example.voyagetime.data.local.entity.ReservationEntity
-import com.example.voyagetime.data.remote.HotelApiService
-import com.example.voyagetime.di.NetworkModule
+import com.example.voyagetime.domain.repository.HotelRepository
+import com.example.voyagetime.data.remote.ReserveRequest
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +24,7 @@ sealed class ReservationsState {
 @HiltViewModel
 class ReservationsViewModel @Inject constructor(
     private val reservationDao: ReservationDao,
-    private val apiService: HotelApiService
+    private val hotelRepository: HotelRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<ReservationsState>(ReservationsState.Loading)
@@ -39,29 +39,53 @@ class ReservationsViewModel @Inject constructor(
 
     // T4.1 — Cargar todas las reservas del usuario logueado
     fun loadReservations() {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val userId = currentUserId()
         viewModelScope.launch {
-            reservationDao.getAllReservations(userId).collect { list ->
-                Log.d(TAG, "loadReservations: ${list.size} reservations")
-                _state.value = ReservationsState.Success(list)
+            try {
+                reservationDao.getAllReservations(userId).collect { list ->
+                    Log.d(TAG, "loadReservations: ${list.size} reservations")
+                    _state.value = ReservationsState.Success(list)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "loadReservations: exception", e)
+                _state.value = ReservationsState.Error(e.message ?: "Could not load reservations")
             }
         }
     }
 
     // T4.2 — Eliminar reserva local + cancelar vía API
     fun deleteReservation(reservation: ReservationEntity) {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val userId = currentUserId()
         viewModelScope.launch {
             try {
-                // 1. Cancelar vía API si tiene ID válido
-                if (reservation.apiReservationId != "UNKNOWN") {
-                    val response = apiService.cancelReservationById(reservation.apiReservationId)
-                    if (response.isSuccessful) {
-                        Log.i(TAG, "deleteReservation: cancelled on API ${reservation.apiReservationId}")
-                    } else {
-                        Log.w(TAG, "deleteReservation: API returned ${response.code()}, deleting locally anyway")
-                    }
+                // 1. Cancelar vía API siempre a través del repositorio.
+                // Usamos primero el endpoint del grupo (/hotels/{group_id}/cancel), que es el
+                // que forma parte de la API del Sprint 04. Si ese endpoint fallara y la API
+                // devolvió un ID real, intentamos el endpoint por ID como respaldo.
+                val cancelRequest = ReserveRequest(
+                    hotelId = reservation.hotelId,
+                    roomId = reservation.roomId,
+                    startDate = reservation.startDate,
+                    endDate = reservation.endDate,
+                    guestName = reservation.guestName,
+                    guestEmail = reservation.guestEmail
+                )
+
+                val cancelResult = hotelRepository.cancelReservation(cancelRequest)
+                if (cancelResult.isSuccess) {
+                    Log.i(TAG, "deleteReservation: cancelled on group API ${reservation.apiReservationId}")
+                } else if (reservation.apiReservationId != "UNKNOWN") {
+                    hotelRepository.cancelReservationById(reservation.apiReservationId)
+                        .onSuccess {
+                            Log.i(TAG, "deleteReservation: cancelled on API by id ${reservation.apiReservationId}")
+                        }
+                        .onFailure { error ->
+                            Log.w(TAG, "deleteReservation: API cancel failed, deleting locally anyway", error)
+                        }
+                } else {
+                    Log.w(TAG, "deleteReservation: group cancel failed, deleting locally anyway", cancelResult.exceptionOrNull())
                 }
+
                 // 2. Borrar localmente
                 reservationDao.deleteReservation(reservation.id, userId)
                 Log.i(TAG, "deleteReservation: deleted locally id=${reservation.id}")
@@ -77,5 +101,10 @@ class ReservationsViewModel @Inject constructor(
 
     fun clearDeleteResult() { _deleteResult.value = null }
 
-    companion object { private const val TAG = "ReservationsViewModel" }
+    private fun currentUserId(): String = FirebaseAuth.getInstance().currentUser?.uid ?: LOCAL_USER_ID
+
+    companion object {
+        private const val TAG = "ReservationsViewModel"
+        private const val LOCAL_USER_ID = "local_user"
+    }
 }

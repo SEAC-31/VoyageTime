@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,48 +45,55 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.voyagetime.R
+import com.example.voyagetime.ui.viewmodels.TripGalleryViewModel
 import java.time.LocalDate
 
 /**
- * T3.3 — Galería específica de cada viaje.
+ * T3.1/T3.2/T3.3 — Galería específica de cada viaje.
  *
- * Muestra únicamente las imágenes adjuntadas a [tripId].
- * Permite añadir nuevas imágenes desde la galería del dispositivo y eliminarlas.
- *
- * @param tripId      ID del viaje (string del Room trip id).
- * @param tripName    Nombre del destino — se muestra en la TopAppBar.
- * @param onBack      Lambda para volver atrás (navController.popBackStack).
+ * Permite adjuntar varias imágenes en una sola operación, guarda sus URI persistentes
+ * en Room mediante TripImageEntity y muestra únicamente las imágenes vinculadas a este tripId.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TripGallery(
     tripId: String,
     tripName: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: TripGalleryViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val savedImages by viewModel.tripImages.collectAsStateWithLifecycle()
 
-    var imageUris by remember {
-        mutableStateOf(PreferencesManager.getTripGalleryImageUris(context, tripId))
+    LaunchedEffect(tripId) {
+        viewModel.loadTrip(tripId)
     }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            context.contentResolver.takePersistableUriPermission(
-                uri,
-                Intent.FLAG_GRANT_READ_URI_PERMISSION
-            )
-            PreferencesManager.addTripGalleryImageUri(context, tripId, uri.toString())
-            imageUris = PreferencesManager.getTripGalleryImageUris(context, tripId)
+        contract = ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris: List<Uri> ->
+        if (uris.isNotEmpty()) {
+            val uriStrings = uris.map { uri ->
+                try {
+                    context.contentResolver.takePersistableUriPermission(
+                        uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                } catch (_: Exception) {
+                    // Some providers do not grant persistable permissions; the URI is still stored.
+                }
+                uri.toString()
+            }
+            viewModel.attachImages(tripId, uriStrings)
         }
     }
 
-    val galleryItems = imageUris.mapIndexed { index, uri ->
+    val galleryItems = savedImages.mapIndexed { index, image ->
         GalleryItem(
-            id = 20_000 + index,
+            id = image.id.toInt(),
             name = stringResource(R.string.gallery_local_image_name, index + 1),
             location = tripName,
             dateAdded = LocalDate.now(),
@@ -93,7 +101,7 @@ fun TripGallery(
             isFavorite = false,
             size = stringResource(R.string.gallery_user_uploaded),
             color = Color(0xFF7E57C2),
-            imageUri = uri
+            imageUri = image.imageUri
         )
     }
 
@@ -104,9 +112,9 @@ fun TripGallery(
             item = selectedItem!!,
             onBack = { selectedItem = null },
             onDelete = { item ->
-                item.imageUri?.let { uri ->
-                    PreferencesManager.removeTripGalleryImageUri(context, tripId, uri)
-                    imageUris = PreferencesManager.getTripGalleryImageUris(context, tripId)
+                val entity = savedImages.firstOrNull { it.imageUri == item.imageUri }
+                if (entity != null) {
+                    viewModel.deleteImage(entity)
                 }
                 selectedItem = null
             }
@@ -167,7 +175,7 @@ fun TripGallery(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        items(galleryItems) { item ->
+                        items(galleryItems, key = { it.id }) { item ->
                             GalleryGridItem(
                                 item = item,
                                 onClick = { selectedItem = item }

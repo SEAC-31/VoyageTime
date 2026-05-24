@@ -78,9 +78,14 @@ class CreateTripViewModel @Inject constructor(
                 state       = TripState.PLANNED,
                 image       = imageRes
             )
-            repository.addTrip(newTrip)
-            Log.i(TAG, "createTrip: trip saved successfully — destination=$normalizedDestination")
-            _uiState.value = CreateTripUiState(isSaved = true)
+            try {
+                repository.addTrip(newTrip)
+                Log.i(TAG, "createTrip: trip saved successfully — destination=$normalizedDestination")
+                _uiState.value = CreateTripUiState(isSaved = true)
+            } catch (e: Exception) {
+                Log.e(TAG, "createTrip: failed saving trip", e)
+                _uiState.value = CreateTripUiState(error = e.message ?: "Could not create trip")
+            }
         }
     }
 

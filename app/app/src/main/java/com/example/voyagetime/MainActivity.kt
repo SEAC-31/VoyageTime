@@ -45,6 +45,7 @@ import com.example.voyagetime.ui.screens.ForgotPasswordScreen
 import com.example.voyagetime.ui.screens.Gallery
 import com.example.voyagetime.ui.screens.Home
 import com.example.voyagetime.ui.screens.HotelDetailScreen
+import com.example.voyagetime.ui.screens.HotelSearchScreen
 import com.example.voyagetime.ui.screens.Itinerary
 import com.example.voyagetime.ui.screens.LanguageManager
 import com.example.voyagetime.ui.screens.LoginScreen
@@ -69,6 +70,7 @@ val LocalOnDarkModeChange = compositionLocalOf<(Boolean) -> Unit> { {} }
 const val EXTRA_START_AFTER_SPLASH = "start_after_splash"
 
 enum class AppScreen { SPLASH, TERMS_ACCEPTANCE, MAIN, AUTH }
+enum class AuthScreen { LOGIN, REGISTER, FORGOT_PASSWORD }
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -84,7 +86,7 @@ class MainActivity : ComponentActivity() {
         val startAfterSplash = intent
             .getStringExtra(EXTRA_START_AFTER_SPLASH)
             ?.let { AppScreen.valueOf(it) }
-            ?: AppScreen.TERMS_ACCEPTANCE
+            ?: resolveStartAfterSplash()
 
         setContent {
             val context = this
@@ -101,25 +103,46 @@ class MainActivity : ComponentActivity() {
             ) {
                 VoyageTimeTheme(darkTheme = darkMode) {
                     var currentScreen by rememberSaveable { mutableStateOf(AppScreen.SPLASH) }
+                    var authScreen by rememberSaveable { mutableStateOf(AuthScreen.LOGIN) }
 
                     when (currentScreen) {
                         AppScreen.SPLASH ->
                             SplashScreen(onFinished = { currentScreen = startAfterSplash })
                         AppScreen.TERMS_ACCEPTANCE ->
                             TermsAcceptanceScreen(
-                                onAccept = { currentScreen = AppScreen.AUTH },
-                                onReject = { currentScreen = AppScreen.AUTH }
+                                onAccept = {
+                                    PreferencesManager.saveTermsAccepted(context, true)
+                                    currentScreen = if (hasPersistentLogin(context)) AppScreen.MAIN else AppScreen.AUTH
+                                },
+                                onReject = {
+                                    PreferencesManager.saveTermsAccepted(context, false)
+                                    authScreen = AuthScreen.LOGIN
+                                    currentScreen = AppScreen.AUTH
+                                }
                             )
                         AppScreen.AUTH ->
-                            LoginScreen(
-                                onLoginSuccess = { currentScreen = AppScreen.MAIN },
-                                onRegisterClick = { currentScreen = AppScreen.MAIN },
-                                onForgotPasswordClick = { currentScreen = AppScreen.MAIN }
-                            )
+                            when (authScreen) {
+                                AuthScreen.LOGIN -> LoginScreen(
+                                    onLoginSuccess = { currentScreen = AppScreen.MAIN },
+                                    onRegisterClick = { authScreen = AuthScreen.REGISTER },
+                                    onForgotPasswordClick = { authScreen = AuthScreen.FORGOT_PASSWORD }
+                                )
+                                AuthScreen.REGISTER -> RegisterScreen(
+                                    viewModel = hiltViewModel(),
+                                    onRegisterSuccess = { authScreen = AuthScreen.LOGIN },
+                                    onNavigateToLogin = { authScreen = AuthScreen.LOGIN }
+                                )
+                                AuthScreen.FORGOT_PASSWORD -> ForgotPasswordScreen(
+                                    viewModel = hiltViewModel(),
+                                    onBack = { authScreen = AuthScreen.LOGIN }
+                                )
+                            }
                         AppScreen.MAIN ->
                             VoyageTimeApp(
                                 onLogout = {
                                     FirebaseAuth.getInstance().signOut()
+                                    PreferencesManager.clearRememberedLogin(context)
+                                    authScreen = AuthScreen.LOGIN
                                     currentScreen = AppScreen.AUTH
                                 }
                             )
@@ -127,6 +150,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun resolveStartAfterSplash(): AppScreen {
+        if (!PreferencesManager.hasAcceptedTerms(this)) return AppScreen.TERMS_ACCEPTANCE
+        return if (hasPersistentLogin(this)) AppScreen.MAIN else AppScreen.AUTH
+    }
+
+    private fun hasPersistentLogin(context: Context): Boolean {
+        return FirebaseAuth.getInstance().currentUser != null || PreferencesManager.getRememberLogin(context)
     }
 }
 
@@ -139,6 +171,7 @@ fun VoyageTimeApp(onLogout: () -> Unit = {}) {
     val items = listOf(
         NavItem(Routes.HOME,         R.string.nav_home,         Icons.Default.Home),
         NavItem(Routes.TRIPS,        R.string.nav_trips,        Icons.Default.Place),
+        NavItem(Routes.HOTEL_SEARCH, R.string.nav_hotels,       Icons.Default.Search),
         NavItem(Routes.RESERVATIONS, R.string.nav_reservations, Icons.Default.Hotel),
         NavItem(Routes.GALLERY,      R.string.nav_gallery,      Icons.Default.PhotoLibrary),
         NavItem(Routes.PREFERENCES,  R.string.nav_preferences,  Icons.Default.AccountBox),
@@ -223,6 +256,17 @@ private fun AppNavHost(
             }
             composable(Routes.DEPARTURE_CITY) { DepartureCityScreen() }
             composable(Routes.TRAVEL_STYLE) { TravelStyleScreen() }
+            composable(Routes.HOTEL_SEARCH) {
+                HotelSearchScreen(
+                    onHotelSelected = { hotel, startDate, endDate ->
+                        pendingHotel = hotel
+                        pendingTripId = 0L
+                        pendingStartDate = startDate
+                        pendingEndDate = endDate
+                        navController.navigate(Routes.HOTEL_DETAIL)
+                    }
+                )
+            }
             composable(Routes.GALLERY) { Gallery() }
             composable(
                 route = "${Routes.TRIP_GALLERY}/{tripId}/{tripName}",
@@ -289,6 +333,7 @@ object Routes {
     const val HOME             = "home"
     const val CREATE_TRIP      = "create_trip"
     const val TRIPS            = "trips"
+    const val HOTEL_SEARCH     = "hotel_search"
     const val ITINERARY        = "itinerary"
     const val DEPARTURE_CITY   = "departure_city"
     const val TRAVEL_STYLE     = "travel_style"

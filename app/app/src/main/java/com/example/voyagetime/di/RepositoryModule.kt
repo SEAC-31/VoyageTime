@@ -33,8 +33,9 @@ object RepositoryModule {
     @Singleton
     fun provideTripRepository(
         tripDao: TripDao,
+        userDao: UserDao,
         authRepository: AuthRepository
-    ): TripRepository = TripRepositoryImpl(tripDao, authRepository)
+    ): TripRepository = TripRepositoryImpl(tripDao, userDao, authRepository)
 
     @Provides
     @Singleton

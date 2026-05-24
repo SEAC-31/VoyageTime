@@ -210,6 +210,13 @@ private fun ReservationCard(
 
                 Spacer(Modifier.height(4.dp))
                 Text(
+                    text = "Linked trip ID: ${reservation.tripId}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(Modifier.height(4.dp))
+                Text(
                     text = "Guest: ${reservation.guestName}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

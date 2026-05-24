@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.FlightTakeoff
+import androidx.compose.material.icons.filled.Hotel
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Schedule
@@ -69,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.voyagetime.R
+import com.example.voyagetime.ui.viewmodels.TripReservationSummary
 import com.example.voyagetime.ui.viewmodels.TripsViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -191,6 +193,7 @@ fun Trips(
             uiState.upcomingTrips.forEachIndexed { index, trip ->
                 EditableUpcomingTripCard(
                     trip = trip,
+                    reservationSummary = uiState.reservationsByTrip[trip.id],
                     onViewClick = { onTripClick(trip.id) },
                     onGalleryClick = { onGalleryClick(trip.id) },
                     onDeleteClick = { viewModel.deleteTrip(trip.id) },
@@ -210,6 +213,7 @@ fun Trips(
             uiState.pastTrips.forEachIndexed { index, trip ->
                 PastTripCard(
                     trip = trip,
+                    reservationSummary = uiState.reservationsByTrip[trip.id],
                     onViewClick = { onTripClick(trip.id) },
                     onGalleryClick = { onGalleryClick(trip.id) },
                     onDeleteClick = { viewModel.deleteTrip(trip.id) }
@@ -407,6 +411,7 @@ fun TripCategory(
 @Composable
 fun EditableUpcomingTripCard(
     trip: TripItem,
+    reservationSummary: TripReservationSummary? = null,
     onViewClick: () -> Unit,
     onGalleryClick: () -> Unit = {},
     onDeleteClick: () -> Unit,
@@ -464,6 +469,7 @@ fun EditableUpcomingTripCard(
                         ) {
                             TripMainInfo(
                                 trip = trip,
+                                reservationSummary = reservationSummary,
                                 modifier = Modifier.weight(1f)
                             )
 
@@ -501,7 +507,10 @@ fun EditableUpcomingTripCard(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            TripMainInfo(trip = trip)
+                            TripMainInfo(
+                                trip = trip,
+                                reservationSummary = reservationSummary
+                            )
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -676,6 +685,7 @@ fun EditableUpcomingTripCard(
 @Composable
 private fun TripMainInfo(
     trip: TripItem,
+    reservationSummary: TripReservationSummary? = null,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -731,6 +741,10 @@ private fun TripMainInfo(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+
+            if (reservationSummary != null) {
+                TripReservationInfo(summary = reservationSummary)
+            }
         }
     }
 }
@@ -738,6 +752,7 @@ private fun TripMainInfo(
 @Composable
 fun PastTripCard(
     trip: TripItem,
+    reservationSummary: TripReservationSummary? = null,
     onViewClick: () -> Unit,
     onGalleryClick: () -> Unit = {},
     onDeleteClick: () -> Unit
@@ -802,6 +817,10 @@ fun PastTripCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+
+                if (reservationSummary != null) {
+                    TripReservationInfo(summary = reservationSummary)
+                }
             }
         }
 
@@ -817,6 +836,44 @@ fun PastTripCard(
                 imageVector = Icons.Default.PhotoLibrary,
                 contentDescription = stringResource(R.string.trip_gallery_btn),
                 tint = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun TripReservationInfo(summary: TripReservationSummary) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Hotel,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(16.dp)
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = "Hotel reservation: ${summary.hotelName}",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = "${summary.roomType} · ID ${summary.apiReservationId} · €${"%.2f".format(summary.price)}",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

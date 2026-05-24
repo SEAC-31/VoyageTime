@@ -3,12 +3,15 @@ package com.example.voyagetime.ui.viewmodels
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.voyagetime.R
 import com.example.voyagetime.data.local.dao.ReservationDao
+import com.example.voyagetime.data.local.dao.TripDao
+import com.example.voyagetime.data.local.dao.UserDao
+import com.example.voyagetime.data.local.entity.TripEntity
 import com.example.voyagetime.data.local.entity.ReservationEntity
-import com.example.voyagetime.data.remote.HotelApiService
+import com.example.voyagetime.data.local.entity.UserEntity
 import com.example.voyagetime.data.remote.HotelDto
 import com.example.voyagetime.data.remote.ReserveRequest
-import com.example.voyagetime.di.NetworkModule
 import com.example.voyagetime.domain.repository.HotelRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.gson.Gson
@@ -18,6 +21,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 // ── UI State ──────────────────────────────────────────────────────────────
@@ -34,9 +39,10 @@ sealed class HotelBookingState {
 
 @HiltViewModel
 class HotelBookingViewModel @Inject constructor(
-    private val apiService: HotelApiService,
     private val hotelRepository: HotelRepository,
-    private val reservationDao: ReservationDao
+    private val reservationDao: ReservationDao,
+    private val tripDao: TripDao,
+    private val userDao: UserDao
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<HotelBookingState>(HotelBookingState.Idle)
@@ -83,10 +89,9 @@ class HotelBookingViewModel @Inject constructor(
         endDate: String
     ) {
         val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser == null) {
-            _state.value = HotelBookingState.Error("User not logged in")
-            return
-        }
+        val userId = currentUser?.uid ?: LOCAL_USER_ID
+        val userEmail = currentUser?.email ?: "guest@local.voyagetime"
+        val guestName = currentUser?.displayName ?: userEmail.substringBefore("@").ifBlank { "Guest" }
 
         val room = hotel.rooms.find { it.id == roomId }
         if (room == null) {
@@ -99,32 +104,43 @@ class HotelBookingViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
+                ensureLocalUser(userId, userEmail)
+
                 val request = ReserveRequest(
                     hotelId = hotel.id,
                     roomId = room.id,
                     startDate = startDate,
                     endDate = endDate,
-                    guestName = currentUser.displayName ?: currentUser.email ?: "Guest",
-                    guestEmail = currentUser.email ?: ""
+                    guestName = guestName,
+                    guestEmail = userEmail
                 )
-                val response = apiService.reserveRoom(NetworkModule.GROUP_ID, request)
-
-                if (!response.isSuccessful) {
-                    Log.e(TAG, "bookRoom: API error ${response.code()}")
-                    _state.value = HotelBookingState.Error("Booking failed: ${response.code()}")
+                val bookingResult = hotelRepository.reserveRoom(request)
+                if (bookingResult.isFailure) {
+                    val error = bookingResult.exceptionOrNull()
+                    Log.e(TAG, "bookRoom: repository error", error)
+                    _state.value = HotelBookingState.Error(error?.message ?: "Booking failed")
                     return@launch
                 }
 
-                val apiResId = extractReservationId(response.body())
+                val apiResId = extractReservationId(bookingResult.getOrNull())
                 Log.i(TAG, "bookRoom: reservation created with id=$apiResId")
+
+                val savedTripId = ensureTripForReservation(
+                    requestedTripId = tripId,
+                    hotel = hotel,
+                    roomPrice = room.price,
+                    startDate = startDate,
+                    endDate = endDate,
+                    userId = userId
+                )
 
                 val entity = ReservationEntity(
                     apiReservationId = apiResId,
-                    tripId = tripId,
-                    userId = currentUser.uid,
+                    tripId = savedTripId,
+                    userId = userId,
                     hotelId = hotel.id,
                     hotelName = hotel.name,
-                    hotelImageUrl = hotel.imageUrl,
+                    hotelImageUrl = hotel.allImages.firstOrNull().orEmpty(),
                     roomId = room.id,
                     roomType = room.roomType,
                     roomPrice = room.price,
@@ -150,6 +166,62 @@ class HotelBookingViewModel @Inject constructor(
     }
 
 
+
+    private suspend fun ensureLocalUser(uid: String, email: String?) {
+        if (userDao.getUserById(uid) != null) return
+
+        userDao.insertUserIfMissing(
+            UserEntity(
+                firebaseUid = uid,
+                username = "user_${uid.take(12)}",
+                email = email ?: "$uid@local.voyagetime"
+            )
+        )
+    }
+
+    private suspend fun ensureTripForReservation(
+        requestedTripId: Long,
+        hotel: HotelDto,
+        roomPrice: Double,
+        startDate: String,
+        endDate: String,
+        userId: String
+    ): Long {
+        if (requestedTripId > 0L) return requestedTripId
+
+        val start = LocalDate.parse(startDate)
+        val end = LocalDate.parse(endDate)
+        val nights = ChronoUnit.DAYS.between(start, end).coerceAtLeast(1).toInt()
+        val budget = (roomPrice * nights).toInt().coerceAtLeast(0)
+        val city = hotel.city.ifBlank { hotel.address.substringBefore(",").ifBlank { hotel.name } }
+
+        val trip = TripEntity(
+            userId = userId,
+            destination = city,
+            country = countryForCity(city),
+            startDateTime = start.atStartOfDay(),
+            endDateTime = end.atStartOfDay(),
+            durationDays = nights,
+            budgetAmount = budget,
+            statusLabel = "PLANNED",
+            imageRes = imageForCity(city)
+        )
+        return tripDao.insertTrip(trip)
+    }
+
+    private fun countryForCity(city: String): String = when (city.trim().lowercase()) {
+        "barcelona" -> "Spain"
+        "paris" -> "France"
+        "london" -> "United Kingdom"
+        else -> ""
+    }
+
+    private fun imageForCity(city: String): Int = when (city.trim().lowercase()) {
+        "barcelona" -> R.drawable.barcelona
+        "paris" -> R.drawable.paris
+        else -> R.drawable.logo_no_background
+    }
+
     private fun extractReservationId(body: JsonElement?): String {
         return try {
             val obj = body?.asJsonObject ?: return "UNKNOWN"
@@ -165,5 +237,6 @@ class HotelBookingViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "HotelBookingViewModel"
+        private const val LOCAL_USER_ID = "local_user"
     }
 }
